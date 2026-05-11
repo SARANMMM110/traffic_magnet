@@ -1,0 +1,3638 @@
+import OpenAI from "openai";
+import { 
+  generateOptimizedLandingPagePrompt, 
+  generateOptimizedToolHTMLPrompt,
+  generateBlueprintPrompt,
+  generateRegenerateBlueprintPrompt
+} from "./prompts";
+
+interface ToolIdea {
+  name: string;
+  category: string;
+  score: number;
+  why: string;
+  traffic_potential: "High" | "Medium" | "Low";
+  link_magnet_score: "Strong" | "Medium" | "Weak";
+  monetization: "Strong" | "Medium" | "Weak";
+  keywords: string[];
+}
+
+interface DiscoveryResult {
+  tools: ToolIdea[];
+}
+
+export async function discoverToolIdeas(
+  niche: string,
+  goal: string | null,
+  audience: string | null,
+  apiKey: string
+): Promise<ToolIdea[]> {
+  // Validate API key before proceeding
+  if (!apiKey || apiKey.trim().length === 0) {
+    console.error("[discoverToolIdeas] API key is empty or undefined");
+    throw new Error("OpenAI API key is required");
+  }
+  
+  if (!apiKey.startsWith('sk-')) {
+    console.error("[discoverToolIdeas] API key format appears invalid");
+    throw new Error("OpenAI API key must start with 'sk-'");
+  }
+  
+  const client = new OpenAI({ apiKey });
+
+  const userPrompt = `Niche: ${niche}
+Goal: ${goal || "Generate traffic"}
+Target Audience: ${audience || "General"}
+
+IMPORTANT: You MUST generate exactly 10 unique tool ideas.
+
+Each tool must be a unique, specific calculator, generator, analyzer, or interactive tool that:
+- Solves a real problem in this niche
+- Can rank on Google for specific keywords
+- Attracts backlinks from other sites
+- Has monetization potential
+
+Return ONLY valid JSON in this exact format with NO additional text:
+{
+  "tools": [
+    {
+      "name": "Tool Name",
+      "category": "Category Name",
+      "score": 85,
+      "why": "One sentence explaining the value",
+      "traffic_potential": "High",
+      "link_magnet_score": "Strong",
+      "monetization": "Medium",
+      "keywords": ["keyword1", "keyword2", "keyword3"]
+    }
+  ]
+}
+
+Generate ALL 10 tools now.`;
+
+  try {
+    console.log("[discoverToolIdeas] Starting discovery for niche:", niche);
+    console.log("[discoverToolIdeas] Using API key:", apiKey ? `${apiKey.substring(0, 10)}...` : 'NONE');
+    
+    const response = await client.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are a traffic magnet strategist. Generate tool ideas that rank on Google and attract backlinks. Return ONLY valid JSON, no other text.",
+        },
+        {
+          role: "user",
+          content: userPrompt,
+        },
+      ],
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "tool_discovery",
+          schema: {
+            type: "object",
+            properties: {
+              tools: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    name: { type: "string" },
+                    category: { type: "string" },
+                    score: { type: "number" },
+                    why: { type: "string" },
+                    traffic_potential: {
+                      type: "string",
+                      enum: ["High", "Medium", "Low"],
+                    },
+                    link_magnet_score: {
+                      type: "string",
+                      enum: ["Strong", "Medium", "Weak"],
+                    },
+                    monetization: {
+                      type: "string",
+                      enum: ["Strong", "Medium", "Weak"],
+                    },
+                    keywords: {
+                      type: "array",
+                      items: { type: "string" },
+                    },
+                  },
+                  required: [
+                    "name",
+                    "category",
+                    "score",
+                    "why",
+                    "traffic_potential",
+                    "link_magnet_score",
+                    "monetization",
+                    "keywords",
+                  ],
+                  additionalProperties: false,
+                },
+              },
+            },
+            required: ["tools"],
+            additionalProperties: false,
+          },
+          strict: true,
+        },
+      },
+      temperature: 0.8,
+    });
+
+    console.log("[discoverToolIdeas] OpenAI API call successful");
+
+    const content = response.choices[0].message.content;
+    if (!content) {
+      throw new Error("No content in OpenAI response");
+    }
+
+    console.log("[discoverToolIdeas] Response content length:", content.length);
+
+    const result: DiscoveryResult = JSON.parse(content);
+    console.log("[discoverToolIdeas] Parsed result, tools count:", result.tools?.length || 0);
+    
+    if (!result.tools || !Array.isArray(result.tools) || result.tools.length === 0) {
+      console.error("[discoverToolIdeas] Invalid result structure:", result);
+      throw new Error("OpenAI returned invalid tool structure");
+    }
+    
+    // Ensure we got at least 10 tools
+    if (result.tools.length < 10) {
+      console.warn(`[discoverToolIdeas] Only received ${result.tools.length} tools instead of 10. Retrying...`);
+      throw new Error(`Only ${result.tools.length} tools generated. Please try again or check your OpenAI API key quota.`);
+    }
+    
+    console.log("[discoverToolIdeas] Successfully generated", result.tools.length, "tools");
+    return result.tools;
+  } catch (error) {
+    console.error("[discoverToolIdeas] Error occurred:", error);
+    if (error instanceof Error) {
+      console.error("[discoverToolIdeas] Error message:", error.message);
+      console.error("[discoverToolIdeas] Error stack:", error.stack);
+    }
+    throw new Error(`Tool discovery failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+function generateBlueprintPrompt(
+  toolName: string,
+  niche: string,
+  category: string | null,
+  goal: string | null
+): string {
+  return `You are generating clean, professional blueprint content for a premium SaaS dashboard application.
+
+═══════════════════════════════════════════════════════════
+CRITICAL UI/UX REQUIREMENTS
+═══════════════════════════════════════════════════════════
+
+This blueprint must be:
+✓ CLEAN and visually readable inside dashboard cards
+✓ CONCISE but valuable (not bloated)
+✓ PROFESSIONAL marketing language
+✓ SEO-FOCUSED with strategic keywords
+✓ FORMATTED for modern SaaS UI sections
+
+DO NOT generate:
+✗ Overly long paragraphs
+✗ Technical dumps or raw JSON
+✗ Broken formatting or serialized objects
+✗ Weak one-line filler content
+✗ Excessive or repetitive text
+
+═══════════════════════════════════════════════════════════
+JSON STRUCTURE RULES
+═══════════════════════════════════════════════════════════
+
+* Return ONLY pure valid JSON
+* Do NOT return markdown or code fences
+* Do NOT use \`\`\`json
+* Do NOT stringify JSON
+* Do NOT escape the entire object
+* Do NOT return nested JSON as strings
+* Every field must contain ONLY its own content
+* Never merge multiple sections together
+* The response must work directly with JSON.parse()
+
+═══════════════════════════════════════════════════════════
+RETURN THIS EXACT STRUCTURE
+═══════════════════════════════════════════════════════════
+
+{
+"title": "",
+"category": "",
+"tool_type": "",
+"description": "",
+"purpose": "",
+"target_keywords": [],
+"inputs_required": [],
+"output_type": "",
+"calculation_logic": "",
+"features": [],
+"monetization_strategy": "",
+"internal_links": [],
+"cta_text": "",
+"theme_suggestions": [],
+"seo_title": "",
+"seo_description": ""
+}
+
+═══════════════════════════════════════════════════════════
+FIELD REQUIREMENTS (DASHBOARD-OPTIMIZED)
+═══════════════════════════════════════════════════════════
+
+━━━ title ━━━
+• Tool name only (no extra text)
+• Professional and clear
+
+━━━ category ━━━
+• Single category name
+• Example: "Marketing", "Finance", "Real Estate"
+
+━━━ tool_type ━━━
+• Single tool type
+• Example: "calculator", "analyzer", "generator", "converter"
+
+━━━ description ━━━
+• ONE compelling sentence (15-25 words)
+• Professional marketing language
+• Clear value proposition
+
+━━━ purpose ━━━
+**STRICT REQUIREMENT: 60-100 WORDS EXACTLY (Dashboard Card Length)**
+
+Write ONE clean, professional paragraph that explains:
+• What the tool does
+• Who it helps
+• Why it is useful
+
+CRITICAL RULES:
+✓ Write exactly 60-100 words - count carefully
+✓ Natural, readable marketing language
+✓ Easy to scan inside dashboard card
+✓ Clear value proposition focused on user benefits
+✓ Professional tone - avoid hyperbole or excessive superlatives
+✓ Focus on practical use cases and outcomes
+
+PERFECT EXAMPLE (meets all requirements):
+"The Keyword Density Calculator helps users analyze keyword frequency within content to improve on-page SEO performance. It enables marketers, bloggers, and SEO professionals to optimize content strategically while avoiding keyword stuffing penalties and improving search engine visibility."
+
+REJECT THESE PATTERNS:
+✗ Too long (over 100 words)
+✗ Too technical or feature-focused instead of benefit-focused
+✗ Repetitive or bloated language
+✗ Weak generic statements
+
+━━━ target_keywords ━━━
+**STRICT REQUIREMENT: EXACTLY 5-8 KEYWORDS (Dashboard Badge-Friendly)**
+
+CRITICAL RULES:
+✓ Generate EXACTLY 5 to 8 keywords - no more, no less
+✓ Short SEO keyword phrases (2-4 words each)
+✓ Perfect for displaying as UI badges/tags
+✓ Focused on what users actually search for
+✓ Avoid long-tail phrases or full sentences
+
+PERFECT EXAMPLE (5 keywords, all short and focused):
+[
+"keyword density checker",
+"SEO content optimization",
+"on-page SEO tool",
+"keyword frequency analyzer",
+"SEO keyword calculator"
+]
+
+REJECT THESE PATTERNS:
+✗ Too many keywords (9+)
+✗ Too few keywords (under 5)
+✗ Long phrases like "how to check keyword density for SEO optimization"
+✗ Question format keywords
+
+━━━ inputs_required ━━━
+**STRICT REQUIREMENT: 3-8 USER-FRIENDLY INPUT FIELDS**
+
+List specific, clear field labels that users will fill in.
+
+CRITICAL RULES:
+✓ Exactly 3 to 8 inputs
+✓ Use clear, non-technical language
+✓ Professional field names
+✓ Practical and relevant to the tool
+
+PERFECT EXAMPLE (5 inputs):
+[
+"Content Text",
+"Target Keyword",
+"Minimum Word Count",
+"Language",
+"Analysis Depth"
+]
+
+REJECT THESE PATTERNS:
+✗ Too many inputs (9+ fields)
+✗ Too few inputs (under 3)
+✗ Technical jargon or developer language
+✗ Vague generic inputs
+
+━━━ output_type ━━━
+**STRICT REQUIREMENT: 1 CLEAR SENTENCE (20-40 WORDS)**
+
+Describe what result users receive - be specific about format and value.
+
+PERFECT EXAMPLE:
+"Displays a comprehensive ROI percentage, break-even timeline, annual profit projections, and a detailed financial summary with actionable recommendations."
+
+REJECT THESE PATTERNS:
+✗ Too vague: "Results"
+✗ Too short: "Percentage"
+✗ Too long (over 40 words with excessive detail)
+
+━━━ calculation_logic ━━━
+**STRICT REQUIREMENT: 60-80 WORDS EXACTLY (Dashboard Card Length)**
+
+Write a clear, professional explanation of HOW the tool works in plain business language.
+
+CRITICAL RULES:
+✓ Exactly 60-80 words - count carefully
+✓ Plain language explanation - avoid technical jargon
+✓ Focus on the process/methodology
+✓ Clear enough for non-technical users to understand
+✓ Professional and informative
+
+PERFECT EXAMPLE (meets all requirements):
+"The calculator analyzes text content and counts keyword occurrences, then divides by total word count to determine density percentage. It identifies optimal keyword usage ranges to help avoid over-optimization while maintaining SEO effectiveness."
+
+REJECT THESE PATTERNS:
+✗ Too technical with programming terms
+✗ Too long (over 80 words with excessive detail)
+✗ Too short (under 60 words, lacking depth)
+✗ Vague without explaining the actual process
+
+━━━ features ━━━
+**STRICT REQUIREMENT: 5-8 PREMIUM SAAS-STYLE FEATURES**
+
+List key features that make this tool valuable - written like premium SaaS feature bullets.
+
+CRITICAL RULES:
+✓ Exactly 5 to 8 features (count them)
+✓ Each feature should be 3-8 words maximum
+✓ Professional SaaS-quality language
+✓ Benefit-focused, not just feature names
+✓ Clear value in each bullet
+
+PERFECT EXAMPLE (6 features, all concise and valuable):
+[
+"Real-time keyword density analysis",
+"SEO optimization recommendations",
+"Content scoring and benchmarking",
+"Competitor keyword comparison",
+"Export detailed PDF reports",
+"Multi-keyword tracking dashboard"
+]
+
+REJECT THESE PATTERNS:
+✗ Too many features (9+ items)
+✗ Too few features (under 5)
+✗ Overly long feature descriptions (full sentences)
+✗ Generic features without clear value
+✗ Technical jargon that users won't understand
+
+━━━ monetization_strategy ━━━
+**STRICT REQUIREMENT: 40-80 WORDS EXACTLY (Dashboard Card Length)**
+
+Write a concise, business-focused explanation of how this tool generates revenue.
+
+CRITICAL RULES:
+✓ Exactly 40-80 words - count carefully
+✓ Professional business language
+✓ Focus on realistic monetization channels
+✓ Mention multiple revenue streams where applicable
+✓ Include: subscriptions, affiliate opportunities, premium tools, lead generation
+
+PERFECT EXAMPLE (meets all requirements):
+"Generate revenue through affiliate links to SEO tools and services, offer premium versions with additional features (like keyword tracking), and capture leads for digital marketing services through consultation offers."
+
+REJECT THESE PATTERNS:
+✗ Too long (over 80 words with excessive detail)
+✗ Too short (under 40 words, lacking substance)
+✗ Vague statements without specific monetization channels
+✗ Overly technical or implementation-focused
+
+━━━ internal_links ━━━
+**STRICT REQUIREMENT: 5-8 RELATED TOOLS**
+
+Suggest highly relevant complementary tools that users would naturally want to use next.
+
+CRITICAL RULES:
+✓ Exactly 5 to 8 related tools (count them)
+✓ Each tool name should be 2-5 words
+✓ Highly relevant to the main tool's purpose
+✓ Natural cross-sell opportunities
+✓ SEO-focused or marketing-focused tools
+
+PERFECT EXAMPLE (6 related tools):
+[
+"SEO Meta Tag Generator",
+"Readability Score Checker",
+"Backlink Analyzer",
+"Content Optimizer",
+"Keyword Research Tool",
+"Heading Tag Analyzer"
+]
+
+REJECT THESE PATTERNS:
+✗ Too many tools (9+ items)
+✗ Too few tools (under 5)
+✗ Unrelated or generic tools
+✗ Overly long tool names
+
+━━━ cta_text ━━━
+**STRICT REQUIREMENT: 1 SENTENCE ONLY - Strong Conversion-Focused CTA**
+
+Natural marketing language that creates urgency or demonstrates value.
+
+CRITICAL RULES:
+✓ Exactly 1 sentence (not a fragment, not multiple sentences)
+✓ Action-oriented and conversion-focused
+✓ Creates urgency or demonstrates clear value
+✓ Natural marketing language (not salesy or pushy)
+✓ Specific to the tool's benefit
+
+PERFECT EXAMPLES:
+"Calculate Your Keyword Density and Optimize Your SEO Content Today"
+"Start Optimizing - Get Your Free Keyword Analysis Now"
+"Improve Your Rankings - Check Your Keyword Density in Seconds"
+
+REJECT THESE PATTERNS:
+✗ Multiple sentences or overly long explanations
+✗ Weak generic CTAs like "Click here to use the tool"
+✗ Too pushy or salesy language
+✗ Questions instead of commands
+
+━━━ theme_suggestions ━━━
+• 3-5 design theme names
+• Relevant to the tool's purpose
+
+Example:
+[
+"Professional",
+"Modern SEO",
+"Clean Marketing",
+"Corporate"
+]
+
+━━━ seo_title ━━━
+• 50-60 characters
+• Include primary keyword
+• Compelling and click-worthy
+
+Example: "Free Keyword Density Calculator - SEO Optimization Tool"
+
+━━━ seo_description ━━━
+• 140-160 characters
+• High CTR marketing copy
+• Include call-to-action
+• Include primary keyword
+
+Example: "Analyze keyword density and optimize your content for SEO. Free calculator with instant results and actionable recommendations. Try it now!"
+
+═══════════════════════════════════════════════════════════
+FINAL VALIDATION CHECKLIST
+═══════════════════════════════════════════════════════════
+
+Before submitting your response, verify EVERY requirement:
+
+□ purpose is EXACTLY 60-100 words (count the words)
+□ target_keywords contains EXACTLY 5-8 keywords (count them)
+□ Each keyword is SHORT (2-4 words maximum)
+□ calculation_logic is EXACTLY 60-80 words (count the words)
+□ features contains 5-8 concise items
+□ monetization_strategy is EXACTLY 40-80 words (count the words)
+□ internal_links contains 5-8 related tools
+□ cta_text is EXACTLY 1 sentence with strong conversion focus
+□ All content is clean and readable in dashboard UI
+□ No overly long paragraphs or bloated text
+□ JSON is valid and properly formatted
+□ No fields contain serialized JSON or broken content
+□ No markdown code fences in the output
+
+CRITICAL: The AI model MUST count words carefully to meet exact requirements.
+
+═══════════════════════════════════════════════════════════
+GENERATE BLUEPRINT
+═══════════════════════════════════════════════════════════
+
+Tool Name: ${toolName}
+Niche: ${niche}
+Category: ${category || "General"}
+Goal: ${goal || "Generate traffic"}
+
+Return ONLY the complete JSON structure with premium-quality content. NO additional text, NO markdown fences:`;
+}
+
+export async function generateBlueprint(
+  toolName: string,
+  niche: string,
+  category: string | null,
+  goal: string | null,
+  anthropicKey: string | null,
+  openaiKey: string | null
+): Promise<string> {
+  const prompt = generateBlueprintPrompt(toolName, niche, category, goal);
+
+  console.log("[Blueprint] Generating for tool:", toolName);
+  console.log("[Blueprint] Has Anthropic key:", !!anthropicKey);
+  console.log("[Blueprint] Has OpenAI key:", !!openaiKey);
+
+  // Try Anthropic first if available
+  if (anthropicKey) {
+    try {
+      return await generateBlueprintWithAnthropic(prompt, anthropicKey);
+    } catch (error) {
+      console.error("[Blueprint] Anthropic failed:", error);
+      // If OpenAI key is available, try it as fallback
+      if (!openaiKey) {
+        throw error;
+      }
+      console.log("[Blueprint] Falling back to OpenAI...");
+    }
+  }
+
+  // Try OpenAI
+  if (openaiKey) {
+    return await generateBlueprintWithOpenAI(prompt, openaiKey);
+  }
+
+  throw new Error("No API key available for blueprint generation");
+}
+
+async function generateBlueprintWithAnthropic(
+  prompt: string,
+  apiKey: string
+): Promise<string> {
+  const MAX_RETRIES = 2;
+  let lastError = null;
+
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    console.log(`[Blueprint/Anthropic] Attempt ${attempt}/${MAX_RETRIES}`);
+    
+    try {
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01"
+        },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 4000,
+          temperature: 0.4,
+          messages: [{ role: "user", content: prompt }]
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[Blueprint/Anthropic] API error ${response.status}:`, errorText);
+        lastError = `API returned ${response.status}: ${errorText}`;
+        
+        // Don't retry on auth errors
+        if (response.status === 401 || response.status === 403) {
+          throw new Error("Invalid Anthropic API key");
+        }
+        continue;
+      }
+
+      const data = await response.json() as any;
+      console.log("[Blueprint/Anthropic] API response received");
+
+      // Extract text from response
+      let raw = "";
+      if (data.content && Array.isArray(data.content)) {
+        raw = data.content
+          .filter((block: any) => block.type === "text")
+          .map((block: any) => block.text)
+          .join("\n")
+          .trim();
+      } else {
+        console.error("[Blueprint/Anthropic] Unexpected response structure:", data);
+        lastError = "Unexpected API response structure";
+        continue;
+      }
+
+      if (!raw) {
+        console.error("[Blueprint/Anthropic] Empty response from AI");
+        lastError = "Empty response from AI";
+        continue;
+      }
+
+      console.log("[Blueprint/Anthropic] ===== RAW AI RESPONSE START =====");
+      console.log(raw);
+      console.log("[Blueprint/Anthropic] ===== RAW AI RESPONSE END =====");
+      console.log("[Blueprint/Anthropic] Raw response length:", raw.length);
+
+      // Clean markdown wrappers
+      let cleaned = raw
+        .replace(/```json/g, "")
+        .replace(/```/g, "")
+        .trim();
+      
+      console.log("[Blueprint/Anthropic] After markdown removal:", cleaned.substring(0, 200));
+      
+      // Find JSON boundaries (extra safety)
+      const firstBrace = cleaned.indexOf('{');
+      const lastBrace = cleaned.lastIndexOf('}');
+      if (firstBrace === -1 || lastBrace === -1) {
+        console.error("[Blueprint/Anthropic] No JSON found in response:", cleaned.substring(0, 500));
+        lastError = "No JSON object in AI response";
+        continue;
+      }
+      cleaned = cleaned.substring(firstBrace, lastBrace + 1);
+
+      console.log("[Blueprint/Anthropic] Extracted JSON:", cleaned.substring(0, 200));
+
+      // Parse JSON
+      let blueprint;
+      try {
+        blueprint = JSON.parse(cleaned);
+      } catch (e) {
+        console.error("[Blueprint/Anthropic] ===== JSON PARSE ERROR =====");
+        console.error("[Blueprint/Anthropic] Error:", e);
+        console.error("[Blueprint/Anthropic] Failed to parse this content:");
+        console.log(cleaned);
+        console.error("[Blueprint/Anthropic] ===== END ERROR =====");
+        lastError = `JSON parse error: ${e instanceof Error ? e.message : String(e)}`;
+        continue;
+      }
+
+      // Validate required fields
+      if (!blueprint.title) {
+        console.error("[Blueprint/Anthropic] Validation failed: Missing title");
+        lastError = "Missing title field";
+        continue;
+      }
+      if (!blueprint.purpose) {
+        console.error("[Blueprint/Anthropic] Validation failed: Missing purpose");
+        lastError = "Missing purpose field";
+        continue;
+      }
+
+      // SUCCESS - return as stringified JSON for storage
+      console.log("[Blueprint/Anthropic] Generated successfully with all required fields");
+      return JSON.stringify(blueprint);
+
+    } catch (err) {
+      console.error(`[Blueprint/Anthropic] Attempt ${attempt} threw:`, err);
+      lastError = err instanceof Error ? err.message : String(err);
+      
+      // Re-throw auth errors immediately
+      if (err instanceof Error && err.message.includes("Invalid Anthropic API key")) {
+        throw err;
+      }
+    }
+  }
+
+  // All retries exhausted
+  throw new Error(`Anthropic blueprint generation failed after ${MAX_RETRIES} attempts: ${lastError}`);
+}
+
+async function generateBlueprintWithOpenAI(
+  prompt: string,
+  apiKey: string
+): Promise<string> {
+  console.log("[Blueprint/OpenAI] Generating blueprint");
+  
+  try {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: "You are an expert at creating technical blueprints for interactive web tools. Output only valid JSON, no markdown or explanations."
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        temperature: 0.4,
+        max_tokens: 4000
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[Blueprint/OpenAI] API error ${response.status}:`, errorText);
+      throw new Error(`OpenAI API returned ${response.status}: ${errorText}`);
+    }
+
+    const data = await response.json() as any;
+    let raw = data.choices?.[0]?.message?.content || "";
+
+    if (!raw) {
+      throw new Error("Empty response from OpenAI");
+    }
+
+    console.log("[Blueprint/OpenAI] ===== RAW AI RESPONSE START =====");
+    console.log(raw);
+    console.log("[Blueprint/OpenAI] ===== RAW AI RESPONSE END =====");
+    console.log("[Blueprint/OpenAI] Raw response length:", raw.length);
+
+    // Clean markdown wrappers
+    let cleaned = raw
+      .replace(/```json/g, "")
+      .replace(/```/g, "")
+      .trim();
+    
+    console.log("[Blueprint/OpenAI] After markdown removal:", cleaned.substring(0, 200));
+    
+    // Find JSON boundaries
+    const firstBrace = cleaned.indexOf('{');
+    const lastBrace = cleaned.lastIndexOf('}');
+    if (firstBrace === -1 || lastBrace === -1) {
+      console.error("[Blueprint/OpenAI] No JSON found in response");
+      throw new Error("No JSON object in OpenAI response");
+    }
+    cleaned = cleaned.substring(firstBrace, lastBrace + 1);
+
+    console.log("[Blueprint/OpenAI] Extracted JSON:", cleaned.substring(0, 200));
+
+    // Parse and validate
+    let blueprint;
+    try {
+      blueprint = JSON.parse(cleaned);
+    } catch (e) {
+      console.error("[Blueprint/OpenAI] ===== JSON PARSE ERROR =====");
+      console.error("[Blueprint/OpenAI] Error:", e);
+      console.error("[Blueprint/OpenAI] Failed to parse this content:");
+      console.log(cleaned);
+      console.error("[Blueprint/OpenAI] ===== END ERROR =====");
+      throw new Error(`JSON parse error: ${e instanceof Error ? e.message : String(e)}`);
+    }
+
+    // Validate required fields
+    if (!blueprint.title) {
+      console.error("[Blueprint/OpenAI] Validation failed: Missing title");
+      throw new Error("Missing title field");
+    }
+    if (!blueprint.purpose) {
+      console.error("[Blueprint/OpenAI] Validation failed: Missing purpose");
+      throw new Error("Missing purpose field");
+    }
+
+    console.log("[Blueprint/OpenAI] Generated successfully with all required fields");
+    return JSON.stringify(blueprint);
+
+  } catch (error) {
+    console.error("[Blueprint/OpenAI] Error:", error);
+    throw error;
+  }
+}
+
+export async function generateToolHTML(
+  blueprint: any,
+  action: "standalone" | "embed",
+  anthropicKey: string | null,
+  openaiKey: string | null
+): Promise<string> {
+  console.log("[HTML] Generating tool HTML for action:", action);
+  console.log("[HTML] Has Anthropic key:", !!anthropicKey);
+  console.log("[HTML] Has OpenAI key:", !!openaiKey);
+
+  const prompt = generateHTMLPrompt(blueprint, action);
+
+  // Try Anthropic first if available
+  if (anthropicKey) {
+    try {
+      return await generateHTMLWithAnthropic(prompt, anthropicKey);
+    } catch (error) {
+      console.error("[HTML] Anthropic failed:", error);
+      // If OpenAI key is available, try it as fallback
+      if (!openaiKey) {
+        throw error;
+      }
+      console.log("[HTML] Falling back to OpenAI...");
+    }
+  }
+
+  // Try OpenAI
+  if (openaiKey) {
+    return await generateHTMLWithOpenAI(prompt, openaiKey);
+  }
+
+  throw new Error("No API key available for HTML generation");
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// LANDING PAGE GENERATION
+// ════════════════════════════════════════════════════════════════════════════
+
+export async function generateLandingPage(
+  blueprint: any,
+  anthropicKey: string | null,
+  openaiKey: string | null
+): Promise<string> {
+  console.log("[Landing Page] Generating full landing page");
+  console.log("[Landing Page] Has Anthropic key:", !!anthropicKey);
+  console.log("[Landing Page] Has OpenAI key:", !!openaiKey);
+
+  const prompt = generateLandingPagePrompt(blueprint);
+
+  // Try Anthropic first if available
+  if (anthropicKey) {
+    try {
+      return await generateLandingPageWithAnthropic(prompt, anthropicKey);
+    } catch (error) {
+      console.error("[Landing Page] Anthropic failed:", error);
+      if (!openaiKey) {
+        throw error;
+      }
+      console.log("[Landing Page] Falling back to OpenAI...");
+    }
+  }
+
+  // Try OpenAI
+  if (openaiKey) {
+    return await generateLandingPageWithOpenAI(prompt, openaiKey);
+  }
+
+  throw new Error("No API key available for landing page generation");
+}
+
+function generateLandingPagePrompt(blueprint: any): string {
+  // Build icon array for form inputs
+  const iconOptions = ['sun', 'dollar-sign', 'wifi', 'globe', 'calendar', 'users', 'map-marker-alt', 'clock', 'percent', 'calculator', 'chart-line', 'database'];
+  
+  // Build inputs HTML from blueprint
+  const inputsHTML = Array.isArray(blueprint.inputs_required) && blueprint.inputs_required.length > 0
+    ? blueprint.inputs_required.map((input: any, idx: number) => {
+        const fieldName = typeof input === 'string' ? input : (input.name || input.label || `Input ${idx + 1}`);
+        const fieldType = typeof input === 'object' && input.type === 'select' ? 'select' : 'text';
+        const icon = iconOptions[idx % iconOptions.length];
+        const placeholder = `e.g., ${fieldType === 'select' ? 'Select' : fieldName === 'Monthly budget (USD)' || fieldName.toLowerCase().includes('budget') ? '1800' : fieldName.toLowerCase().includes('internet') || fieldName.toLowerCase().includes('speed') ? '50' : 'Enter value'}`;
+        
+        if (fieldType === 'select') {
+          return `
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label style="font-weight:600; font-size:14px; letter-spacing:-0.2px; color:#2C3A58; display:flex; align-items:center; gap:8px;">
+            <i class="fas fa-${icon}" style="color:#6E57E0; width:18px;"></i> ${fieldName}
+          </label>
+          <select id="input${idx}" style="background:#F9FAFE; border:1.5px solid #E9EDF4; border-radius:24px; padding:14px 20px; font-family:'Inter',sans-serif; font-size:15px; transition:0.2s; outline:none; color:#13182A; width:100%; cursor:pointer; appearance:none; background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%228%22><path fill=%22%236E57E0%22 d=%22M0 0l6 8 6-8z%22/></svg>'); background-repeat:no-repeat; background-position:calc(100% - 16px) center;" onfocus="this.style.borderColor='#6E57E0'; this.style.boxShadow='0 0 0 3px rgba(110,87,224,0.15)'; this.style.background='white'" onblur="this.style.borderColor='#E9EDF4'; this.style.boxShadow='none'; this.style.background='#F9FAFE'">
+            <option value="">Select</option>
+            <option>Option 1</option>
+            <option>Option 2</option>
+            <option>Option 3</option>
+          </select>
+        </div>`;
+        }
+        
+        return `
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label style="font-weight:600; font-size:14px; letter-spacing:-0.2px; color:#2C3A58; display:flex; align-items:center; gap:8px;">
+            <i class="fas fa-${icon}" style="color:#6E57E0; width:18px;"></i> ${fieldName}
+          </label>
+          <input type="text" id="input${idx}" placeholder="${placeholder}" style="background:#F9FAFE; border:1.5px solid #E9EDF4; border-radius:24px; padding:14px 20px; font-family:'Inter',sans-serif; font-size:15px; transition:0.2s; outline:none; color:#13182A; width:100%;" onfocus="this.style.borderColor='#6E57E0'; this.style.boxShadow='0 0 0 3px rgba(110,87,224,0.15)'; this.style.background='white'" onblur="this.style.borderColor='#E9EDF4'; this.style.boxShadow='none'; this.style.background='#F9FAFE'" required>
+        </div>`;
+      }).join('\n')
+    : `
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label style="font-weight:600; font-size:14px; letter-spacing:-0.2px; color:#2C3A58; display:flex; align-items:center; gap:8px;">
+            <i class="fas fa-calculator" style="color:#6E57E0; width:18px;"></i> Input Value
+          </label>
+          <input type="text" id="input0" placeholder="e.g., 100" style="background:#F9FAFE; border:1.5px solid #E9EDF4; border-radius:24px; padding:14px 20px; font-family:'Inter',sans-serif; font-size:15px; transition:0.2s; outline:none; color:#13182A; width:100%;" onfocus="this.style.borderColor='#6E57E0'; this.style.boxShadow='0 0 0 3px rgba(110,87,224,0.15)'; this.style.background='white'" onblur="this.style.borderColor='#E9EDF4'; this.style.boxShadow='none'; this.style.background='#F9FAFE'" required>
+        </div>`;
+
+  // Build benefits HTML from blueprint features
+  const benefitsHTML = Array.isArray(blueprint.features) && blueprint.features.length > 0
+    ? blueprint.features.slice(0, 6).map((feature: any, idx: number) => {
+        const icons = ['bolt', 'chart-line', 'shield-alt', 'clock', 'users', 'check-circle'];
+        const text = typeof feature === 'string' ? feature : (feature.title || feature.name || `Benefit ${idx + 1}`);
+        const desc = typeof feature === 'object' && feature.description ? feature.description : 'Powerful feature to help you succeed';
+        return `
+      <div style="background:#FFFFFF; border-radius:28px; padding:24px 28px; display:flex; gap:20px; align-items:flex-start; border:1px solid #F0F2F9; transition:transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
+        <div style="width:52px; height:52px; background:linear-gradient(135deg, #F5F3FF, #FFFFFF); border-radius:20px; display:flex; align-items:center; justify-content:center; font-size:24px; color:#6E57E0; border:1px solid #E8E5FF; flex-shrink:0;">
+          <i class="fas fa-${icons[idx % icons.length]}"></i>
+        </div>
+        <div>
+          <h3 style="font-size:18px; font-weight:700; margin-bottom:8px; color:#1A1E2B;">${text}</h3>
+          <p style="font-size:15px; color:#64748B; line-height:1.6;">${desc}</p>
+        </div>
+      </div>`;
+      }).join('\n')
+    : `
+      <div style="background:#FFFFFF; border-radius:28px; padding:24px 28px; display:flex; gap:20px; align-items:flex-start; border:1px solid #F0F2F9;">
+        <div style="width:52px; height:52px; background:linear-gradient(135deg, #F5F3FF, #FFFFFF); border-radius:20px; display:flex; align-items:center; justify-content:center; font-size:24px; color:#6E57E0; border:1px solid #E8E5FF; flex-shrink:0;">
+          <i class="fas fa-check"></i>
+        </div>
+        <div>
+          <h3 style="font-size:18px; font-weight:700; margin-bottom:8px; color:#1A1E2B;">Fast & Accurate</h3>
+          <p style="font-size:15px; color:#64748B; line-height:1.6;">Get instant, reliable results every time</p>
+        </div>
+      </div>`;
+
+  return `You are an expert landing page designer. Create a CLEAN, PROFESSIONAL landing page HTML document matching the NOMADIC style EXACTLY.
+
+
+CRITICAL: Output ONLY the complete HTML document. No markdown code fences, no explanations.
+
+TOOL DETAILS:
+- Title: ${blueprint.title}
+- Description: ${blueprint.description || blueprint.purpose}
+- Purpose: ${blueprint.purpose}
+- Category: ${blueprint.category || 'Calculator'}
+- Keywords: ${Array.isArray(blueprint.target_keywords) ? blueprint.target_keywords.join(', ') : ''}
+
+Generate the complete HTML now:
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>${blueprint.seo_title || blueprint.title}</title>
+  <meta name="description" content="${blueprint.seo_description || blueprint.description}">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #ffffff;
+      color: #1A1E2B;
+      scroll-behavior: smooth;
+      overflow-x: hidden;
+    }
+    .page-container { max-width: 1280px; margin: 0 auto; padding: 0 32px; }
+    
+    /* Hero */
+    .hero-premium {
+      position: relative;
+      padding: 140px 0 100px;
+      background: radial-gradient(ellipse at 80% 30%, rgba(110, 87, 224, 0.05), transparent 60%);
+      overflow: hidden;
+    }
+    .hero-premium::before {
+      content: "";
+      position: absolute;
+      top: -20%;
+      right: -10%;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(110, 87, 224, 0.2) 0%, rgba(255,255,255,0) 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .hero-inner { position: relative; z-index: 2; max-width: 900px; margin: 0 auto; text-align: center; }
+    .badge-premium {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(110, 87, 224, 0.12);
+      backdrop-filter: blur(2px);
+      padding: 8px 20px;
+      border-radius: 100px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #4F46E5;
+      margin-bottom: 28px;
+      border: 1px solid rgba(110, 87, 224, 0.25);
+    }
+    .hero-premium h1 {
+      font-size: clamp(44px, 7vw, 78px);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      color: #1A1E2B;
+      margin-bottom: 24px;
+    }
+    .gradient-glow {
+      background: linear-gradient(135deg, #6E57E0, #A78BFA);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .hero-description {
+      font-size: 18px;
+      line-height: 1.6;
+      color: #4B5565;
+      max-width: 700px;
+      margin: 0 auto 36px;
+    }
+    .trust-group {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 32px;
+      margin-top: 32px;
+    }
+    .trust-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #4B5565;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .trust-item i { color: #6E57E0; font-size: 18px; }
+    .btn-group { display: flex; flex-wrap: wrap; gap: 18px; justify-content: center; margin: 32px 0 20px; }
+    .btn-primary-premium {
+      background: linear-gradient(105deg, #5B48E0, #8A6EFF);
+      padding: 14px 34px;
+      border-radius: 44px;
+      font-weight: 600;
+      font-size: 16px;
+      border: none;
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+      box-shadow: 0 12px 28px -8px rgba(94, 76, 225, 0.35);
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+    .btn-primary-premium:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 20px 32px -12px rgba(94, 76, 225, 0.5);
+      background: linear-gradient(105deg, #4A3AD0, #7E5CFF);
+    }
+    .btn-outline-premium {
+      background: transparent;
+      border: 1.5px solid #D9DFF0;
+      padding: 14px 34px;
+      border-radius: 44px;
+      font-weight: 600;
+      font-size: 16px;
+      color: #1A1E2B;
+      cursor: pointer;
+      transition: all 0.25s;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+    .btn-outline-premium:hover {
+      border-color: #6E57E0;
+      background: rgba(110, 87, 224, 0.04);
+    }
+    
+    /* Tool Card */
+    .tool-card-premium {
+      background: #FFFFFF;
+      border-radius: 48px;
+      box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.02);
+      padding: 48px 44px;
+      margin: 40px 0 60px;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+    .input-group { display: flex; flex-direction: column; gap: 10px; }
+    .input-group label {
+      font-weight: 600;
+      font-size: 14px;
+      letter-spacing: -0.2px;
+      color: #2C3A58;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .input-group label i { color: #6E57E0; width: 18px; }
+    select, input {
+      background: #F9FAFE;
+      border: 1.5px solid #E9EDF4;
+      border-radius: 24px;
+      padding: 14px 20px;
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      transition: 0.2s;
+      outline: none;
+      color: #13182A;
+      width: 100%;
+    }
+    select:focus, input:focus {
+      border-color: #6E57E0;
+      box-shadow: 0 0 0 3px rgba(110, 87, 224, 0.15);
+      background: white;
+    }
+    .btn-find {
+      background: #1A1E2B;
+      color: white;
+      width: 100%;
+      padding: 16px;
+      border-radius: 56px;
+      border: none;
+      font-weight: 700;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: all 0.25s;
+      margin-top: 16px;
+    }
+    .btn-find:hover {
+      background: #2D2A5E;
+      transform: scale(0.99);
+      box-shadow: 0 12px 16px -10px rgba(0,0,0,0.2);
+    }
+    .results-premium {
+      margin-top: 44px;
+      background: #F8F9FF;
+      border-radius: 32px;
+      padding: 28px 32px;
+      border-left: 5px solid #6E57E0;
+    }
+    
+    /* Steps */
+    .steps-grid-premium {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 32px;
+      margin: 48px 0;
+    }
+    .step-premium {
+      background: white;
+      border-radius: 32px;
+      padding: 32px;
+      box-shadow: 0 15px 30px -12px rgba(0,0,0,0.05);
+      transition: all 0.25s;
+      border: 1px solid rgba(0,0,0,0.03);
+    }
+    .step-premium:hover {
+      transform: translateY(-6px);
+      border-color: #DDD9FF;
+      box-shadow: 0 25px 35px -15px rgba(110, 87, 224, 0.2);
+    }
+    .step-icon {
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(145deg, #F1EFFE, #FFFFFF);
+      border-radius: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      color: #6E57E0;
+      margin-bottom: 28px;
+      border: 1px solid #EBE9FE;
+    }
+    
+    /* Benefits */
+    .benefits-grid-premium {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 28px;
+      margin: 48px 0;
+    }
+    .benefit-premium {
+      background: #FFFFFF;
+      border-radius: 28px;
+      padding: 24px 28px;
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+      border: 1px solid #F0F2F9;
+    }
+    .benefit-icon-premium {
+      width: 52px;
+      height: 52px;
+      background: linear-gradient(135deg, #F5F3FF, #FFFFFF);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      color: #6E57E0;
+      border: 1px solid #E8E5FF;
+      flex-shrink: 0;
+    }
+    
+    /* FAQ */
+    .faq-container-premium { margin: 48px auto 20px; max-width: 880px; }
+    .faq-premium {
+      background: #FFFFFF;
+      border-radius: 24px;
+      border: 1px solid #EDF0F8;
+      margin-bottom: 18px;
+    }
+    .faq-premium summary {
+      padding: 24px 32px;
+      font-weight: 700;
+      font-size: 18px;
+      cursor: pointer;
+      list-style: none;
+      color: #111827;
+    }
+    .faq-premium summary::-webkit-details-marker { display: none; }
+    .faq-premium summary::after {
+      content: "\f067";
+      font-family: "Font Awesome 6 Free";
+      font-weight: 900;
+      font-size: 18px;
+      color: #6E57E0;
+      float: right;
+    }
+    .faq-premium[open] summary::after { content: "\f068"; }
+    .faq-answer-premium {
+      padding: 4px 32px 28px 32px;
+      color: #4B5565;
+      line-height: 1.65;
+      border-top: 1px solid #F0F3FC;
+      margin-top: 6px;
+    }
+    
+    /* CTA */
+    .cta-luxe {
+      background: linear-gradient(125deg, #121826 0%, #1C2136 100%);
+      border-radius: 56px;
+      margin: 80px auto;
+      padding: 64px 48px;
+      text-align: center;
+      color: white;
+      position: relative;
+      overflow: hidden;
+    }
+    .cta-luxe h3 {
+      font-size: 38px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 18px;
+    }
+    .cta-luxe p {
+      font-size: 18px;
+      opacity: 0.9;
+      margin-bottom: 36px;
+    }
+    
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 48px 0 32px;
+      color: #6c6f78;
+      font-size: 14px;
+      border-top: 1px solid #EDF2F7;
+    }
+    
+    /* Mobile */
+    @media (max-width: 760px) {
+      .page-container { padding: 0 20px; }
+      .tool-card-premium { padding: 28px 20px; }
+      .cta-luxe { padding: 48px 24px; border-radius: 32px; }
+      .hero-premium { padding: 80px 0 60px; }
+      .form-grid { grid-template-columns: 1fr; }
+      .benefits-grid-premium { grid-template-columns: 1fr; }
+      .steps-grid-premium { grid-template-columns: 1fr; }
+      .btn-group { flex-direction: column; width: 100%; }
+      .btn-primary-premium, .btn-outline-premium { width: 100%; justify-content: center; }
+    }
+    
+    i, .fas, .far { pointer-events: none; }
+  </style>
+</head>
+<body>
+
+<!-- 1. HERO SECTION -->
+<section class="hero-premium">
+  <div class="page-container hero-inner">
+    <div class="badge-premium">
+      <i class="fas fa-bolt"></i> ${blueprint.tool_type || 'Instant Results'}
+    </div>
+    <h1>${blueprint.title.replace(/\b(\w+)\b(?!.*\b\1\b)/, '<span class="gradient-glow">$1</span>')}</h1>
+    <p class="hero-description">${blueprint.purpose}</p>
+    <div class="btn-group">
+      <a href="#matcher-tool" class="btn-primary-premium"><i class="fas fa-calculator"></i> ${blueprint.cta_text || 'Get Started Free'}</a>
+      <a href="#how-it-works" class="btn-outline-premium"><i class="fas fa-play-circle"></i> See how it works</a>
+    </div>
+    <div class="trust-group">
+      <div class="trust-item"><i class="fas fa-chart-line"></i> Real-time data</div>
+      <div class="trust-item"><i class="fas fa-shield-alt"></i> No sign-up</div>
+      <div class="trust-item"><i class="fas fa-bolt"></i> Instant results</div>
+    </div>
+  </div>
+</section>
+
+<!-- 2. TOOL SECTION -->
+<div class="page-container" id="matcher-tool">
+  <div class="tool-card-premium">
+    <div style="text-align: center; margin-bottom: 28px;">
+      <h2 style="font-size: 32px; font-weight: 700;">${blueprint.title}</h2>
+      <p style="color:#5b677b;">${blueprint.description}</p>
+    </div>
+    <form id="calculatorForm" onsubmit="event.preventDefault(); calculate();">
+      <div class="form-grid">
+        ${inputsHTML}
+      </div>
+      <button type="submit" class="btn-find">
+        <i class="fas fa-rocket"></i> ${blueprint.cta_text || 'Calculate Now'}
+      </button>
+    </form>
+    <div id="results" style="display: none;" class="results-premium">
+      <!-- Results populated by JavaScript -->
+    </div>
+  </div>
+</div>
+
+<!-- 3. HOW IT WORKS -->
+<section id="how-it-works">
+  <div class="page-container" style="margin-top: 20px;">
+    <div style="text-align: center; margin-bottom: 20px;">
+      <span style="background: #F1EFFE; padding: 8px 22px; border-radius: 100px; font-size: 14px; font-weight: 600;">3‑step flow</span>
+      <h2 style="font-size: 36px; font-weight: 700; margin-top: 24px;">How It Works</h2>
+    </div>
+    <div class="steps-grid-premium">
+      <div class="step-premium">
+        <div class="step-icon"><i class="fas fa-sliders-h"></i></div>
+        <h3>1. Enter Your Data</h3>
+        <p>Input your values into the form fields above</p>
+      </div>
+      <div class="step-premium">
+        <div class="step-icon"><i class="fas fa-chart-line"></i></div>
+        <h3>2. Get Instant Results</h3>
+        <p>Our algorithm calculates your personalized results</p>
+      </div>
+      <div class="step-premium">
+        <div class="step-icon"><i class="fas fa-rocket"></i></div>
+        <h3>3. Take Action</h3>
+        <p>Use the insights to make informed decisions</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 4. BENEFITS -->
+<section class="benefits-section">
+  <div class="page-container">
+    <div style="text-align: center; margin: 40px 0 20px;">
+      <h2 style="font-size: 36px; font-weight: 700;">Key Benefits</h2>
+      <p style="color:#4C5A73;">Everything you need in one powerful tool</p>
+    </div>
+    <div class="benefits-grid-premium">
+      <!-- Generate from blueprint.features -->
+    </div>
+  </div>
+</section>
+
+<!-- 5. FAQ -->
+<section class="faq-section">
+  <div class="page-container">
+    <div style="text-align: center; margin-bottom: 40px;">
+      <h2 style="font-size: 34px;">Frequently Asked Questions</h2>
+      <p>Common questions about this tool</p>
+    </div>
+    <div class="faq-container-premium">
+      <!-- Generate 5-7 FAQ items -->
+    </div>
+  </div>
+</section>
+
+<!-- 6. FINAL CTA -->
+<div class="page-container">
+  <div class="cta-luxe">
+    <h3>${blueprint.cta_text || 'Ready to Get Started?'}</h3>
+    <p>Join thousands using this tool every day</p>
+    <a href="#matcher-tool" class="btn-primary-premium" style="margin-top: 12px;">
+      Get Started Now <i class="fas fa-arrow-right"></i>
+    </a>
+    <p style="font-size: 12px; margin-top: 28px; opacity: 0.6;">No sign-up required • 100% free</p>
+  </div>
+</div>
+
+<!-- 7. FOOTER -->
+<footer class="page-container">
+  <p>© 2025 ${blueprint.title} — ${blueprint.description}</p>
+</footer>
+
+<!-- 8. JAVASCRIPT -->
+<script>
+  function calculate() {
+    // Implement calculation logic from blueprint.calculation_logic
+    const resultsDiv = document.getElementById('results');
+    // Perform calculations and display results
+    resultsDiv.style.display = 'block';
+    resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+  
+  // Smooth scrolling
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function(e) {
+      const href = this.getAttribute('href');
+      if(href && href !== "#" && href !== "") {
+        const target = document.querySelector(href);
+        if(target) {
+          e.preventDefault();
+          target.scrollIntoView({ behavior: 'smooth' });
+        }
+      }
+    });
+  });
+</script>
+</body>
+</html>
+
+CRITICAL IMPLEMENTATION INSTRUCTIONS:
+1. Use blueprint.inputs_required to generate form inputs with proper labels and icons
+2. Implement blueprint.calculation_logic in the calculate() function
+3. Generate 4-6 benefit cards from blueprint.features array
+4. Use blueprint.target_keywords naturally in content
+5. Create 5-7 FAQ items relevant to the tool
+6. Make sure all Font Awesome icons use proper class names (fas fa-icon-name)
+7. Output ONLY the complete HTML (no markdown fences, no explanations)
+
+Generate the complete landing page now:
+
+═══════════════════════════════════════════════════════════
+🏗️ SECTION-BY-SECTION STRUCTURE
+═══════════════════════════════════════════════════════════
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. 🚀 HERO SECTION — CLEAN & CENTERED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+<section class="hero-premium" style="position:relative; padding:140px 0 100px; background:radial-gradient(ellipse at 80% 30%, rgba(110,87,224,0.05), transparent 60%); overflow:hidden;">
+  
+  <!-- Subtle gradient orbs (minimal, not overwhelming) -->
+  <div style="position:absolute; top:-20%; right:-10%; width:600px; height:600px; background:radial-gradient(circle, rgba(110,87,224,0.2) 0%, transparent 70%); border-radius:50%; pointer-events:none;"></div>
+  <div style="position:absolute; bottom:-15%; left:-8%; width:500px; height:500px; background:radial-gradient(circle, rgba(0,209,255,0.08) 0%, transparent 70%); pointer-events:none;"></div>
+  
+  <div style="position:relative; z-index:2; max-width:900px; margin:0 auto; text-align:center; padding:0 32px;">
+    
+    <!-- Badge (optional) -->
+    <div style="display:inline-flex; align-items:center; gap:8px; background:rgba(110,87,224,0.12); backdrop-filter:blur(2px); padding:8px 20px; border-radius:100px; font-size:14px; font-weight:600; color:#4F46E5; margin-bottom:28px; letter-spacing:-0.2px; border:1px solid rgba(110,87,224,0.25);">
+      <i class="fas fa-sparkles"></i> [Badge text — e.g., "AI-Powered Tool"]
+    </div>
+    
+    <!-- Hero headline with gradient accent -->
+    <h1 style="font-size:clamp(44px,7vw,78px); font-weight:800; line-height:1.1; letter-spacing:-0.03em; color:#1A1E2B; margin-bottom:24px;">
+      [Main headline] <span style="background:linear-gradient(135deg, #6E57E0, #A78BFA); -webkit-background-clip:text; background-clip:text; color:transparent;">[gradient accent word]</span>
+    </h1>
+    
+    <!-- Description -->
+    <p style="font-size:18px; line-height:1.6; color:#4B5565; max-width:700px; margin:0 auto 36px;">
+      [Compelling description of what the tool does and the value it provides]
+    </p>
+    
+    <!-- Button group -->
+    <div style="display:flex; flex-wrap:wrap; gap:18px; justify-content:center; margin:32px 0 20px;">
+      <a href="#tool-section" style="background:linear-gradient(105deg, #5B48E0, #8A6EFF); padding:14px 34px; border-radius:44px; font-weight:600; font-size:16px; border:none; color:white; cursor:pointer; transition:all 0.3s cubic-bezier(0.2,0.9,0.4,1.1); box-shadow:0 12px 28px -8px rgba(94,76,225,0.35); display:inline-flex; align-items:center; gap:10px; text-decoration:none;" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 20px 32px -12px rgba(94,76,225,0.5)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 12px 28px -8px rgba(94,76,225,0.35)'">
+        <i class="fas fa-rocket"></i> [Primary CTA — e.g., "Try the calculator"]
+      </a>
+      <a href="#how-it-works" style="background:transparent; border:1.5px solid #D9DFF0; padding:14px 34px; border-radius:44px; font-weight:600; font-size:16px; color:#1A1E2B; cursor:pointer; transition:all 0.25s; display:inline-flex; align-items:center; gap:10px; text-decoration:none;" onmouseover="this.style.borderColor='#6E57E0'; this.style.background='rgba(110,87,224,0.04)'" onmouseout="this.style.borderColor='#D9DFF0'; this.style.background='transparent'">
+        <i class="fas fa-play-circle"></i> [Secondary CTA — e.g., "How it works"]
+      </a>
+    </div>
+    
+    <!-- Trust indicators -->
+    <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:32px; margin-top:32px;">
+      <div style="display:flex; align-items:center; gap:8px; color:#4B5565; font-size:14px; font-weight:500;">
+        <i class="fas fa-check-circle" style="color:#6E57E0; font-size:18px;"></i> [Trust point 1]
+      </div>
+      <div style="display:flex; align-items:center; gap:8px; color:#4B5565; font-size:14px; font-weight:500;">
+        <i class="fas fa-bolt" style="color:#6E57E0; font-size:18px;"></i> [Trust point 2]
+      </div>
+      <div style="display:flex; align-items:center; gap:8px; color:#4B5565; font-size:14px; font-weight:500;">
+        <i class="fas fa-shield-alt" style="color:#6E57E0; font-size:18px;"></i> [Trust point 3]
+      </div>
+    </div>
+  </div>
+</section>
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. 🧮 TOOL SECTION — CLEAN WHITE CARD (NOMADIC STYLE)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+<div style="max-width:1280px; margin:0 auto; padding:0 32px;" id="tool-section">
+  <div style="background:#FFFFFF; border-radius:48px; box-shadow:0 25px 45px -12px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.02); padding:48px 44px; margin:40px 0 60px;">
+    
+    <!-- Tool header -->
+    <div style="text-align:center; margin-bottom:40px;">
+      <h2 style="font-size:32px; font-weight:700; color:#1A1E2B; margin-bottom:8px;">${blueprint.title}</h2>
+      <p style="color:#5b677b; font-size:16px;">${blueprint.description || blueprint.purpose}</p>
+    </div>
+    
+    <!-- Form inputs -->
+    <form id="calculatorForm" onsubmit="event.preventDefault(); calculate();">
+      <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:24px; margin-bottom:32px;">
+        ${inputsHTML}
+      </div>
+      
+      <!-- Calculate button -->
+      <button type="submit" style="background:#1A1E2B; color:white; width:100%; padding:18px; border-radius:56px; border:none; font-weight:700; font-size:18px; display:flex; align-items:center; justify-content:center; gap:12px; cursor:pointer; transition:all 0.25s; margin-top:8px; font-family:'Inter',sans-serif;" onmouseover="this.style.background='#2D2A5E'; this.style.transform='scale(0.99)'" onmouseout="this.style.background='#1A1E2B'; this.style.transform='scale(1)'">
+        <i class="fas fa-rocket"></i> ${blueprint.cta_text || 'Calculate Now'}
+      </button>
+    </form>
+    
+    <!-- Results area (hidden by default) -->
+    <div id="results" style="display:none; margin-top:44px; background:#F8F9FF; border-radius:32px; padding:28px 32px; border-left:5px solid #6E57E0;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; margin-bottom:20px;">
+        <h3 style="font-weight:700; font-size:22px; color:#1A1E2B; display:flex; align-items:center; gap:10px;">
+          <i class="fas fa-check-circle" style="color:#6E57E0;"></i> Your Results
+        </h3>
+      </div>
+      <div id="resultsContent" style="font-size:16px; color:#374151; line-height:1.7;">
+        <!-- Results will be injected here by JavaScript -->
+      </div>
+    </div>
+  </div>
+</div>
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. 📊 HOW IT WORKS — STEP CARDS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+<section id="how-it-works" style="padding:80px 0 60px;">
+  <div style="max-width:1280px; margin:0 auto; padding:0 32px;">
+    
+    <div style="text-align:center; margin-bottom:48px;">
+      <span style="background:#F1EFFE; padding:8px 22px; border-radius:100px; font-size:14px; font-weight:600; color:#6E57E0;">Simple Process</span>
+      <h2 style="font-size:36px; font-weight:700; margin-top:24px; color:#1A1E2B;">How It Works</h2>
+      <p style="color:#4B5565; margin-top:12px; font-size:16px;">Get results in 3 easy steps</p>
+    </div>
+    
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:32px;">
+      
+      <!-- Step 1 -->
+      <div style="background:white; border-radius:32px; padding:32px; box-shadow:0 15px 30px -12px rgba(0,0,0,0.05); transition:all 0.25s; border:1px solid rgba(0,0,0,0.03);" onmouseover="this.style.transform='translateY(-6px)'; this.style.borderColor='#DDD9FF'; this.style.boxShadow='0 25px 35px -15px rgba(110,87,224,0.2)'" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='rgba(0,0,0,0.03)'; this.style.boxShadow='0 15px 30px -12px rgba(0,0,0,0.05)'">
+        <div style="width:60px; height:60px; background:linear-gradient(145deg, #F1EFFE, #FFFFFF); border-radius:24px; display:flex; align-items:center; justify-content:center; font-size:28px; font-weight:800; color:#6E57E0; margin-bottom:28px; border:1px solid #EBE9FE;">
+          1
+        </div>
+        <h3 style="font-size:20px; font-weight:700; margin-bottom:12px; color:#1A1E2B;">[Step 1 Title]</h3>
+        <p style="font-size:15px; color:#64748B; line-height:1.6;">[Step 1 description]</p>
+      </div>
+      
+      <!-- Step 2 -->
+      <div style="background:white; border-radius:32px; padding:32px; box-shadow:0 15px 30px -12px rgba(0,0,0,0.05); transition:all 0.25s; border:1px solid rgba(0,0,0,0.03);" onmouseover="this.style.transform='translateY(-6px)'; this.style.borderColor='#DDD9FF'; this.style.boxShadow='0 25px 35px -15px rgba(110,87,224,0.2)'" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='rgba(0,0,0,0.03)'; this.style.boxShadow='0 15px 30px -12px rgba(0,0,0,0.05)'">
+        <div style="width:60px; height:60px; background:linear-gradient(145deg, #F1EFFE, #FFFFFF); border-radius:24px; display:flex; align-items:center; justify-content:center; font-size:28px; font-weight:800; color:#6E57E0; margin-bottom:28px; border:1px solid #EBE9FE;">
+          2
+        </div>
+        <h3 style="font-size:20px; font-weight:700; margin-bottom:12px; color:#1A1E2B;">[Step 2 Title]</h3>
+        <p style="font-size:15px; color:#64748B; line-height:1.6;">[Step 2 description]</p>
+      </div>
+      
+      <!-- Step 3 -->
+      <div style="background:white; border-radius:32px; padding:32px; box-shadow:0 15px 30px -12px rgba(0,0,0,0.05); transition:all 0.25s; border:1px solid rgba(0,0,0,0.03);" onmouseover="this.style.transform='translateY(-6px)'; this.style.borderColor='#DDD9FF'; this.style.boxShadow='0 25px 35px -15px rgba(110,87,224,0.2)'" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='rgba(0,0,0,0.03)'; this.style.boxShadow='0 15px 30px -12px rgba(0,0,0,0.05)'">
+        <div style="width:60px; height:60px; background:linear-gradient(145deg, #F1EFFE, #FFFFFF); border-radius:24px; display:flex; align-items:center; justify-content:center; font-size:28px; font-weight:800; color:#6E57E0; margin-bottom:28px; border:1px solid #EBE9FE;">
+          3
+        </div>
+        <h3 style="font-size:20px; font-weight:700; margin-bottom:12px; color:#1A1E2B;">[Step 3 Title]</h3>
+        <p style="font-size:15px; color:#64748B; line-height:1.6;">[Step 3 description]</p>
+      </div>
+      
+    </div>
+  </div>
+</section>
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+4. 💎 BENEFITS — ICON CARDS GRID
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+<section style="padding:80px 0 60px;">
+  <div style="max-width:1280px; margin:0 auto; padding:0 32px;">
+    
+    <div style="text-align:center; margin-bottom:48px;">
+      <h2 style="font-size:36px; font-weight:700; color:#1A1E2B; margin-bottom:12px;">Key Benefits</h2>
+      <p style="color:#4B5565; font-size:16px;">Why users love this tool</p>
+    </div>
+    
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(340px, 1fr)); gap:28px;">
+      
+      <!-- Benefit 1 -->
+      <div style="background:#FFFFFF; border-radius:28px; padding:24px 28px; display:flex; gap:20px; align-items:flex-start; border:1px solid #F0F2F9; transition:transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
+        <div style="width:52px; height:52px; background:linear-gradient(135deg, #F5F3FF, #FFFFFF); border-radius:20px; display:flex; align-items:center; justify-content:center; font-size:24px; color:#6E57E0; border:1px solid #E8E5FF; flex-shrink:0;">
+          <i class="fas fa-bolt"></i>
+        </div>
+        <div>
+          <h3 style="font-size:18px; font-weight:700; margin-bottom:8px; color:#1A1E2B;">[Benefit 1 Title]</h3>
+          <p style="font-size:15px; color:#64748B; line-height:1.6;">[Benefit 1 description]</p>
+        </div>
+      </div>
+      
+      <!-- Repeat for 4-6 benefits with different Font Awesome icons -->
+      
+    </div>
+  </div>
+</section>
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+5. ❓ FAQ — CLEAN ACCORDION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+<section style="padding:80px 0 60px;">
+  <div style="max-width:1280px; margin:0 auto; padding:0 32px;">
+    
+    <div style="text-align:center; margin-bottom:48px;">
+      <h2 style="font-size:34px; font-weight:700; color:#1A1E2B; margin-bottom:12px;">Frequently Asked Questions</h2>
+      <p style="color:#4B5565; font-size:16px;">Everything you need to know</p>
+    </div>
+    
+    <div style="max-width:880px; margin:0 auto;">
+      
+      <!-- FAQ Item 1 -->
+      <details style="background:#FFFFFF; border-radius:24px; border:1px solid #EDF0F8; margin-bottom:18px; transition:all 0.2s;">
+        <summary style="padding:24px 32px; font-weight:700; font-size:18px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; list-style:none; color:#111827;">
+          [Question 1]
+          <i class="fas fa-plus" style="color:#6E57E0; font-size:18px; transition:transform 0.25s;"></i>
+        </summary>
+        <div style="padding:4px 32px 28px 32px; color:#4B5565; line-height:1.65; border-top:1px solid #F0F3FC; margin-top:6px; font-size:15px;">
+          [Answer 1 — detailed response to the question]
+        </div>
+      </details>
+      
+      <!-- Repeat for 5-7 FAQ items -->
+      
+    </div>
+  </div>
+</section>
+
+<style>
+  details[open] summary i.fa-plus::before {
+    content: "\f068"; /* fa-minus */
+  }
+</style>
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+6. 🎯 FINAL CTA — EMAIL CAPTURE (NOMADIC STYLE)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+<div style="max-width:1280px; margin:0 auto; padding:0 32px;">
+  <div style="background:#1E2330; border-radius:56px; margin:80px 0; padding:64px 48px; text-align:center; color:white; position:relative; overflow:hidden;">
+    
+    <h3 style="font-size:clamp(28px, 5vw, 42px); font-weight:700; letter-spacing:-0.02em; margin-bottom:18px; line-height:1.2;">${blueprint.cta_text || "Don't settle for random cities"}</h3>
+    <p style="font-size:18px; color:rgba(255,255,255,0.85); margin-bottom:36px;">Get exclusive destination reports and remote work tips directly.</p>
+    
+    <form id="emailCaptureForm" onsubmit="event.preventDefault(); handleEmailSubmit();" style="display:flex; gap:16px; justify-content:center; flex-wrap:wrap; align-items:center; max-width:560px; margin:0 auto;">
+      <input 
+        type="email" 
+        placeholder="Work email address" 
+        required
+        style="background:rgba(255,255,255,0.08); border:1.5px solid rgba(255,255,255,0.2); padding:16px 28px; border-radius:56px; flex:1; min-width:260px; color:white; font-family:'Inter',sans-serif; font-size:15px; outline:none; transition:0.2s;"
+        onfocus="this.style.borderColor='rgba(255,255,255,0.4)'; this.style.background='rgba(255,255,255,0.12)'"
+        onblur="this.style.borderColor='rgba(255,255,255,0.2)'; this.style.background='rgba(255,255,255,0.08)'"
+      >
+      <button type="submit" style="background:white; border:none; padding:16px 34px; border-radius:56px; font-weight:700; color:#1E2330; cursor:pointer; transition:0.2s; font-family:'Inter',sans-serif; font-size:16px; white-space:nowrap;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(255,255,255,0.2)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+        Notify me →
+      </button>
+    </form>
+    
+    <p style="font-size:13px; margin-top:24px; color:rgba(255,255,255,0.5);">No spam, only premium insights.</p>
+  </div>
+</div>
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+7. 📄 FOOTER — SIMPLE & CLEAN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+<footer style="text-align:center; padding:48px 32px 32px; color:#6c6f78; font-size:14px; border-top:1px solid #EDF2F7; max-width:1280px; margin:0 auto;">
+  <p>© 2025 [Tool Name] — Professional calculations made simple</p>
+</footer>
+
+COMPLETE EXAMPLE TEMPLATE:
+Copy this structure exactly, filling in blueprint-specific content.
+
+Generate a complete, working HTML document now with all sections filled in.`;
+}
+
+<!-- Floating gradient orbs (background depth) -->
+  <div style="position:absolute; top:0%; right:15%; width:600px; height:600px; background:radial-gradient(circle, rgba(124,58,237,0.25), transparent); filter:blur(80px); pointer-events:none;"></div>
+  <div style="position:absolute; bottom:20%; left:10%; width:500px; height:500px; background:radial-gradient(circle, rgba(236,72,153,0.2), transparent); filter:blur(70px); pointer-events:none;"></div>
+  <div style="position:absolute; top:40%; left:40%; width:400px; height:400px; background:radial-gradient(circle, rgba(99,102,241,0.15), transparent); filter:blur(60px); pointer-events:none;"></div>
+  
+  <!-- Content grid (LEFT content + RIGHT visual) -->
+  <div style="max-width:1280px; margin:0 auto; width:100%; display:grid; grid-template-columns:1fr 1fr; gap:80px; align-items:center; position:relative; z-index:1;">
+    
+    <!-- LEFT SIDE: Hero content -->
+    <div>
+      <!-- Small badge/label (optional) -->
+      <div style="display:inline-flex; align-items:center; gap:8px; background:rgba(255,255,255,0.08); backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,0.12); padding:8px 16px; border-radius:100px; font-size:14px; color:rgba(255,255,255,0.9); margin-bottom:24px;">
+        <span style="width:8px; height:8px; background:linear-gradient(135deg, #7C3AED, #EC4899); border-radius:50%; box-shadow:0 0 12px rgba(124,58,237,0.6);"></span>
+        AI-Powered • Instant Results
+      </div>
+      
+      <!-- Giant gradient headline -->
+      <h1 style="font-size:clamp(72px,9vw,110px); font-weight:900; line-height:0.95; letter-spacing:-0.06em; margin-bottom:28px; background:linear-gradient(135deg, #FFFFFF, #E0E7FF, #C4B5FD); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">
+        [Powerful Headline]
+      </h1>
+      
+      <!-- Supporting description -->
+      <p style="font-size:20px; line-height:1.7; color:rgba(255,255,255,0.7); margin-bottom:48px; max-width:540px;">
+        [Compelling description highlighting value proposition]
+      </p>
+      
+      <!-- CTA button group -->
+      <div style="display:flex; gap:16px; margin-bottom:48px; flex-wrap:wrap;">
+        <button onclick="document.getElementById('tool-section').scrollIntoView({behavior:'smooth'})" style="background:linear-gradient(135deg, #7C3AED, #9333EA); color:white; padding:18px 40px; border:none; border-radius:16px; font-size:18px; font-weight:700; cursor:pointer; box-shadow:0 20px 60px rgba(124,58,237,0.4), 0 8px 24px rgba(124,58,237,0.25); transition:all 0.3s cubic-bezier(0.4,0,0.2,1);" onmouseover="this.style.transform='translateY(-3px) scale(1.02)'; this.style.boxShadow='0 30px 80px rgba(124,58,237,0.5), 0 12px 32px rgba(124,58,237,0.35)';" onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 20px 60px rgba(124,58,237,0.4), 0 8px 24px rgba(124,58,237,0.25)';">
+          Get Started Free →
+        </button>
+        <button style="background:rgba(255,255,255,0.08); backdrop-filter:blur(12px); border:2px solid rgba(255,255,255,0.15); color:white; padding:16px 38px; border-radius:16px; font-size:18px; font-weight:600; cursor:pointer; transition:all 0.3s ease;" onmouseover="this.style.background='rgba(255,255,255,0.12)'; this.style.borderColor='rgba(255,255,255,0.25)'; this.style.transform='translateY(-2px)';" onmouseout="this.style.background='rgba(255,255,255,0.08)'; this.style.borderColor='rgba(255,255,255,0.15)'; this.style.transform='translateY(0)';">
+          See How It Works
+        </button>
+      </div>
+      
+      <!-- Trust indicators -->
+      <div style="display:flex; align-items:center; gap:32px; flex-wrap:wrap;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div style="color:#F97316; font-size:16px;">★★★★★</div>
+          <span style="font-size:14px; color:rgba(255,255,255,0.6);">5.0 from 10,000+ users</span>
+        </div>
+        <div style="font-size:14px; color:rgba(255,255,255,0.6);">
+          ⚡ Instant results • 🔒 100% secure
+        </div>
+      </div>
+    </div>
+    
+    <!-- RIGHT SIDE: Floating glassmorphism preview card -->
+    <div style="position:relative;">
+      <!-- Glow effect behind card -->
+      <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:120%; height:120%; background:radial-gradient(circle, rgba(124,58,237,0.3), transparent); filter:blur(60px); pointer-events:none;"></div>
+      
+      <!-- Main floating preview card -->
+      <div style="position:relative; background:rgba(255,255,255,0.08); backdrop-filter:blur(24px) saturate(180%); border:1px solid rgba(255,255,255,0.12); border-radius:32px; padding:48px; box-shadow:0 30px 90px rgba(0,0,0,0.2), 0 10px 40px rgba(124,58,237,0.25), inset 0 1px 0 rgba(255,255,255,0.1);">
+        <!-- Mini calculator preview (simplified 2-3 inputs) -->
+        <div style="margin-bottom:20px;">
+          <div style="font-size:14px; font-weight:600; color:rgba(255,255,255,0.9); margin-bottom:8px;">Input 1</div>
+          <input type="text" placeholder="Enter value..." style="width:100%; padding:12px 16px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; color:white; font-size:15px; outline:none;">
+        </div>
+        <div style="margin-bottom:24px;">
+          <div style="font-size:14px; font-weight:600; color:rgba(255,255,255,0.9); margin-bottom:8px;">Input 2</div>
+          <input type="text" placeholder="Enter value..." style="width:100%; padding:12px 16px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; color:white; font-size:15px; outline:none;">
+        </div>
+        <button style="width:100%; background:linear-gradient(135deg, #F97316, #FB923C); color:white; padding:14px; border:none; border-radius:12px; font-size:16px; font-weight:600; cursor:pointer; box-shadow:0 10px 30px rgba(249,115,22,0.3);">
+          Calculate →
+        </button>
+        
+        <!-- Decorative stats/metrics floating cards (optional) -->
+        <div style="position:absolute; top:-20px; right:-20px; background:rgba(255,255,255,0.1); backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,0.15); padding:16px 20px; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,0.15);">
+          <div style="font-size:24px; font-weight:800; color:white; margin-bottom:4px;">98%</div>
+          <div style="font-size:12px; color:rgba(255,255,255,0.7);">Accuracy</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+MOBILE (@media max-width: 768px):
+- Stack content vertically
+- Hero headline: clamp(48px, 12vw, 72px)
+- Preview card: margin-top: 64px
+- Maintain floating orb effects (reduce size)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. 🧮 TOOL SECTION — PREMIUM FINTECH-GRADE CALCULATOR UI
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+DESIGN MANDATE: The calculator MUST feel like a $50k SaaS application widget.
+Think: Stripe Dashboard + Linear + Modern Fintech App + Premium AI Tool
+
+VISUAL TARGETS:
+✨ Glassmorphic floating panel with depth
+✨ Premium fintech-style input fields
+✨ Gradient buttons with glow and lift animations
+✨ Rewarding animated results panel
+✨ Luxury spacing and typography
+✨ Interactive micro-animations
+✨ App-quality polish (NOT basic HTML forms)
+
+<section id="tool-section" style="padding:140px 20px; background:linear-gradient(to bottom, #0a0a0a, #1a1a1a); position:relative; overflow:hidden;">
+  
+  <!-- Premium background system -->
+  <div style="position:absolute; inset:0; background:repeating-linear-gradient(0deg, rgba(255,255,255,0.015) 0px, transparent 1px), repeating-linear-gradient(90deg, rgba(255,255,255,0.015) 0px, transparent 1px); background-size:50px 50px; opacity:0.6; pointer-events:none;"></div>
+  
+  <!-- Multiple floating gradient orbs for depth -->
+  <div style="position:absolute; top:10%; left:50%; transform:translateX(-50%); width:600px; height:600px; background:radial-gradient(circle, rgba(124,58,237,0.2), transparent); filter:blur(100px); pointer-events:none; animation:pulse 8s ease-in-out infinite;"></div>
+  <div style="position:absolute; bottom:15%; right:10%; width:450px; height:450px; background:radial-gradient(circle, rgba(236,72,153,0.15), transparent); filter:blur(90px); pointer-events:none; animation:pulse 10s ease-in-out infinite;"></div>
+  
+  <style>
+    @keyframes pulse {
+      0%, 100% { opacity: 0.3; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(1.1); }
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes glow {
+      0%, 100% { box-shadow: 0 0 20px rgba(124,58,237,0.3), 0 0 40px rgba(124,58,237,0.15); }
+      50% { box-shadow: 0 0 30px rgba(124,58,237,0.5), 0 0 60px rgba(124,58,237,0.25); }
+    }
+  </style>
+  
+  <div style="max-width:900px; margin:0 auto; position:relative; z-index:1;">
+    
+    <!-- Section header with premium typography -->
+    <div style="text-align:center; margin-bottom:80px;">
+      <div style="display:inline-flex; align-items:center; gap:10px; background:rgba(255,255,255,0.06); backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,0.1); padding:10px 24px; border-radius:100px; font-size:14px; color:rgba(255,255,255,0.85); margin-bottom:28px; box-shadow:0 4px 16px rgba(0,0,0,0.2);">
+        <span style="width:8px; height:8px; background:linear-gradient(135deg, #10B981, #34D399); border-radius:50%; box-shadow:0 0 12px rgba(16,185,129,0.7);"></span>
+        Powered by Advanced AI
+      </div>
+      
+      <h2 style="font-size:clamp(48px,6vw,72px); font-weight:800; line-height:1; letter-spacing:-0.04em; margin-bottom:24px; background:linear-gradient(135deg, #FFFFFF, #E0E7FF, #C4B5FD); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">
+        Calculate Your [Result]
+      </h2>
+      <p style="font-size:20px; color:rgba(255,255,255,0.65); line-height:1.7; max-width:600px; margin:0 auto;">
+        Get instant, accurate results powered by advanced calculations
+      </p>
+    </div>
+    
+    <!-- PREMIUM LUXURY CALCULATOR CARD (Stripe/Linear quality) -->
+    <div style="position:relative;">
+      
+      <!-- Outer glow effect -->
+      <div style="position:absolute; inset:-2px; background:linear-gradient(135deg, rgba(124,58,237,0.3), rgba(236,72,153,0.2), rgba(99,102,241,0.25)); border-radius:34px; filter:blur(20px); opacity:0.6; pointer-events:none;"></div>
+      
+      <!-- Main calculator card with glassmorphism -->
+      <div style="position:relative; background:rgba(15,15,15,0.6); backdrop-filter:blur(40px) saturate(180%); border:1px solid rgba(255,255,255,0.12); border-radius:32px; padding:64px; box-shadow:0 40px 120px rgba(0,0,0,0.5), 0 20px 60px rgba(124,58,237,0.15), inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -1px 0 rgba(0,0,0,0.5); overflow:hidden;">
+        
+        <!-- Subtle gradient overlay -->
+        <div style="position:absolute; top:0; left:0; right:0; height:200px; background:linear-gradient(to bottom, rgba(124,58,237,0.05), transparent); pointer-events:none;"></div>
+        
+        <!-- Form inputs (render ALL blueprint inputs) -->
+        <form onsubmit="event.preventDefault(); calculate();" style="position:relative; z-index:1;">
+          
+          <!-- PREMIUM INPUT FIELD EXAMPLE (repeat for each blueprint input) -->
+          <div style="margin-bottom:32px;">
+            <label style="display:flex; align-items:center; gap:8px; font-size:15px; font-weight:700; color:rgba(255,255,255,0.95); margin-bottom:12px; letter-spacing:0.3px; text-transform:uppercase; font-size:13px;">
+              <span style="width:6px; height:6px; background:linear-gradient(135deg, #7C3AED, #EC4899); border-radius:50%;"></span>
+              [Input Label]
+            </label>
+            <div style="position:relative;">
+              <input 
+                type="number" 
+                id="input1" 
+                placeholder="Enter value..."
+                style="width:100%; padding:18px 24px; background:rgba(255,255,255,0.04); border:2px solid rgba(255,255,255,0.08); border-radius:16px; color:white; font-size:17px; font-weight:500; font-family:inherit; outline:none; transition:all 0.35s cubic-bezier(0.4,0,0.2,1); box-shadow:inset 0 2px 8px rgba(0,0,0,0.2);"
+                onfocus="this.style.borderColor='rgba(124,58,237,0.6)'; this.style.background='rgba(255,255,255,0.08)'; this.style.boxShadow='0 0 0 4px rgba(124,58,237,0.15), inset 0 2px 8px rgba(0,0,0,0.2), 0 8px 24px rgba(124,58,237,0.2)'; this.style.transform='translateY(-2px)';"
+                onblur="this.style.borderColor='rgba(255,255,255,0.08)'; this.style.background='rgba(255,255,255,0.04)'; this.style.boxShadow='inset 0 2px 8px rgba(0,0,0,0.2)'; this.style.transform='translateY(0)';"
+              >
+              <!-- Premium input decoration (floating icon or unit label - optional) -->
+              <div style="position:absolute; right:20px; top:50%; transform:translateY(-50%); font-size:14px; color:rgba(255,255,255,0.4); font-weight:600; pointer-events:none;">
+                <!-- Optional: unit like "$", "%", "kg", etc. -->
+              </div>
+            </div>
+          </div>
+          
+          <!-- Repeat premium input for ALL blueprint inputs with same styling -->
+          
+          <!-- Divider with gradient (optional visual break) -->
+          <div style="height:1px; background:linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent); margin:40px 0;"></div>
+          
+          <!-- PREMIUM FINTECH CTA BUTTON (Stripe-quality) -->
+          <button type="submit" style="position:relative; width:100%; background:linear-gradient(135deg, #F97316 0%, #FB923C 50%, #FBBF24 100%); color:white; padding:22px 32px; border:none; border-radius:16px; font-size:19px; font-weight:800; cursor:pointer; margin-top:8px; box-shadow:0 20px 60px rgba(249,115,22,0.45), 0 10px 30px rgba(249,115,22,0.3), inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -1px 0 rgba(0,0,0,0.2); transition:all 0.35s cubic-bezier(0.4,0,0.2,1); font-family:inherit; letter-spacing:0.5px; text-transform:uppercase; font-size:16px; overflow:hidden;" onmouseover="this.style.transform='translateY(-3px) scale(1.01)'; this.style.boxShadow='0 30px 80px rgba(249,115,22,0.55), 0 15px 40px rgba(249,115,22,0.4), inset 0 1px 0 rgba(255,255,255,0.3)'; this.querySelector('.btn-shine').style.left='100%';" onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 20px 60px rgba(249,115,22,0.45), 0 10px 30px rgba(249,115,22,0.3), inset 0 1px 0 rgba(255,255,255,0.3)'; this.querySelector('.btn-shine').style.left='-100%';">
+            <!-- Animated shine effect -->
+            <span class="btn-shine" style="position:absolute; top:0; left:-100%; width:50%; height:100%; background:linear-gradient(to right, transparent, rgba(255,255,255,0.3), transparent); transform:skewX(-20deg); transition:left 0.6s ease;"></span>
+            <span style="position:relative; z-index:1; display:flex; align-items:center; justify-content:center; gap:10px;">
+              Calculate Now
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M13 17l5-5-5-5M6 17l5-5-5-5"/></svg>
+            </span>
+          </button>
+          
+          <!-- Trust indicator below button -->
+          <p style="text-align:center; font-size:13px; color:rgba(255,255,255,0.5); margin-top:16px; display:flex; align-items:center; justify-content:center; gap:16px;">
+            <span>⚡ Instant Results</span>
+            <span>•</span>
+            <span>🔒 100% Secure</span>
+            <span>•</span>
+            <span>✓ Free Forever</span>
+          </p>
+        </form>
+        
+        <!-- PREMIUM ANIMATED RESULTS PANEL (Hidden initially, shows after calculation) -->
+        <div id="results" style="display:none; margin-top:56px; padding:48px; background:linear-gradient(135deg, rgba(16,185,129,0.1), rgba(59,130,246,0.08)); border:2px solid rgba(16,185,129,0.3); border-radius:24px; backdrop-filter:blur(16px); box-shadow:0 20px 60px rgba(16,185,129,0.15), inset 0 1px 0 rgba(255,255,255,0.1); position:relative; overflow:hidden; animation:slideUp 0.5s ease-out;">
+          
+          <!-- Success glow effect -->
+          <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:150%; height:150%; background:radial-gradient(circle, rgba(16,185,129,0.15), transparent); filter:blur(40px); pointer-events:none;"></div>
+          
+          <!-- Results content injected by JavaScript -->
+          <div style="position:relative; z-index:1;">
+            <!-- Will be populated by calculate() function -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. 💎 BENEFITS SECTION — ASYMMETRIC VISUAL STORYTELLING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+LAYOUT: Mix large featured card + smaller benefit cards (NOT uniform grid)
+
+<section style="padding:140px 20px; background:linear-gradient(to bottom, #FFFFFF, #F8FAFC); position:relative;">
+  
+  <div style="max-width:1280px; margin:0 auto;">
+    
+    <!-- Section header -->
+    <h2 style="text-align:center; font-size:clamp(48px,6vw,72px); font-weight:800; line-height:1; letter-spacing:-0.04em; margin-bottom:80px; color:#0F0F0F;">
+      Why Use [Tool Name]?
+    </h2>
+    
+    <!-- Asymmetric benefit grid -->
+    <div style="display:grid; grid-template-columns:2fr 1fr 1fr; gap:32px;">
+      
+      <!-- FEATURED BENEFIT (large, spans 2 rows) -->
+      <div style="grid-row:span 2; background:linear-gradient(135deg, #7C3AED 0%, #9333EA 50%, #6366F1 100%); color:white; padding:56px; border-radius:32px; box-shadow:0 30px 80px rgba(124,58,237,0.25); position:relative; overflow:hidden;">
+        <!-- Decorative glow -->
+        <div style="position:absolute; bottom:-20%; right:-10%; width:300px; height:300px; background:radial-gradient(circle, rgba(255,255,255,0.15), transparent); filter:blur(60px);"></div>
+        
+        <div style="position:relative; z-index:1;">
+          <div style="font-size:64px; margin-bottom:28px;">🎯</div>
+          <h3 style="font-size:36px; font-weight:700; line-height:1.2; margin-bottom:20px;">
+            [Primary Benefit Title]
+          </h3>
+          <p style="font-size:18px; line-height:1.7; opacity:0.95;">
+            [Detailed description of the main benefit - 2-3 sentences highlighting the core value]
+          </p>
+        </div>
+      </div>
+      
+      <!-- SMALLER BENEFIT CARDS (4-5 cards) -->
+      <div style="background:white; border:2px solid #F1F5F9; padding:40px; border-radius:28px; transition:all 0.3s ease; box-shadow:0 10px 40px rgba(0,0,0,0.04);" onmouseover="this.style.transform='translateY(-8px)'; this.style.boxShadow='0 20px 60px rgba(0,0,0,0.08)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 10px 40px rgba(0,0,0,0.04)';">
+        <div style="width:56px; height:56px; background:linear-gradient(135deg, #F97316, #FB923C); border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:28px; margin-bottom:20px; box-shadow:0 10px 30px rgba(249,115,22,0.25);">
+          ⚡
+        </div>
+        <h3 style="font-size:22px; font-weight:700; margin-bottom:12px; color:#0F0F0F;">
+          [Benefit 2]
+        </h3>
+        <p style="font-size:16px; color:#64748B; line-height:1.6;">
+          [Description]
+        </p>
+      </div>
+      
+      <!-- Repeat 4-6 smaller benefit cards with different icons and gradient colors -->
+      
+    </div>
+  </div>
+</section>
+
+ICONS: Use emojis or create simple gradient icon backgrounds with symbols
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+4. 📊 HOW IT WORKS — FLOATING TIMELINE CARDS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+VISUAL: Connected flow with premium numbered badges (NOT plain stacked cards)
+
+<section style="padding:140px 20px; background:linear-gradient(135deg, #0F0F0F, #1A1A1A); position:relative; overflow:hidden;">
+  
+  <!-- Background orb -->
+  <div style="position:absolute; top:50%; left:20%; width:400px; height:400px; background:radial-gradient(circle, rgba(99,102,241,0.2), transparent); filter:blur(70px); pointer-events:none;"></div>
+  
+  <div style="max-width:1100px; margin:0 auto; position:relative; z-index:1;">
+    
+    <h2 style="text-align:center; font-size:clamp(48px,6vw,72px); font-weight:800; line-height:1; letter-spacing:-0.04em; margin-bottom:100px; background:linear-gradient(135deg, #FFFFFF, #C4B5FD); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">
+      How It Works
+    </h2>
+    
+    <!-- Steps (3 steps) -->
+    <div style="display:grid; gap:64px;">
+      
+      <!-- STEP 1 -->
+      <div style="display:grid; grid-template-columns:120px 1fr; gap:40px; align-items:start;">
+        <!-- Gradient number badge -->
+        <div style="position:relative;">
+          <div style="width:120px; height:120px; background:linear-gradient(135deg, #7C3AED, #9333EA); border-radius:28px; display:flex; align-items:center; justify-content:center; font-size:48px; font-weight:800; color:white; box-shadow:0 20px 60px rgba(124,58,237,0.35), 0 8px 24px rgba(124,58,237,0.2);">
+            1
+          </div>
+          <!-- Connecting line (except for last step) -->
+          <div style="position:absolute; top:120px; left:50%; transform:translateX(-50%); width:3px; height:64px; background:linear-gradient(to bottom, rgba(124,58,237,0.5), transparent);"></div>
+        </div>
+        
+        <!-- Step content -->
+        <div style="padding-top:20px;">
+          <h3 style="font-size:32px; font-weight:700; color:white; margin-bottom:16px; line-height:1.2;">
+            [Step 1 Title]
+          </h3>
+          <p style="font-size:18px; color:rgba(255,255,255,0.6); line-height:1.8;">
+            [Detailed description of step 1]
+          </p>
+        </div>
+      </div>
+      
+      <!-- STEP 2 (similar structure, different gradient color) -->
+      <div style="display:grid; grid-template-columns:120px 1fr; gap:40px; align-items:start;">
+        <div style="position:relative;">
+          <div style="width:120px; height:120px; background:linear-gradient(135deg, #6366F1, #3B82F6); border-radius:28px; display:flex; align-items:center; justify-content:center; font-size:48px; font-weight:800; color:white; box-shadow:0 20px 60px rgba(99,102,241,0.35);">
+            2
+          </div>
+          <div style="position:absolute; top:120px; left:50%; transform:translateX(-50%); width:3px; height:64px; background:linear-gradient(to bottom, rgba(99,102,241,0.5), transparent);"></div>
+        </div>
+        <div style="padding-top:20px;">
+          <h3 style="font-size:32px; font-weight:700; color:white; margin-bottom:16px;">
+            [Step 2 Title]
+          </h3>
+          <p style="font-size:18px; color:rgba(255,255,255,0.6); line-height:1.8;">
+            [Description]
+          </p>
+        </div>
+      </div>
+      
+      <!-- STEP 3 (no connecting line) -->
+      <div style="display:grid; grid-template-columns:120px 1fr; gap:40px; align-items:start;">
+        <div>
+          <div style="width:120px; height:120px; background:linear-gradient(135deg, #F97316, #FB923C); border-radius:28px; display:flex; align-items:center; justify-content:center; font-size:48px; font-weight:800; color:white; box-shadow:0 20px 60px rgba(249,115,22,0.35);">
+            3
+          </div>
+        </div>
+        <div style="padding-top:20px;">
+          <h3 style="font-size:32px; font-weight:700; color:white; margin-bottom:16px;">
+            [Step 3 Title]
+          </h3>
+          <p style="font-size:18px; color:rgba(255,255,255,0.6); line-height:1.8;">
+            [Description]
+          </p>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+</section>
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+5. 🎯 RESULTS/VALUE SECTION — DARK WITH GRADIENT METRICS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+<section style="padding:140px 20px; background:#0A0A0A; position:relative; overflow:hidden;">
+  
+  <!-- Gradient orbs -->
+  <div style="position:absolute; top:0; right:10%; width:500px; height:500px; background:radial-gradient(circle, rgba(236,72,153,0.2), transparent); filter:blur(80px);"></div>
+  <div style="position:absolute; bottom:0; left:15%; width:450px; height:450px; background:radial-gradient(circle, rgba(124,58,237,0.15), transparent); filter:blur(70px);"></div>
+  
+  <div style="max-width:1100px; margin:0 auto; text-align:center; position:relative; z-index:1;">
+    
+    <h2 style="font-size:clamp(48px,6vw,72px); font-weight:800; line-height:1; letter-spacing:-0.04em; margin-bottom:28px; background:linear-gradient(135deg, #FFFFFF, #C4B5FD); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">
+      What You'll Get
+    </h2>
+    <p style="font-size:20px; color:rgba(255,255,255,0.6); line-height:1.7; margin-bottom:80px; max-width:700px; margin-left:auto; margin-right:auto;">
+      Powerful insights and results that drive real outcomes
+    </p>
+    
+    <!-- Metrics grid (3 columns) -->
+    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:48px;">
+      
+      <div style="padding:48px 32px; background:rgba(255,255,255,0.04); backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,0.08); border-radius:24px;">
+        <div style="font-size:64px; font-weight:900; line-height:1; margin-bottom:16px; background:linear-gradient(135deg, #7C3AED, #EC4899); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">
+          [Metric 1]
+        </div>
+        <p style="font-size:18px; color:rgba(255,255,255,0.7); line-height:1.6;">
+          [Metric description]
+        </p>
+      </div>
+      
+      <div style="padding:48px 32px; background:rgba(255,255,255,0.04); backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,0.08); border-radius:24px;">
+        <div style="font-size:64px; font-weight:900; line-height:1; margin-bottom:16px; background:linear-gradient(135deg, #6366F1, #3B82F6); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">
+          [Metric 2]
+        </div>
+        <p style="font-size:18px; color:rgba(255,255,255,0.7);">
+          [Description]
+        </p>
+      </div>
+      
+      <div style="padding:48px 32px; background:rgba(255,255,255,0.04); backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,0.08); border-radius:24px;">
+        <div style="font-size:64px; font-weight:900; line-height:1; margin-bottom:16px; background:linear-gradient(135deg, #F97316, #FB923C); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">
+          [Metric 3]
+        </div>
+        <p style="font-size:18px; color:rgba(255,255,255,0.7);">
+          [Description]
+        </p>
+      </div>
+      
+    </div>
+  </div>
+</section>
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+6. 💬 TESTIMONIALS — PREMIUM GLASSMORPHISM CARDS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+<section style="padding:140px 20px; background:linear-gradient(to bottom, #F8FAFC, #FFFFFF);">
+  
+  <div style="max-width:1280px; margin:0 auto;">
+    
+    <h2 style="text-align:center; font-size:clamp(48px,6vw,72px); font-weight:800; line-height:1; margin-bottom:80px; color:#0F0F0F;">
+      What People Are Saying
+    </h2>
+    
+    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:32px;">
+      
+      <!-- TESTIMONIAL 1 -->
+      <div style="background:white; border:2px solid #F1F5F9; padding:40px; border-radius:28px; box-shadow:0 10px 40px rgba(0,0,0,0.04); transition:all 0.3s ease;" onmouseover="this.style.transform='translateY(-8px)'; this.style.boxShadow='0 20px 60px rgba(0,0,0,0.08)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 10px 40px rgba(0,0,0,0.04)';">
+        <div style="color:#F97316; font-size:20px; margin-bottom:20px; letter-spacing:2px;">★★★★★</div>
+        <p style="font-size:17px; color:#475569; line-height:1.7; margin-bottom:28px; font-style:italic;">
+          "[Compelling testimonial quote highlighting specific value or outcome]"
+        </p>
+        <div style="display:flex; align-items:center; gap:16px;">
+          <div style="width:48px; height:48px; background:linear-gradient(135deg, #7C3AED, #9333EA); border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-size:20px; font-weight:700;">
+            [Initial]
+          </div>
+          <div>
+            <div style="font-weight:700; font-size:16px; color:#0F0F0F; margin-bottom:4px;">[Name]</div>
+            <div style="font-size:14px; color:#94A3B8;">[Role] at [Company]</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- TESTIMONIAL 2 & 3 (similar structure) -->
+      
+    </div>
+  </div>
+</section>
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+7. ❓ FAQ — INTERACTIVE ACCORDION WITH GLOW
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+<section style="padding:140px 20px; background:#FFFFFF;">
+  
+  <div style="max-width:900px; margin:0 auto;">
+    
+    <h2 style="text-align:center; font-size:clamp(48px,6vw,72px); font-weight:800; line-height:1; margin-bottom:80px; color:#0F0F0F;">
+      Frequently Asked Questions
+    </h2>
+    
+    <div style="display:grid; gap:20px;">
+      
+      <!-- FAQ ITEM 1 -->
+      <div style="background:white; border:2px solid #F1F5F9; border-radius:24px; overflow:hidden; transition:all 0.3s ease;" onmouseover="this.style.borderColor='rgba(124,58,237,0.2)'; this.style.boxShadow='0 10px 40px rgba(124,58,237,0.08)';" onmouseout="this.style.borderColor='#F1F5F9'; this.style.boxShadow='none';">
+        <div style="padding:28px 32px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; gap:24px;" onclick="var answer = this.nextElementSibling; var icon = this.querySelector('span'); if(answer.style.maxHeight){ answer.style.maxHeight = null; answer.style.padding = '0 32px'; icon.textContent = '+'; icon.style.transform = 'rotate(0deg)'; } else { answer.style.maxHeight = answer.scrollHeight + 'px'; answer.style.padding = '0 32px 28px 32px'; icon.textContent = '−'; icon.style.transform = 'rotate(90deg)'; }">
+          <h3 style="font-size:20px; font-weight:700; color:#0F0F0F; line-height:1.4;">[Question]</h3>
+          <span style="font-size:32px; color:#7C3AED; font-weight:300; transition:transform 0.3s ease; flex-shrink:0;">+</span>
+        </div>
+        <div style="max-height:0; overflow:hidden; transition:all 0.3s ease; padding:0 32px;">
+          <p style="font-size:17px; color:#64748B; line-height:1.8; padding-bottom:0;">
+            [Detailed answer to FAQ]
+          </p>
+        </div>
+      </div>
+      
+      <!-- FAQ ITEMS 2-7 (5-7 total) -->
+      
+    </div>
+  </div>
+</section>
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+8. 🎯 FINAL CTA — CINEMATIC CONVERSION BLOCK
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+<section style="position:relative; overflow:hidden; padding:180px 20px; background:linear-gradient(135deg, #1a0b2e, #0a0a0a); text-align:center;">
+  
+  <!-- Massive floating gradient orbs -->
+  <div style="position:absolute; top:-30%; left:10%; width:800px; height:800px; background:radial-gradient(circle, rgba(124,58,237,0.3), transparent); filter:blur(100px); pointer-events:none;"></div>
+  <div style="position:absolute; bottom:-30%; right:10%; width:700px; height:700px; background:radial-gradient(circle, rgba(236,72,153,0.25), transparent); filter:blur(90px); pointer-events:none;"></div>
+  <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:600px; height:600px; background:radial-gradient(circle, rgba(99,102,241,0.2), transparent); filter:blur(80px); pointer-events:none;"></div>
+  
+  <div style="max-width:900px; margin:0 auto; position:relative; z-index:1;">
+    
+    <!-- Small badge -->
+    <div style="display:inline-flex; align-items:center; gap:8px; background:rgba(255,255,255,0.1); backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,0.15); padding:10px 20px; border-radius:100px; font-size:14px; color:rgba(255,255,255,0.9); margin-bottom:32px;">
+      <span style="width:8px; height:8px; background:#F97316; border-radius:50%; box-shadow:0 0 16px rgba(249,115,22,0.8);"></span>
+      Get Started in 30 Seconds
+    </div>
+    
+    <!-- Giant headline -->
+    <h2 style="font-size:clamp(56px,8vw,96px); font-weight:900; line-height:0.95; letter-spacing:-0.05em; margin-bottom:32px; background:linear-gradient(135deg, #FFFFFF, #C4B5FD, #FBBF24); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">
+      Ready to Get Started?
+    </h2>
+    
+    <p style="font-size:22px; color:rgba(255,255,255,0.7); line-height:1.7; margin-bottom:56px; max-width:700px; margin-left:auto; margin-right:auto;">
+      Join thousands of users getting instant, accurate results
+    </p>
+    
+    <!-- Massive CTA button -->
+    <button onclick="document.getElementById('tool-section').scrollIntoView({behavior:'smooth'})" style="background:linear-gradient(135deg, #F97316, #FB923C); color:white; padding:24px 64px; border:none; border-radius:20px; font-size:22px; font-weight:800; cursor:pointer; box-shadow:0 30px 80px rgba(249,115,22,0.45), 0 12px 32px rgba(249,115,22,0.3); transition:all 0.4s cubic-bezier(0.4,0,0.2,1); letter-spacing:0.5px;" onmouseover="this.style.transform='translateY(-5px) scale(1.03)'; this.style.boxShadow='0 40px 100px rgba(249,115,22,0.55), 0 16px 40px rgba(249,115,22,0.4)';" onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 30px 80px rgba(249,115,22,0.45), 0 12px 32px rgba(249,115,22,0.3)';">
+      Start Now — It's Free →
+    </button>
+    
+    <p style="font-size:15px; color:rgba(255,255,255,0.5); margin-top:28px;">
+      ✓ No credit card required  •  ✓ Instant access  •  ✓ Free forever
+    </p>
+  </div>
+</section>
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+9. 🎨 FOOTER — PREMIUM SAAS MULTI-COLUMN LAYOUT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CRITICAL: The footer MUST feel like a premium SaaS company footer (Stripe, Vercel, Linear quality).
+This is NOT optional - every landing page MUST include this professional footer.
+
+<footer style="background:linear-gradient(to bottom, #0A0A0A, #000000); padding:80px 20px 40px; position:relative; overflow:hidden;">
+  
+  <!-- Subtle gradient orb -->
+  <div style="position:absolute; top:0; left:50%; transform:translateX(-50%); width:600px; height:300px; background:radial-gradient(circle, rgba(124,58,237,0.08), transparent); filter:blur(80px); pointer-events:none;"></div>
+  
+  <div style="max-width:1280px; margin:0 auto; position:relative; z-index:1;">
+    
+    <!-- Main footer grid (4 columns on desktop) -->
+    <div style="display:grid; grid-template-columns:1.5fr 1fr 1fr 1fr; gap:64px; margin-bottom:64px;">
+      
+      <!-- COLUMN 1: Brand + Description -->
+      <div>
+        <!-- Logo/Brand name -->
+        <div style="font-size:24px; font-weight:800; color:white; margin-bottom:16px; background:linear-gradient(135deg, #FFFFFF, #C4B5FD); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">
+          [Tool Name]
+        </div>
+        
+        <!-- Description -->
+        <p style="font-size:15px; color:rgba(255,255,255,0.6); line-height:1.7; margin-bottom:28px; max-width:280px;">
+          Professional-grade calculations powered by advanced algorithms. Trusted by thousands worldwide.
+        </p>
+        
+        <!-- Trust badge -->
+        <div style="display:inline-flex; align-items:center; gap:8px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); padding:8px 16px; border-radius:100px; font-size:13px; color:rgba(255,255,255,0.7);">
+          <span style="color:#10B981;">✓</span>
+          100% Secure & Private
+        </div>
+      </div>
+      
+      <!-- COLUMN 2: Product -->
+      <div>
+        <h4 style="font-size:14px; font-weight:700; color:white; margin-bottom:20px; text-transform:uppercase; letter-spacing:0.5px;">
+          Product
+        </h4>
+        <ul style="list-style:none; padding:0; margin:0;">
+          <li style="margin-bottom:14px;">
+            <a href="#tool-section" style="font-size:15px; color:rgba(255,255,255,0.6); text-decoration:none; transition:color 0.3s ease;" onmouseover="this.style.color='rgba(255,255,255,0.95)'" onmouseout="this.style.color='rgba(255,255,255,0.6)'">
+              Calculator
+            </a>
+          </li>
+          <li style="margin-bottom:14px;">
+            <a href="#" style="font-size:15px; color:rgba(255,255,255,0.6); text-decoration:none; transition:color 0.3s ease;" onmouseover="this.style.color='rgba(255,255,255,0.95)'" onmouseout="this.style.color='rgba(255,255,255,0.6)'">
+              Features
+            </a>
+          </li>
+          <li style="margin-bottom:14px;">
+            <a href="#" style="font-size:15px; color:rgba(255,255,255,0.6); text-decoration:none; transition:color 0.3s ease;" onmouseover="this.style.color='rgba(255,255,255,0.95)'" onmouseout="this.style.color='rgba(255,255,255,0.6)'">
+              How It Works
+            </a>
+          </li>
+          <li style="margin-bottom:14px;">
+            <a href="#" style="font-size:15px; color:rgba(255,255,255,0.6); text-decoration:none; transition:color 0.3s ease;" onmouseover="this.style.color='rgba(255,255,255,0.95)'" onmouseout="this.style.color='rgba(255,255,255,0.6)'">
+              Pricing
+            </a>
+          </li>
+        </ul>
+      </div>
+      
+      <!-- COLUMN 3: Resources -->
+      <div>
+        <h4 style="font-size:14px; font-weight:700; color:white; margin-bottom:20px; text-transform:uppercase; letter-spacing:0.5px;">
+          Resources
+        </h4>
+        <ul style="list-style:none; padding:0; margin:0;">
+          <li style="margin-bottom:14px;">
+            <a href="#" style="font-size:15px; color:rgba(255,255,255,0.6); text-decoration:none; transition:color 0.3s ease;" onmouseover="this.style.color='rgba(255,255,255,0.95)'" onmouseout="this.style.color='rgba(255,255,255,0.6)'">
+              Documentation
+            </a>
+          </li>
+          <li style="margin-bottom:14px;">
+            <a href="#" style="font-size:15px; color:rgba(255,255,255,0.6); text-decoration:none; transition:color 0.3s ease;" onmouseover="this.style.color='rgba(255,255,255,0.95)'" onmouseout="this.style.color='rgba(255,255,255,0.6)'">
+              Help Center
+            </a>
+          </li>
+          <li style="margin-bottom:14px;">
+            <a href="#" style="font-size:15px; color:rgba(255,255,255,0.6); text-decoration:none; transition:color 0.3s ease;" onmouseover="this.style.color='rgba(255,255,255,0.95)'" onmouseout="this.style.color='rgba(255,255,255,0.6)'">
+              Blog
+            </a>
+          </li>
+          <li style="margin-bottom:14px;">
+            <a href="#" style="font-size:15px; color:rgba(255,255,255,0.6); text-decoration:none; transition:color 0.3s ease;" onmouseover="this.style.color='rgba(255,255,255,0.95)'" onmouseout="this.style.color='rgba(255,255,255,0.6)'">
+              API
+            </a>
+          </li>
+        </ul>
+      </div>
+      
+      <!-- COLUMN 4: Company -->
+      <div>
+        <h4 style="font-size:14px; font-weight:700; color:white; margin-bottom:20px; text-transform:uppercase; letter-spacing:0.5px;">
+          Company
+        </h4>
+        <ul style="list-style:none; padding:0; margin:0;">
+          <li style="margin-bottom:14px;">
+            <a href="#" style="font-size:15px; color:rgba(255,255,255,0.6); text-decoration:none; transition:color 0.3s ease;" onmouseover="this.style.color='rgba(255,255,255,0.95)'" onmouseout="this.style.color='rgba(255,255,255,0.6)'">
+              About
+            </a>
+          </li>
+          <li style="margin-bottom:14px;">
+            <a href="#" style="font-size:15px; color:rgba(255,255,255,0.6); text-decoration:none; transition:color 0.3s ease;" onmouseover="this.style.color='rgba(255,255,255,0.95)'" onmouseout="this.style.color='rgba(255,255,255,0.6)'">
+              Contact
+            </a>
+          </li>
+          <li style="margin-bottom:14px;">
+            <a href="#" style="font-size:15px; color:rgba(255,255,255,0.6); text-decoration:none; transition:color 0.3s ease;" onmouseover="this.style.color='rgba(255,255,255,0.95)'" onmouseout="this.style.color='rgba(255,255,255,0.6)'">
+              Privacy
+            </a>
+          </li>
+          <li style="margin-bottom:14px;">
+            <a href="#" style="font-size:15px; color:rgba(255,255,255,0.6); text-decoration:none; transition:color 0.3s ease;" onmouseover="this.style.color='rgba(255,255,255,0.95)'" onmouseout="this.style.color='rgba(255,255,255,0.6)'">
+              Terms
+            </a>
+          </li>
+        </ul>
+      </div>
+      
+    </div>
+    
+    <!-- Divider -->
+    <div style="height:1px; background:linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent); margin-bottom:32px;"></div>
+    
+    <!-- Bottom bar (Copyright + Social) -->
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:24px;">
+      
+      <!-- Copyright -->
+      <p style="font-size:14px; color:rgba(255,255,255,0.5); margin:0;">
+        © 2024 [Tool Name]. All rights reserved.
+      </p>
+      
+      <!-- Social icons -->
+      <div style="display:flex; gap:20px;">
+        <a href="#" style="width:36px; height:36px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:8px; display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,0.6); text-decoration:none; transition:all 0.3s ease;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.borderColor='rgba(255,255,255,0.2)'; this.style.color='white';" onmouseout="this.style.background='rgba(255,255,255,0.06)'; this.style.borderColor='rgba(255,255,255,0.1)'; this.style.color='rgba(255,255,255,0.6)';">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+        </a>
+        <a href="#" style="width:36px; height:36px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:8px; display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,0.6); text-decoration:none; transition:all 0.3s ease;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.borderColor='rgba(255,255,255,0.2)'; this.style.color='white';" onmouseout="this.style.background='rgba(255,255,255,0.06)'; this.style.borderColor='rgba(255,255,255,0.1)'; this.style.color='rgba(255,255,255,0.6)';">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/></svg>
+        </a>
+        <a href="#" style="width:36px; height:36px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:8px; display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,0.6); text-decoration:none; transition:all 0.3s ease;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.borderColor='rgba(255,255,255,0.2)'; this.style.color='white';" onmouseout="this.style.background='rgba(255,255,255,0.06)'; this.style.borderColor='rgba(255,255,255,0.1)'; this.style.color='rgba(255,255,255,0.6)';">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+        </a>
+      </div>
+      
+    </div>
+    
+  </div>
+  
+  <!-- Mobile responsive override -->
+  <style>
+    @media (max-width: 768px) {
+      footer > div > div:first-child {
+        grid-template-columns: 1fr !important;
+        gap: 48px !important;
+      }
+    }
+  </style>
+  
+</footer>
+
+═══════════════════════════════════════════════════════════
+⚡ CALCULATOR FUNCTIONALITY (CRITICAL)
+═══════════════════════════════════════════════════════════
+
+The embedded tool MUST:
+✅ Include ALL inputs from blueprint.inputs_required
+✅ Implement blueprint.calculation_logic accurately
+✅ Show results dynamically without page reload
+✅ Use event listeners (button onclick or form onsubmit with preventDefault)
+✅ Handle validation and edge cases
+✅ Display formatted results with <strong> around key numbers
+✅ Smooth scroll to results: document.getElementById('results').scrollIntoView({behavior:'smooth'})
+
+Example:
+function calculate() {
+  const input1 = parseFloat(document.getElementById('input1').value) || 0;
+  const input2 = parseFloat(document.getElementById('input2').value) || 0;
+  const result = input1 * input2;
+  
+  const resultsDiv = document.getElementById('results');
+  resultsDiv.innerHTML = \`
+    <div style="text-align:center;">
+      <!-- Success icon with animation -->
+      <div style="width:80px; height:80px; background:linear-gradient(135deg, #10B981, #34D399); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 28px; box-shadow:0 20px 60px rgba(16,185,129,0.4), 0 0 0 8px rgba(16,185,129,0.1); animation:scaleIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      </div>
+      
+      <!-- Result headline -->
+      <h3 style="font-size:20px; font-weight:600; color:rgba(255,255,255,0.7); margin-bottom:12px; text-transform:uppercase; letter-spacing:1px; font-size:14px;">
+        Your Result
+      </h3>
+      
+      <!-- Giant result number with gradient -->
+      <div style="font-size:64px; font-weight:900; line-height:1; margin-bottom:24px; background:linear-gradient(135deg, #FFFFFF, #10B981, #34D399); -webkit-background-clip:text; -webkit-text-fill-color:transparent; letter-spacing:-0.02em;">
+        \${Math.round(result).toLocaleString()}
+      </div>
+      
+      <!-- Result explanation -->
+      <p style="font-size:17px; color:rgba(255,255,255,0.7); line-height:1.8; max-width:500px; margin:0 auto 32px;">
+        [Contextual explanation of what this result means and why it matters]
+      </p>
+      
+      <!-- Additional insights (optional metrics cards) -->
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:16px; margin-top:32px;">
+        <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); padding:20px; border-radius:16px; backdrop-filter:blur(8px);">
+          <div style="font-size:13px; color:rgba(255,255,255,0.5); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;">Insight 1</div>
+          <div style="font-size:24px; font-weight:700; color:white;">[Value]</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); padding:20px; border-radius:16px; backdrop-filter:blur(8px);">
+          <div style="font-size:13px; color:rgba(255,255,255,0.5); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;">Insight 2</div>
+          <div style="font-size:24px; font-weight:700; color:white;">[Value]</div>
+        </div>
+      </div>
+      
+      <!-- Action buttons (optional) -->
+      <div style="margin-top:32px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+        <button onclick="window.print()" style="background:rgba(255,255,255,0.08); border:2px solid rgba(255,255,255,0.15); color:white; padding:14px 28px; border-radius:12px; font-size:15px; font-weight:600; cursor:pointer; transition:all 0.3s ease; backdrop-filter:blur(8px);" onmouseover="this.style.background='rgba(255,255,255,0.12)'; this.style.transform='translateY(-2px)';" onmouseout="this.style.background='rgba(255,255,255,0.08)'; this.style.transform='translateY(0)';">
+          Save Results
+        </button>
+        <button onclick="document.querySelector('form').reset(); resultsDiv.style.display='none';" style="background:transparent; border:2px solid rgba(255,255,255,0.2); color:rgba(255,255,255,0.7); padding:14px 28px; border-radius:12px; font-size:15px; font-weight:600; cursor:pointer; transition:all 0.3s ease;" onmouseover="this.style.borderColor='rgba(255,255,255,0.3)'; this.style.color='white';" onmouseout="this.style.borderColor='rgba(255,255,255,0.2)'; this.style.color='rgba(255,255,255,0.7)';">
+          Calculate Again
+        </button>
+      </div>
+    </div>
+    
+    <style>
+      @keyframes scaleIn {
+        from { transform: scale(0); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+      }
+    </style>
+  \`;
+  resultsDiv.style.display = 'block';
+  resultsDiv.scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+═══════════════════════════════════════════════════════════
+📋 BLUEPRINT DATA
+═══════════════════════════════════════════════════════════
+
+${JSON.stringify(blueprint, null, 2)}
+
+═══════════════════════════════════════════════════════════
+✅ FINAL QUALITY CHECKLIST
+═══════════════════════════════════════════════════════════
+
+DOCUMENT STRUCTURE:
+□ Complete <!DOCTYPE html> document
+□ Proper <head> with meta tags, title, viewport
+□ Google Fonts: Inter loaded
+□ Body: margin:0; padding:0; font-family: Inter, sans-serif
+
+ALL 9 PREMIUM SECTIONS:
+□ 1. Hero Section — Cinematic split layout with floating preview
+□ 2. Tool Section — Premium glassmorphism calculator UI
+□ 3. Benefits Section — Asymmetric visual storytelling layout
+□ 4. How It Works — Floating timeline with gradient badges
+□ 5. Results/Value — Dark section with gradient metrics
+□ 6. Testimonials — Premium glassmorphism cards
+□ 7. FAQ — Interactive luxury accordion
+□ 8. Final CTA — Cinematic conversion block
+□ 9. Footer — Professional multi-column SaaS footer
+
+DESIGN QUALITY:
+□ Alternating dark/light sections (NOT all white)
+□ Layered gradient backgrounds with floating blur orbs
+□ Glassmorphism effects with backdrop-filter
+□ Premium typography scale (clamp(), tight letter-spacing)
+□ Deep layered shadows on all cards/elements
+□ Large border radius (24px-40px)
+□ Generous spacing (140px section padding)
+□ Visual depth and layering throughout
+
+INTERACTIVITY:
+□ Hover states with elevation and glow effects
+□ Smooth transitions (0.3s-0.4s cubic-bezier)
+□ Interactive FAQ accordion
+□ Button hover animations (lift + scale)
+□ Focus states on inputs with glow rings
+□ Smooth scroll behavior on CTAs
+
+CALCULATOR FUNCTIONALITY:
+□ All blueprint inputs rendered
+□ Calculation logic implemented correctly
+□ Results display with animation
+□ Form validation and error handling
+□ No page reload on submit
+□ Results scroll into view smoothly
+□ Premium results panel design
+
+FOOTER REQUIREMENTS:
+□ 4-column layout (Brand + Product + Resources + Company)
+□ Brand description and trust badge
+□ Navigation links in each column
+□ Bottom bar with copyright and social icons
+□ Gradient divider line
+□ Dark premium background
+□ Hover states on all links
+□ Mobile responsive (stacks on mobile)
+
+RESPONSIVE DESIGN:
+□ Mobile: stack hero columns vertically
+□ Mobile: reduce hero headline size
+□ Mobile: single column for benefits/testimonials
+□ Mobile: stack footer columns
+□ Tablet: maintain premium spacing
+□ All sections readable on small screens
+
+TECHNICAL:
+□ No markdown fences in output
+□ Proper HTML structure
+□ All inline styles (no external CSS files)
+□ Functional JavaScript for calculator
+□ SEO meta tags (title, description, OG tags)
+□ Viewport meta tag for mobile
+
+BRAND QUALITY:
+□ Feels like $50k custom build
+□ Matches Linear/Stripe/Framer aesthetic
+□ Cinematic and immersive experience
+□ Premium startup-grade polish
+□ Investor-demo quality
+□ NOT template-like or generic
+
+Generate the complete PREMIUM landing page HTML now:`;
+}
+
+async function generateLandingPageWithAnthropic(prompt: string, apiKey: string): Promise<string> {
+  console.log("[Landing Page/Anthropic] Generating");
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01"
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 16000,
+        temperature: 0.4,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[Landing Page/Anthropic] API error ${response.status}:`, errorText);
+      throw new Error(`Anthropic API returned ${response.status}`);
+    }
+
+    const data = await response.json() as any;
+
+    let html = "";
+    if (data.content && Array.isArray(data.content)) {
+      html = data.content
+        .filter((block: any) => block.type === "text")
+        .map((block: any) => block.text)
+        .join("\n")
+        .trim();
+    } else {
+      throw new Error("Unexpected API response structure");
+    }
+    
+    // Strip markdown fences
+    html = html.replace(/^```(?:html)?\s*\n?/, '').replace(/\n?```\s*$/, '');
+
+    console.log("[Landing Page/Anthropic] Generated successfully, length:", html.length);
+    return html;
+  } catch (error) {
+    console.error("[Landing Page/Anthropic] Generation error:", error);
+    throw error;
+  }
+}
+
+async function generateLandingPageWithOpenAI(prompt: string, apiKey: string): Promise<string> {
+  console.log("[Landing Page/OpenAI] Generating");
+
+  try {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: "You are an expert landing page designer. Output only raw HTML code with no markdown formatting or explanations. Create complete, production-ready landing pages."
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        temperature: 0.4,
+        max_tokens: 16000
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[Landing Page/OpenAI] API error ${response.status}:`, errorText);
+      throw new Error(`OpenAI API returned ${response.status}`);
+    }
+
+    const data = await response.json() as any;
+    let html = data.choices?.[0]?.message?.content || "";
+
+    if (!html) {
+      throw new Error("Empty response from OpenAI");
+    }
+
+    // Strip markdown fences
+    html = html.replace(/^```(?:html)?\s*\n?/i, '').replace(/\n?```\s*$/, '').trim();
+
+    console.log("[Landing Page/OpenAI] Generated successfully, length:", html.length);
+    return html;
+  } catch (error) {
+    console.error("[Landing Page/OpenAI] Generation error:", error);
+    throw error;
+  }
+}
+
+function generateHTMLPrompt(
+  blueprint: any,
+  action: "standalone" | "embed"
+): string {
+  return `You are an expert web developer generating a production-ready, premium-quality lead-generation tool for Magnet Lab. Output ONLY raw HTML — no markdown, no code fences, no explanations, no preamble.
+
+═══════════════════════════════════════════════════════════
+MODE: ${action.toUpperCase()}
+═══════════════════════════════════════════════════════════
+
+${action === "standalone" ? `
+STANDALONE MODE RULES:
+- Output a complete <!DOCTYPE html> document with <html>, <head>, <body>
+- Must work as a single .html file uploaded via FTP to any web host
+- Body background: linear-gradient(to right, #f0f0f0, #e0e0e0), min-height:100vh, padding:40px 20px, flex centered
+- Outer wrapper: width:100%, max-width:700px, margin:0 auto
+- Card: background:white, padding:48px, border-radius:16px, box-shadow:0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)
+- Use type="button" with onclick="functionName()" — NEVER form submit (prevents page reload)
+- Include in <head>:
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <title>[Tool Name]</title>
+  <style>body { font-family: 'Inter', sans-serif; }</style>
+` : `
+EMBED MODE RULES:
+- DO NOT include <!DOCTYPE>, <html>, <head>, <body> tags
+- Output starts with the Tailwind/Inter <link>/<script> tags, then a single <div> wrapper
+- Wrapper div: id="taf-[tool-slug]", style="width:100%; padding:40px 20px; box-sizing:border-box; font-family:'Inter',sans-serif;"
+- Inner card: style="background:#FFFFFF; max-width:600px; margin:0 auto; border-radius:16px; box-shadow:0 10px 40px rgba(0,0,0,0.08); padding:40px; box-sizing:border-box;"
+- ALL styling must be inline via style="" attributes — NO <style> blocks
+- Prefix all input IDs with "taf-" to avoid conflicts (e.g., id="taf-age" not id="age")
+- Wrap script in document.addEventListener('DOMContentLoaded', function() { ... })
+- Use form submit with event.preventDefault() OR button onclick — both work
+- Include at the very top (before the wrapper div):
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+`}
+
+═══════════════════════════════════════════════════════════
+DESIGN SYSTEM (NON-NEGOTIABLE — applies to BOTH modes)
+═══════════════════════════════════════════════════════════
+
+TYPOGRAPHY:
+- Font family: Inter, sans-serif
+- Heading (h1/h2): font-size:28px, font-weight:700, color:#111827, text-align:center, margin-bottom:8px
+- Subheading/description: font-size:15px, color:#6B7280, text-align:center, margin-bottom:32px, line-height:1.6
+- Labels: font-size:13px, font-weight:600, color:#374151, display:block, margin-bottom:6px
+
+FORM ELEMENTS:
+- Inputs/selects: width:100%, padding:12px 16px, border:2px solid #E5E7EB, border-radius:10px, font-size:15px, outline:none, box-sizing:border-box, margin-bottom:20px, font-family:inherit
+- Focus state (add via :focus or onfocus inline): border-color:#1A1A1A
+- Placeholders must be helpful hints, not just "Enter value"
+
+BUTTON:
+- background-color:#1A1A1A, color:white, width:100%, padding:14px, border:none, border-radius:12px, font-size:16px, font-weight:600, cursor:pointer, margin-top:8px, font-family:inherit
+- Button text should be action-oriented (e.g., "Calculate My [Result]", "Get My [Outcome]", "Show My Results")
+
+RESULTS BOX:
+- Hidden by default: style="display:none;"
+- When shown: background:#F9731618, border:2px solid #F9731640, border-radius:12px, padding:24px, margin-top:28px
+- Result heading: font-size:22px, font-weight:700, color:#111827, margin-bottom:12px
+- Result text: font-size:15px, color:#374151, line-height:1.7
+- Use <strong> tags around key numbers in results
+- Round all numbers with Math.round()
+
+FOOTER:
+- Do NOT include any footer with brand name, copyright, or external links
+- Tool should end with the results section
+
+═══════════════════════════════════════════════════════════
+FUNCTIONALITY REQUIREMENTS
+═══════════════════════════════════════════════════════════
+
+1. INPUT VALIDATION:
+   - Every form input listed in the blueprint MUST be rendered
+   - Mark required fields with the required attribute
+   - Use type="number" with min/max where applicable
+   - Use <select> for finite choices, <input type="radio"> only when blueprint specifies
+
+2. CALCULATION INTEGRITY (CRITICAL):
+   - Every variable used in calculations MUST have a corresponding form input
+   - If the blueprint formula needs "height", the form MUST have a height input
+   - Before writing the script, list every variable in the formulas, then verify each one is collected from the form
+   - Handle edge cases: division by zero, negative values, empty inputs (use parseFloat() || 0 as fallback only when safe)
+
+3. RESULT DISPLAY:
+   - Use innerHTML to inject formatted results with <strong> around key numbers
+   - Show a clear primary result first, then supporting details
+   - Toggle results div from display:none to display:block
+   - Scroll results into view: document.getElementById('results').scrollIntoView({behavior:'smooth'})
+
+4. NO BROKEN CODE:
+   - No undefined variables
+   - No syntax errors
+   - No console.log statements
+   - No TODO comments
+
+═══════════════════════════════════════════════════════════
+BLUEPRINT TO IMPLEMENT
+═══════════════════════════════════════════════════════════
+
+${JSON.stringify(blueprint, null, 2)}
+
+═══════════════════════════════════════════════════════════
+PRE-FLIGHT CHECKLIST (verify mentally before outputting)
+═══════════════════════════════════════════════════════════
+
+□ Every formula variable has a matching form input with correct id
+□ All IDs match between HTML elements and JavaScript getElementById calls
+□ ${action === "embed" ? "All IDs prefixed with 'taf-'" : "Standard IDs used"}
+□ ${action === "standalone" ? "Complete <!DOCTYPE html> document" : "NO doctype/html/head/body tags"}
+□ Tailwind CDN and Inter font included
+□ Submit ${action === "standalone" ? "uses type='button' with onclick (no page reload)" : "uses preventDefault() if form submit"}
+□ Results div has display:none initially
+□ Math.round() used on all numeric outputs
+□ Footer with © year and brand included
+□ No markdown fences in output
+
+Generate the complete HTML now:`;
+}
+
+async function generateHTMLWithAnthropic(prompt: string, apiKey: string): Promise<string> {
+  console.log("[HTML/Anthropic] Generating");
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01"
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 8000,
+        temperature: 0.3,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[HTML/Anthropic] API error ${response.status}:`, errorText);
+      throw new Error(`Anthropic API returned ${response.status}`);
+    }
+
+    const data = await response.json() as any;
+
+    // Extract text from response
+    let html = "";
+    if (data.content && Array.isArray(data.content)) {
+      html = data.content
+        .filter((block: any) => block.type === "text")
+        .map((block: any) => block.text)
+        .join("\n")
+        .trim();
+    } else {
+      throw new Error("Unexpected API response structure");
+    }
+    
+    // Strip any accidental markdown fences (safety net)
+    html = html.replace(/^```(?:html)?\s*\n?/, '').replace(/\n?```\s*$/, '');
+
+    console.log("[HTML/Anthropic] Generated successfully, length:", html.length);
+    return html;
+  } catch (error) {
+    console.error("[HTML/Anthropic] Generation error:", error);
+    throw error;
+  }
+}
+
+async function generateHTMLWithOpenAI(prompt: string, apiKey: string): Promise<string> {
+  console.log("[HTML/OpenAI] Generating");
+
+  try {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: "You are an expert web developer. Output only raw HTML code with no markdown formatting or explanations."
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        temperature: 0.3,
+        max_tokens: 8000
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[HTML/OpenAI] API error ${response.status}:`, errorText);
+      throw new Error(`OpenAI API returned ${response.status}`);
+    }
+
+    const data = await response.json() as any;
+    let html = data.choices?.[0]?.message?.content || "";
+
+    if (!html) {
+      throw new Error("Empty response from OpenAI");
+    }
+
+    // Strip markdown fences
+    html = html.replace(/^```(?:html)?\s*\n?/i, '').replace(/\n?```\s*$/, '').trim();
+
+    console.log("[HTML/OpenAI] Generated successfully, length:", html.length);
+    return html;
+  } catch (error) {
+    console.error("[HTML/OpenAI] Generation error:", error);
+    throw error;
+  }
+}
+
+export async function regenerateBlueprintFromBlueprint(
+  currentBlueprint: string,
+  niche: string,
+  goal: string,
+  anthropicKey: string | null,
+  openaiKey: string | null
+): Promise<string> {
+  console.log("[Blueprint Regenerate] Starting");
+  console.log("[Blueprint Regenerate] Has Anthropic key:", !!anthropicKey);
+  console.log("[Blueprint Regenerate] Has OpenAI key:", !!openaiKey);
+
+  const prompt = generateRegenerateBlueprintPrompt(currentBlueprint, niche, goal);
+
+  // Try Anthropic first if available
+  if (anthropicKey) {
+    try {
+      return await regenerateBlueprintWithAnthropic(prompt, anthropicKey);
+    } catch (error) {
+      console.error("[Blueprint Regenerate] Anthropic failed:", error);
+      // If OpenAI key is available, try it as fallback
+      if (!openaiKey) {
+        throw error;
+      }
+      console.log("[Blueprint Regenerate] Falling back to OpenAI...");
+    }
+  }
+
+  // Try OpenAI
+  if (openaiKey) {
+    return await regenerateBlueprintWithOpenAI(prompt, openaiKey);
+  }
+
+  throw new Error("No API key available for blueprint regeneration");
+}
+
+function generateRegenerateBlueprintPrompt(
+  currentBlueprint: string,
+  niche: string,
+  goal: string
+): string {
+  return `You are regenerating clean, professional blueprint content for a premium SaaS dashboard application.
+
+═══════════════════════════════════════════════════════════
+CURRENT BLUEPRINT (for reference)
+═══════════════════════════════════════════════════════════
+
+${currentBlueprint}
+
+═══════════════════════════════════════════════════════════
+CONTEXT
+═══════════════════════════════════════════════════════════
+
+- Niche: ${niche}
+- Goal: ${goal}
+
+YOUR TASK: Generate a SIGNIFICANTLY IMPROVED version with better content quality while maintaining clean, dashboard-optimized formatting.
+
+═══════════════════════════════════════════════════════════
+CRITICAL UI/UX REQUIREMENTS
+═══════════════════════════════════════════════════════════
+
+This blueprint must be:
+✓ CLEAN and visually readable inside dashboard cards
+✓ CONCISE but valuable (not bloated)
+✓ PROFESSIONAL marketing language
+✓ SEO-FOCUSED with strategic keywords
+✓ FORMATTED for modern SaaS UI sections
+
+DO NOT generate:
+✗ Overly long paragraphs
+✗ Technical dumps or raw JSON
+✗ Broken formatting or serialized objects
+✗ Weak one-line filler content
+✗ Excessive or repetitive text
+
+═══════════════════════════════════════════════════════════
+JSON STRUCTURE RULES
+═══════════════════════════════════════════════════════════
+
+* Return ONLY pure valid JSON
+* Do NOT return markdown or code fences
+* Do NOT use \`\`\`json
+* Do NOT stringify JSON
+* Do NOT escape the entire object
+* Do NOT return nested JSON as strings
+* Every field must contain ONLY its own content
+* Never merge multiple sections together
+* The response must work directly with JSON.parse()
+
+═══════════════════════════════════════════════════════════
+RETURN THIS EXACT STRUCTURE
+═══════════════════════════════════════════════════════════
+
+{
+"title": "",
+"category": "",
+"tool_type": "",
+"description": "",
+"purpose": "",
+"target_keywords": [],
+"inputs_required": [],
+"output_type": "",
+"calculation_logic": "",
+"features": [],
+"monetization_strategy": "",
+"internal_links": [],
+"cta_text": "",
+"theme_suggestions": [],
+"seo_title": "",
+"seo_description": ""
+}
+
+═══════════════════════════════════════════════════════════
+FIELD REQUIREMENTS (DASHBOARD-OPTIMIZED)
+═══════════════════════════════════════════════════════════
+
+━━━ purpose ━━━
+**60-100 WORDS (Dashboard Card Length)**
+
+Write a clean, professional paragraph that explains:
+• What the tool does
+• Who it helps
+• Why it is useful
+
+━━━ target_keywords ━━━
+**5-8 KEYWORDS ONLY (Dashboard Badge-Friendly)**
+
+Short, focused SEO keyword phrases.
+
+━━━ calculation_logic ━━━
+**60-80 WORDS (Dashboard Card Length)**
+
+Clear, professional explanation in plain business language.
+
+━━━ features ━━━
+**5-8 FEATURES (Dashboard-Friendly)**
+
+Short, specific, and valuable features.
+
+━━━ monetization_strategy ━━━
+**40-80 WORDS (Dashboard Card Length)**
+
+Concise, business-focused monetization explanation.
+
+━━━ internal_links ━━━
+**5-8 RELATED TOOLS**
+
+Relevant complementary tools.
+
+━━━ cta_text ━━━
+**1 SENTENCE - Strong Conversion-Focused CTA**
+
+Natural marketing language with urgency or value.
+
+═══════════════════════════════════════════════════════════
+FINAL VALIDATION CHECKLIST
+═══════════════════════════════════════════════════════════
+
+Before submitting your response, verify:
+
+□ purpose is 60-100 words (dashboard card length)
+□ target_keywords contains 5-8 focused keywords
+□ calculation_logic is 60-80 words (dashboard card length)
+□ features contains 5-8 concise items
+□ monetization_strategy is 40-80 words (dashboard card length)
+□ internal_links contains 5-8 related tools
+□ cta_text is 1 sentence with strong conversion focus
+□ All content is clean and readable in dashboard UI
+□ No overly long paragraphs or bloated text
+□ JSON is valid and properly formatted
+
+═══════════════════════════════════════════════════════════
+
+Return ONLY the improved JSON structure with clean, dashboard-optimized content. NO additional text, NO markdown fences:`;
+}
+
+async function regenerateBlueprintWithAnthropic(prompt: string, apiKey: string): Promise<string> {
+  console.log("[Blueprint Regenerate/Anthropic] Generating");
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01"
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 4000,
+        temperature: 0.5,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[Blueprint Regenerate/Anthropic] API error ${response.status}:`, errorText);
+      throw new Error(`Anthropic API returned ${response.status}`);
+    }
+
+    const data = await response.json() as any;
+
+    // Extract text from response
+    let raw = "";
+    if (data.content && Array.isArray(data.content)) {
+      raw = data.content
+        .filter((block: any) => block.type === "text")
+        .map((block: any) => block.text)
+        .join("\n")
+        .trim();
+    } else {
+      throw new Error("Unexpected API response structure");
+    }
+    
+    // Strip markdown fences if AI ignores instructions
+    raw = raw.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/, '').trim();
+    
+    // Find JSON boundaries
+    const firstBrace = raw.indexOf('{');
+    const lastBrace = raw.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1) {
+      raw = raw.substring(firstBrace, lastBrace + 1);
+    }
+    
+    // Parse to validate
+    let blueprint;
+    try {
+      blueprint = JSON.parse(raw);
+    } catch (e) {
+      console.error("[Blueprint Regenerate/Anthropic] JSON parse failed:", raw.substring(0, 1000));
+      throw new Error("Failed to parse blueprint JSON");
+    }
+
+    console.log("[Blueprint Regenerate/Anthropic] Regenerated successfully");
+    return JSON.stringify(blueprint);
+  } catch (error) {
+    console.error("[Blueprint Regenerate/Anthropic] Error:", error);
+    throw error;
+  }
+}
+
+async function regenerateBlueprintWithOpenAI(prompt: string, apiKey: string): Promise<string> {
+  console.log("[Blueprint Regenerate/OpenAI] Generating");
+
+  try {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: "You are an expert at creating technical blueprints for interactive web tools. Output only valid JSON, no markdown or explanations."
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        temperature: 0.5,
+        max_tokens: 4000
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[Blueprint Regenerate/OpenAI] API error ${response.status}:`, errorText);
+      throw new Error(`OpenAI API returned ${response.status}`);
+    }
+
+    const data = await response.json() as any;
+    let raw = data.choices?.[0]?.message?.content || "";
+
+    if (!raw) {
+      throw new Error("Empty response from OpenAI");
+    }
+
+    // Strip markdown fences
+    raw = raw.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/, '').trim();
+    
+    // Find JSON boundaries
+    const firstBrace = raw.indexOf('{');
+    const lastBrace = raw.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1) {
+      raw = raw.substring(firstBrace, lastBrace + 1);
+    }
+    
+    // Parse and validate
+    const blueprint = JSON.parse(raw);
+    console.log("[Blueprint Regenerate/OpenAI] Regenerated successfully");
+    return JSON.stringify(blueprint);
+  } catch (error) {
+    console.error("[Blueprint Regenerate/OpenAI] Error:", error);
+    throw error;
+  }
+}
+
+// Legacy function - kept for backwards compatibility
+interface SEOContent {
+  intro_text: string;
+  h2_sections: Array<{ heading: string; content: string }>;
+  faqs: Array<{ question: string; answer: string }>;
+  meta_title: string;
+  meta_description: string;
+  cta_text: string;
+}
+
+export async function generateSEOContent(
+  toolName: string,
+  toolDescription: string,
+  niche: string,
+  apiKey: string
+): Promise<SEOContent> {
+  const client = new OpenAI({ apiKey });
+
+  const prompt = `Generate SEO-optimized content for this web tool:
+
+Tool Name: ${toolName}
+Description: ${toolDescription}
+Niche: ${niche}
+
+Create comprehensive SEO content that will help this tool rank in search engines and provide value to users:
+
+1. intro_text: 2-3 paragraph introduction (150-200 words) that explains what the tool does, why it's useful, and how to use it. Should be engaging and include the tool name naturally.
+
+2. h2_sections: 3 content sections with H2 headings and detailed content (100-150 words each). Topics might include: how it works, benefits, use cases, tips, best practices, etc.
+
+3. faqs: 5 frequently asked questions with detailed answers (50-75 words each). Cover common questions users might search for.
+
+4. meta_title: SEO-optimized page title (50-60 characters) that includes the tool name and primary keyword
+
+5. meta_description: Compelling meta description (140-160 characters) that encourages clicks from search results
+
+6. cta_text: Call-to-action text (20-40 words) that encourages users to try the tool or take next steps
+
+Focus on natural language, helpful information, and incorporating relevant keywords without keyword stuffing.`;
+
+  try {
+    const response = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are an expert SEO content writer who creates high-quality, search-optimized content for web tools.",
+        },
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "seo_content",
+          schema: {
+            type: "object",
+            properties: {
+              intro_text: { type: "string" },
+              h2_sections: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    heading: { type: "string" },
+                    content: { type: "string" },
+                  },
+                  required: ["heading", "content"],
+                  additionalProperties: false,
+                },
+              },
+              faqs: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    question: { type: "string" },
+                    answer: { type: "string" },
+                  },
+                  required: ["question", "answer"],
+                  additionalProperties: false,
+                },
+              },
+              meta_title: { type: "string" },
+              meta_description: { type: "string" },
+              cta_text: { type: "string" },
+            },
+            required: [
+              "intro_text",
+              "h2_sections",
+              "faqs",
+              "meta_title",
+              "meta_description",
+              "cta_text",
+            ],
+            additionalProperties: false,
+          },
+          strict: true,
+        },
+      },
+      temperature: 0.7,
+    });
+
+    const content = response.choices[0].message.content;
+    if (!content) {
+      throw new Error("No SEO content generated");
+    }
+
+    return JSON.parse(content);
+  } catch (error) {
+    console.error("SEO content generation error:", error);
+    throw error;
+  }
+}
+
+export async function generateVariation(
+  blueprint: any,
+  audience: string,
+  monetization: string,
+  anthropicKey: string | null,
+  openaiKey: string | null
+): Promise<string> {
+  const prompt = `You are generating a VARIATION of an existing tool blueprint optimized for a specific audience and monetization strategy.
+
+ORIGINAL BLUEPRINT:
+${JSON.stringify(blueprint, null, 2)}
+
+NEW TARGET AUDIENCE: ${audience}
+NEW MONETIZATION STRATEGY: ${monetization}
+
+Your task: Generate a NEW blueprint that reimagines this tool for the specified audience and monetization approach.
+
+KEY REQUIREMENTS:
+1. Keep the same core tool concept and category
+2. Adapt ALL content to appeal to the new target audience
+3. Redesign the monetization strategy to align with the specified approach
+4. Update keywords, features, and CTAs to match the new focus
+5. Maintain the exact same JSON structure and field requirements as the original
+
+═══════════════════════════════════════════════════════════
+RETURN THIS EXACT STRUCTURE
+═══════════════════════════════════════════════════════════
+
+{
+"title": "",
+"category": "",
+"tool_type": "",
+"description": "",
+"purpose": "",
+"target_keywords": [],
+"inputs_required": [],
+"output_type": "",
+"calculation_logic": "",
+"features": [],
+"monetization_strategy": "",
+"internal_links": [],
+"cta_text": "",
+"theme_suggestions": [],
+"seo_title": "",
+"seo_description": ""
+}
+
+CRITICAL FIELD REQUIREMENTS:
+- purpose: EXACTLY 60-100 words
+- target_keywords: EXACTLY 5-8 keywords (2-4 words each)
+- calculation_logic: EXACTLY 60-80 words
+- features: 5-8 items
+- monetization_strategy: EXACTLY 40-80 words (must align with: ${monetization})
+- internal_links: 5-8 related tools
+- cta_text: 1 sentence, conversion-focused
+
+Return ONLY valid JSON, NO markdown fences, NO additional text.`;
+
+  console.log("[Variation] Generating for audience:", audience, "monetization:", monetization);
+  console.log("[Variation] Has Anthropic key:", !!anthropicKey);
+  console.log("[Variation] Has OpenAI key:", !!openaiKey);
+
+  // Try Anthropic first if available
+  if (anthropicKey) {
+    try {
+      return await generateVariationWithAnthropic(prompt, anthropicKey);
+    } catch (error) {
+      console.error("[Variation] Anthropic failed:", error);
+      if (!openaiKey) {
+        throw error;
+      }
+      console.log("[Variation] Falling back to OpenAI...");
+    }
+  }
+
+  // Try OpenAI
+  if (openaiKey) {
+    return await generateVariationWithOpenAI(prompt, openaiKey);
+  }
+
+  throw new Error("No API key available for variation generation");
+}
+
+async function generateVariationWithAnthropic(
+  prompt: string,
+  apiKey: string
+): Promise<string> {
+  console.log("[Variation/Anthropic] Generating variation");
+  
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01"
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 4000,
+        temperature: 0.5,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[Variation/Anthropic] API error ${response.status}:`, errorText);
+      throw new Error(`Anthropic API returned ${response.status}`);
+    }
+
+    const data = await response.json() as any;
+    let raw = data.content?.[0]?.text || "";
+
+    if (!raw) {
+      throw new Error("Empty response from Anthropic");
+    }
+
+    console.log("[Variation/Anthropic] Raw response length:", raw.length);
+
+    // Clean markdown wrappers
+    let cleaned = raw
+      .replace(/```json/g, "")
+      .replace(/```/g, "")
+      .trim();
+    
+    // Find JSON boundaries
+    const firstBrace = cleaned.indexOf('{');
+    const lastBrace = cleaned.lastIndexOf('}');
+    if (firstBrace === -1 || lastBrace === -1) {
+      throw new Error("No JSON object in response");
+    }
+    cleaned = cleaned.substring(firstBrace, lastBrace + 1);
+
+    // Parse and validate
+    const blueprint = JSON.parse(cleaned);
+    
+    if (!blueprint.title || !blueprint.purpose) {
+      throw new Error("Missing required fields in variation");
+    }
+
+    console.log("[Variation/Anthropic] Generated successfully");
+    return JSON.stringify(blueprint);
+
+  } catch (error) {
+    console.error("[Variation/Anthropic] Error:", error);
+    throw error;
+  }
+}
+
+async function generateVariationWithOpenAI(
+  prompt: string,
+  apiKey: string
+): Promise<string> {
+  console.log("[Variation/OpenAI] Generating variation");
+  
+  try {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: "You are an expert at creating technical blueprints for interactive web tools. Output only valid JSON, no markdown or explanations."
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        temperature: 0.5,
+        max_tokens: 4000
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[Variation/OpenAI] API error ${response.status}:`, errorText);
+      throw new Error(`OpenAI API returned ${response.status}`);
+    }
+
+    const data = await response.json() as any;
+    let raw = data.choices?.[0]?.message?.content || "";
+
+    if (!raw) {
+      throw new Error("Empty response from OpenAI");
+    }
+
+    console.log("[Variation/OpenAI] Raw response length:", raw.length);
+
+    // Clean markdown wrappers
+    let cleaned = raw
+      .replace(/```json/g, "")
+      .replace(/```/g, "")
+      .trim();
+    
+    // Find JSON boundaries
+    const firstBrace = cleaned.indexOf('{');
+    const lastBrace = cleaned.lastIndexOf('}');
+    if (firstBrace === -1 || lastBrace === -1) {
+      throw new Error("No JSON object in response");
+    }
+    cleaned = cleaned.substring(firstBrace, lastBrace + 1);
+
+    // Parse and validate
+    const blueprint = JSON.parse(cleaned);
+    
+    if (!blueprint.title || !blueprint.purpose) {
+      throw new Error("Missing required fields in variation");
+    }
+
+    console.log("[Variation/OpenAI] Generated successfully");
+    return JSON.stringify(blueprint);
+
+  } catch (error) {
+    console.error("[Variation/OpenAI] Error:", error);
+    throw error;
+  }
+}
+
+export async function generateContentWrapper(
+  keyword: string,
+  niche: string,
+  blueprint: string,
+  includeCta: boolean,
+  ctaType: string | null,
+  ctaText: string | null,
+  ctaUrl: string | null,
+  apiKey: string
+): Promise<any> {
+  console.log("[Content Wrapper] Generating with keyword:", keyword, "niche:", niche);
+
+  const userPrompt = `Generate a premium SEO content package for a calculator/tool landing page.
+
+Target Keyword: ${keyword}
+Niche: ${niche}
+Tool Blueprint: ${blueprint}
+Include CTA: ${includeCta}
+CTA Type: ${ctaType || "N/A"}
+CTA Text: ${ctaText || "N/A"}
+CTA URL: ${ctaUrl || "N/A"}
+
+REQUIREMENTS:
+
+1. Page H1: Engaging, keyword-rich headline (8-12 words)
+2. Introduction: Compelling opening paragraph (150-200 words) that hooks the reader and naturally includes the target keyword
+3. How It Works: 3-5 numbered steps explaining the tool/calculator functionality
+4. Key Benefits: 5-8 specific benefits (each 1-2 sentences)
+5. Semantic Keywords: 15-20 related keywords/entities for SEO
+6. FAQ Section: 6-8 common questions with detailed answers
+7. Meta Title: SEO-optimized title (55-60 chars)
+8. Meta Description: Compelling meta description (150-155 chars)
+9. CTA Block: Conversion-focused call-to-action HTML
+
+Return ONLY valid JSON in this exact format:
+{
+  "page_h1": "string",
+  "introduction": "string (HTML formatted)",
+  "how_it_works": [
+    {"step_number": 1, "title": "string", "description": "string"}
+  ],
+  "key_benefits": [
+    "benefit text (1-2 sentences)"
+  ],
+  "semantic_keywords": [
+    "keyword or entity"
+  ],
+  "faq_section": [
+    {"question": "string", "answer": "string (HTML formatted)"}
+  ],
+  "meta_title": "string",
+  "meta_description": "string",
+  "cta_block": "string (HTML) or null"
+}`;
+
+  try {
+    console.log("[Content Wrapper] Making API call to OpenAI");
+    
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: "You are an expert SEO content strategist and conversion copywriter. Generate premium, publish-ready content that ranks well and converts visitors. Return ONLY valid JSON with no markdown formatting."
+          },
+          {
+            role: "user",
+            content: userPrompt
+          }
+        ],
+        temperature: 0.7
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("[Content Wrapper] API error:", response.status, errorText);
+      throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
+    }
+
+    const data = await response.json() as any;
+    console.log("[Content Wrapper] API response received");
+    
+    const content = data.choices?.[0]?.message?.content;
+    if (!content) {
+      throw new Error("No content wrapper generated");
+    }
+
+    // Clean markdown formatting if present
+    let cleanedContent = content.trim();
+    if (cleanedContent.startsWith('```json')) {
+      cleanedContent = cleanedContent.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+    } else if (cleanedContent.startsWith('```')) {
+      cleanedContent = cleanedContent.replace(/^```\s*/, '').replace(/\s*```$/, '');
+    }
+
+    const parsed = JSON.parse(cleanedContent);
+    console.log("[Content Wrapper] Successfully parsed content package");
+    
+    return parsed;
+  } catch (error) {
+    console.error("[Content Wrapper] Generation error:", error);
+    throw error;
+  }
+}
