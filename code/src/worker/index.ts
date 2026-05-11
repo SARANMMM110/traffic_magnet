@@ -1004,9 +1004,47 @@ app.post("/api/tools/:id/landing-page", authMiddleware, async (c) => {
 
   try {
     console.log("[Landing Page Endpoint] Starting generation for tool:", toolId);
+
+    let blueprint;
+    try {
+      blueprint = typeof tool.blueprint === "string"
+        ? JSON.parse(tool.blueprint)
+        : tool.blueprint;
+    } catch (parseError) {
+      console.warn("[Landing Page Endpoint] Blueprint JSON parse failed, using tool fallback:", parseError);
+      blueprint = {};
+    }
+
+    blueprint = {
+      title: tool.name,
+      category: tool.category || "Calculator",
+      description: tool.description || "",
+      purpose: tool.description || `Help users with ${tool.name}`,
+      target_keywords: [],
+      inputs_required: [],
+      features: [],
+      cta_text: `Start using ${tool.name}`,
+      ...blueprint,
+    };
+
+    if (typeof blueprint.title !== "string" || !blueprint.title.trim()) {
+      blueprint.title = tool.name;
+    }
+    if (typeof blueprint.description !== "string") {
+      blueprint.description = tool.description || "";
+    }
+    if (typeof blueprint.purpose !== "string" || !blueprint.purpose.trim()) {
+      blueprint.purpose = tool.description || `Help users with ${tool.name}`;
+    }
+    if (typeof blueprint.category !== "string" || !blueprint.category.trim()) {
+      blueprint.category = tool.category || "Calculator";
+    }
+    if (typeof blueprint.cta_text !== "string" || !blueprint.cta_text.trim()) {
+      blueprint.cta_text = `Start using ${tool.name}`;
+    }
     
     const landingPageHtml = await generateLandingPage(
-      tool.blueprint as string,
+      blueprint,
       anthropicKey,
       openaiKey
     );
@@ -1021,7 +1059,10 @@ app.post("/api/tools/:id/landing-page", authMiddleware, async (c) => {
     return c.json({ html: landingPageHtml });
   } catch (error) {
     console.error("[Landing Page Endpoint] Generation error:", error);
-    return c.json({ error: "Failed to generate landing page" }, 500);
+    return c.json({
+      error: "Failed to generate landing page",
+      message: error instanceof Error ? error.message : "Unknown error"
+    }, 500);
   }
 });
 

@@ -172,6 +172,18 @@ export default function BlueprintView() {
     }
   };
 
+  const readApiError = async (response: Response, fallback: string) => {
+    try {
+      const data = await response.json();
+      if (Array.isArray(data.details)) {
+        return data.details.join(", ");
+      }
+      return data.message || data.error || fallback;
+    } catch {
+      return fallback;
+    }
+  };
+
   const generateLandingPageHandler = async () => {
     if (!tool) return;
     
@@ -185,8 +197,7 @@ export default function BlueprintView() {
       });
       
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to generate landing page");
+        throw new Error(await readApiError(response, "Failed to generate landing page"));
       }
       
       const data = await response.json();

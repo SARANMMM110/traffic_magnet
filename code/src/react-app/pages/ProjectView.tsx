@@ -131,12 +131,28 @@ export default function ProjectView() {
     setLandingPageHtml(tool.landing_page_html);
   };
 
+  const readApiError = async (response: Response, fallback: string) => {
+    try {
+      const data = await response.json();
+      if (Array.isArray(data.details)) {
+        return data.details.join(", ");
+      }
+      return data.message || data.error || fallback;
+    } catch {
+      return fallback;
+    }
+  };
+
   const generateBlueprint = async () => {
     if (!selectedTool) return;
 
+    const isRegeneration = Boolean(selectedTool.blueprint);
     setBuildStep("analyzing");
     try {
-      const response = await fetch(`/api/tools/${selectedTool.id}/blueprint`, {
+      const endpoint = isRegeneration
+        ? `/api/tools/${selectedTool.id}/blueprint/regenerate`
+        : `/api/tools/${selectedTool.id}/blueprint`;
+      const response = await fetch(endpoint, {
         method: "POST",
         credentials: "include",
       });
@@ -160,21 +176,21 @@ export default function ProjectView() {
         setBuildStep(null);
         showToast({
           type: "success",
-          title: "Blueprint generated!",
-          message: "Your tool blueprint is ready",
+          title: isRegeneration ? "Blueprint regenerated!" : "Blueprint generated!",
+          message: isRegeneration ? "Your tool blueprint has been updated" : "Your tool blueprint is ready",
         });
         // Store as string to match database format
         setSelectedTool({ ...selectedTool, blueprint: data.blueprint });
         await loadProject();
       } else {
-        throw new Error("Blueprint generation failed");
+        throw new Error(await readApiError(response, "Blueprint generation failed"));
       }
     } catch (error) {
       console.error("Failed to generate blueprint:", error);
       showToast({
         type: "error",
-        title: "Blueprint failed",
-        message: "Could not generate blueprint",
+        title: isRegeneration ? "Blueprint regeneration failed" : "Blueprint failed",
+        message: error instanceof Error ? error.message : "Could not generate blueprint",
       });
       setBuildStep(null);
     }
@@ -406,8 +422,7 @@ export default function ProjectView() {
       });
       
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to generate landing page");
+        throw new Error(await readApiError(response, "Failed to generate landing page"));
       }
       
       const data = await response.json();
