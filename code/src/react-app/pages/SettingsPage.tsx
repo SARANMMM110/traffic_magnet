@@ -3,7 +3,7 @@ import { Link } from "react-router";
 import DashboardLayout from "@/react-app/components/DashboardLayout";
 import { useAuth } from "@getmocha/users-service/react";
 import { useToast } from "@/react-app/components/Toast";
-import { ArrowLeft, Eye, EyeOff, Info, Check } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Info, Check, KeyRound } from "lucide-react";
 
 interface UsageData {
   projects: number;
@@ -188,7 +188,7 @@ export default function SettingsPage() {
 
   return (
     <DashboardLayout>
-      <div className="p-8 max-w-2xl mx-auto">
+      <div className="page-shell max-w-2xl">
         {/* Back Link */}
         <Link
           to="/dashboard"
@@ -208,7 +208,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Profile Card */}
-        <div className="glass-card p-6 mb-6">
+        <div className="premium-card p-6 mb-6">
           {/* Top Row */}
           <div className="flex items-start gap-4 mb-4">
             <div
@@ -323,17 +323,19 @@ export default function SettingsPage() {
                   boxShadow: "0 0 20px var(--brand-glow)",
                 }}
               >
-                ⚡ Upgrade Plan
+                Upgrade Plan
               </button>
             )}
           </div>
         </div>
 
         {/* API Keys Card */}
-        <div className="glass-card p-6">
+        <div className="premium-card p-6">
           {/* Header */}
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-2xl">🔑</span>
+            <span className="icon-tile h-10 w-10">
+              <KeyRound className="h-5 w-5" />
+            </span>
             <h3 className="text-xl font-bold" style={{ color: "var(--text-primary)" }}>Your API Keys</h3>
           </div>
           <p className="text-sm mb-6" style={{ color: "var(--text-muted)" }}>

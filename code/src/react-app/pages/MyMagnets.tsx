@@ -109,17 +109,18 @@ export default function MyMagnets() {
 
   return (
     <DashboardLayout>
-      <div className="p-8 max-w-6xl mx-auto">
+      <div className="page-shell max-w-6xl">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>My Magnets</h1>
-          <p style={{ color: "var(--text-muted)" }}>
+        <div className="surface-panel mb-8 p-6">
+          <div className="section-eyebrow mb-2">Asset Library</div>
+          <h1 className="text-4xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>My Magnets</h1>
+          <p style={{ color: "var(--text-secondary)" }}>
             All blueprints you've generated across your projects.
           </p>
         </div>
 
         {/* Usage Meter Card */}
-        <div className="glass-card p-6 mb-8">
+        <div className="premium-card p-6 mb-8">
           <div className="flex items-center justify-between mb-3">
             <p className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
               {usage.used} of {usage.limit} lifetime Traffic Magnets used
@@ -154,7 +155,7 @@ export default function MyMagnets() {
                 className="text-sm font-semibold hover:underline inline-flex items-center gap-1 mt-1"
                 style={{ color: "var(--brand)" }}
               >
-                ⚡ Upgrade your plan →
+                Upgrade your plan
               </Link>
             </div>
           )}
@@ -180,13 +181,9 @@ export default function MyMagnets() {
             </p>
             <Link to="/projects/new">
               <button
-                className="px-6 py-3 rounded-xl font-semibold text-white transition-all hover:brightness-110"
-                style={{
-                  background: "linear-gradient(135deg, #7C5CFC, #5A3FD4)",
-                  boxShadow: "0 0 20px var(--brand-glow)",
-                }}
+                className="btn-primary rounded-2xl px-6 py-3 font-semibold"
               >
-                → Create Your First Project
+                Create Your First Project
               </button>
             </Link>
           </div>
@@ -200,12 +197,7 @@ export default function MyMagnets() {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-4 py-2 rounded-lg text-sm"
-                style={{
-                  background: "var(--bg-elevated)",
-                  border: "1px solid var(--border-strong)",
-                  color: "var(--text-primary)",
-                }}
+                className="input-premium px-4 py-3 text-sm"
               >
                 <option value="date">Sort by: Date</option>
                 <option value="name">Sort by: Name</option>
@@ -222,12 +214,7 @@ export default function MyMagnets() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search magnets..."
-                  className="w-full pl-10 pr-4 py-2 rounded-lg text-sm"
-                  style={{
-                    background: "var(--bg-elevated)",
-                    border: "1px solid var(--border-strong)",
-                    color: "var(--text-primary)",
-                  }}
+                  className="input-premium w-full pl-10 pr-4 py-3 text-sm"
                 />
               </div>
             </div>
@@ -238,7 +225,7 @@ export default function MyMagnets() {
                 return (
                   <div
                     key={magnet.id}
-                    className="glass-card p-5 flex items-center justify-between gap-4 hover:scale-[1.01] transition-all"
+                    className="premium-card p-5 flex items-center justify-between gap-4 transition-all"
                   >
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">

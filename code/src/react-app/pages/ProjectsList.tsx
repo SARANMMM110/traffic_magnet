@@ -139,10 +139,11 @@ export default function ProjectsList() {
 
   return (
     <DashboardLayout>
-      <div className="p-8 max-w-7xl mx-auto space-y-8">
+      <div className="page-shell max-w-7xl space-y-8">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="surface-panel flex flex-col gap-5 p-6 md:flex-row md:items-center md:justify-between">
           <div className="space-y-1">
+            <div className="section-eyebrow">Workspace</div>
             <h1 className="text-4xl font-bold">My Projects</h1>
             <p className="text-muted-foreground">
               Manage all your traffic tool projects
@@ -204,7 +205,7 @@ export default function ProjectsList() {
                 onMouseEnter={() => setHoveredProject(project.id)}
                 onMouseLeave={() => setHoveredProject(null)}
               >
-                <Card className="p-6 space-y-4 hover:shadow-lg hover:border-primary/50 transition-all h-full relative">
+                <Card className="p-6 space-y-4 transition-all h-full relative">
                   <div className="space-y-2">
                     <div className="flex items-start justify-between">
                       <h3 className="font-semibold text-lg line-clamp-2">
@@ -232,7 +233,7 @@ export default function ProjectsList() {
                         <ArrowRight className="w-5 h-5 text-muted-foreground" />
                       </div>
                     </div>
-                    <div className="inline-block px-2 py-1 bg-primary/10 text-primary text-xs rounded-md font-medium">
+                    <div className="inline-block rounded-full bg-[var(--brand-soft)] px-3 py-1 text-xs font-semibold text-[var(--brand)]">
                       {project.niche}
                     </div>
                   </div>

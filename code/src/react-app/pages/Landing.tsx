@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { Target, Bolt, TrendingUp } from "lucide-react";
+import { ArrowRight, Bolt, CheckCircle, Sparkles, Target, TrendingUp } from "lucide-react";
 
 export default function Landing() {
   const scrollToFeatures = () => {
@@ -38,32 +38,33 @@ export default function Landing() {
       {/* Content */}
       <div className="relative z-10">
         {/* Hero Section */}
-        <div className="flex flex-col items-center justify-center min-h-screen px-4 text-center">
-          <div className="max-w-[600px] space-y-8 animate-fade-in-up">
+        <div className="flex min-h-screen flex-col items-center justify-center px-4 py-24 text-center">
+          <div className="max-w-[760px] space-y-8 animate-fade-in-up">
             {/* Eyebrow tag */}
             <div className="inline-block">
               <div
-                className="px-4 py-2 rounded-full text-xs font-semibold tracking-wider"
+                className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold tracking-wider"
                 style={{
-                  border: "1px solid var(--brand)",
+                  border: "1px solid rgba(99, 91, 255, 0.22)",
+                  background: "var(--brand-soft)",
                   color: "var(--brand)",
                   letterSpacing: "0.1em",
                 }}
               >
+                <Sparkles className="h-3.5 w-3.5" />
                 AI-POWERED SEO TOOL FACTORY
               </div>
             </div>
 
             {/* Headline */}
-            <h1 className="text-5xl md:text-6xl font-extrabold leading-tight">
-              <div>Build tools that rank.</div>
-              <div>Attract traffic that</div>
-              <div className="text-gradient">compounds.</div>
+            <h1 className="text-5xl font-extrabold leading-tight md:text-7xl">
+              <div>Build AI tools that rank,</div>
+              <div className="text-gradient">convert, and compound.</div>
             </h1>
 
             {/* Subtext */}
             <p
-              className="text-base md:text-lg max-w-[480px] mx-auto"
+              className="mx-auto max-w-[620px] text-base leading-8 md:text-lg"
               style={{ color: "var(--text-secondary)" }}
             >
               Generate free online calculators and tools your niche needs — built
@@ -74,26 +75,27 @@ export default function Landing() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
               <Link to="/signup">
                 <button
-                  className="px-6 py-3 rounded-xl font-semibold text-white shadow-lg hover:brightness-110 hover:scale-105 active:scale-98 transition-all duration-200"
-                  style={{
-                    background: "linear-gradient(135deg, #7C5CFC, #5A3FD4)",
-                    boxShadow: "0 0 20px var(--brand-glow)",
-                  }}
+                  className="btn-primary inline-flex items-center gap-2 rounded-2xl px-6 py-3 font-semibold"
                 >
-                  ⚡ Start Building Free
+                  Start Building Free
+                  <ArrowRight className="h-4 w-4" />
                 </button>
               </Link>
               <button
                 onClick={scrollToFeatures}
-                className="px-6 py-3 rounded-xl font-semibold hover:bg-opacity-80 transition-all duration-200"
-                style={{
-                  background: "var(--bg-elevated)",
-                  border: "1px solid var(--border-strong)",
-                  color: "var(--text-primary)",
-                }}
+                className="btn-secondary rounded-2xl px-6 py-3 font-semibold"
               >
-                See how it works →
+                See how it works
               </button>
+            </div>
+
+            <div className="flex flex-wrap justify-center gap-4 text-sm" style={{ color: "var(--text-secondary)" }}>
+              {["No-code workflow", "SEO-ready exports", "AI content wrapper"].map((item) => (
+                <span key={item} className="inline-flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-emerald-500" />
+                  {item}
+                </span>
+              ))}
             </div>
           </div>
         </div>
@@ -103,14 +105,8 @@ export default function Landing() {
           <div className="max-w-5xl mx-auto">
             <div className="grid md:grid-cols-3 gap-6">
               {/* Card 1 */}
-              <div
-                className="glass-card p-8 space-y-4"
-                style={{ animationDelay: "0ms" }}
-              >
-                <div
-                  className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl"
-                  style={{ background: "rgba(124, 92, 252, 0.15)" }}
-                >
+              <div className="premium-card space-y-4 p-8" style={{ animationDelay: "0ms" }}>
+                <div className="icon-tile h-14 w-14">
                   <Target className="w-8 h-8" style={{ color: "var(--brand)" }} />
                 </div>
                 <h3 className="text-xl font-bold">Pick Your Niche</h3>
@@ -120,14 +116,8 @@ export default function Landing() {
               </div>
 
               {/* Card 2 */}
-              <div
-                className="glass-card p-8 space-y-4"
-                style={{ animationDelay: "60ms" }}
-              >
-                <div
-                  className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl"
-                  style={{ background: "rgba(245, 158, 11, 0.15)" }}
-                >
+              <div className="premium-card space-y-4 p-8" style={{ animationDelay: "60ms" }}>
+                <div className="icon-tile h-14 w-14 text-[var(--accent-amber)]">
                   <Bolt className="w-8 h-8" style={{ color: "var(--accent-amber)" }} />
                 </div>
                 <h3 className="text-xl font-bold">AI Builds the Tool</h3>
@@ -137,14 +127,8 @@ export default function Landing() {
               </div>
 
               {/* Card 3 */}
-              <div
-                className="glass-card p-8 space-y-4"
-                style={{ animationDelay: "120ms" }}
-              >
-                <div
-                  className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl"
-                  style={{ background: "rgba(0, 208, 132, 0.15)" }}
-                >
+              <div className="premium-card space-y-4 p-8" style={{ animationDelay: "120ms" }}>
+                <div className="icon-tile h-14 w-14 text-[var(--accent-green)]">
                   <TrendingUp className="w-8 h-8" style={{ color: "var(--accent-green)" }} />
                 </div>
                 <h3 className="text-xl font-bold">Traffic Compounds</h3>
@@ -155,6 +139,44 @@ export default function Landing() {
             </div>
           </div>
         </div>
+
+        <footer className="px-4 pb-8">
+          <div className="premium-footer mx-auto max-w-5xl p-8">
+            <div className="grid gap-8 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
+              <div>
+                <div className="mb-3 flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-950 text-white">
+                    <Sparkles className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <div className="font-bold">Traffic Magnet</div>
+                    <div className="text-xs" style={{ color: "var(--text-muted)" }}>AI growth studio</div>
+                  </div>
+                </div>
+                <p className="max-w-sm text-sm leading-6" style={{ color: "var(--text-secondary)" }}>
+                  Premium AI workflows for creating SEO tools, content wrappers, and publish-ready assets.
+                </p>
+              </div>
+              {[
+                ["Product", "Dashboard", "Content Wrapper", "My Magnets"],
+                ["Resources", "Help & FAQ", "SEO Tools", "WordPress"],
+                ["Company", "VibeLabs", "Roadmap", "Support"],
+              ].map(([title, ...items]) => (
+                <div key={title}>
+                  <h4 className="mb-3 text-sm font-bold">{title}</h4>
+                  <ul className="space-y-2 text-sm" style={{ color: "var(--text-secondary)" }}>
+                    {items.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+            <div className="mt-8 border-t border-[var(--border)] pt-5 text-sm" style={{ color: "var(--text-muted)" }}>
+              Traffic Magnet by VibeLabs © {new Date().getFullYear()}
+            </div>
+          </div>
+        </footer>
       </div>
     </div>
   );

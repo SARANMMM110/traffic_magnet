@@ -6,9 +6,9 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
-    <div className="flex h-screen overflow-hidden" style={{ background: "var(--bg-base)" }}>
+    <div className="app-shell flex h-screen overflow-hidden md:p-4 md:gap-4">
       <Sidebar />
-      <main className="flex-1 overflow-y-auto w-full md:w-auto">
+      <main className="flex-1 overflow-y-auto w-full md:w-auto md:rounded-[28px]">
         {children}
       </main>
     </div>

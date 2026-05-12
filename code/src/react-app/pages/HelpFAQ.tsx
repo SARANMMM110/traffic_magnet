@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router";
 import DashboardLayout from "@/react-app/components/DashboardLayout";
-import { Search, ChevronDown } from "lucide-react";
+import { BriefcaseBusiness, ChevronDown, CircleDollarSign, Globe2, Hammer, KeyRound, Rocket, Search, TrendingUp } from "lucide-react";
 
 interface FAQItem {
   question: string;
@@ -53,13 +53,13 @@ const FAQ_DATA: FAQItem[] = [
 ];
 
 const CATEGORIES = [
-  { emoji: "🚀", name: "Getting Started" },
-  { emoji: "💰", name: "Pricing & Plans" },
-  { emoji: "🔨", name: "Building Tools" },
-  { emoji: "🔑", name: "API Keys" },
-  { emoji: "📈", name: "Traffic & SEO" },
-  { emoji: "🌐", name: "Domains & Embedding" },
-  { emoji: "💼", name: "Use Cases" },
+  { icon: Rocket, name: "Getting Started" },
+  { icon: CircleDollarSign, name: "Pricing & Plans" },
+  { icon: Hammer, name: "Building Tools" },
+  { icon: KeyRound, name: "API Keys" },
+  { icon: TrendingUp, name: "Traffic & SEO" },
+  { icon: Globe2, name: "Domains & Embedding" },
+  { icon: BriefcaseBusiness, name: "Use Cases" },
 ];
 
 export default function HelpFAQ() {
@@ -106,7 +106,7 @@ export default function HelpFAQ() {
 
   return (
     <DashboardLayout>
-      <div className="p-8 max-w-4xl mx-auto">
+      <div className="page-shell max-w-4xl">
         {/* Breadcrumb */}
         <div className="mb-6">
           <Link to="/faq" style={{ color: "var(--text-muted)" }} className="text-sm">
@@ -115,7 +115,7 @@ export default function HelpFAQ() {
         </div>
 
         {/* Header */}
-        <div className="text-center mb-8">
+        <div className="surface-panel mb-8 p-8 text-center">
           <h1 className="text-4xl font-bold mb-3" style={{ color: "var(--text-primary)" }}>Help & FAQ</h1>
           <p className="text-lg mb-2" style={{ color: "var(--text-muted)" }}>
             Answers to the most common questions about Magnet Lab
@@ -136,7 +136,7 @@ export default function HelpFAQ() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search questions..."
-            className="w-full pl-12 pr-4 py-4 rounded-xl text-base glass-card"
+            className="input-premium w-full pl-12 pr-4 py-4 text-base"
             style={{
               color: "var(--text-primary)",
             }}
@@ -179,7 +179,10 @@ export default function HelpFAQ() {
                       : "1px solid var(--border-strong)",
                 }}
               >
-                {cat.emoji} {cat.name}
+                {(() => {
+                  const Icon = cat.icon;
+                  return <span className="inline-flex items-center gap-2"><Icon className="h-4 w-4" />{cat.name}</span>;
+                })()}
               </button>
             ))}
           </div>
@@ -194,11 +197,12 @@ export default function HelpFAQ() {
           ) : (
             Object.entries(groupedFAQs).map(([category, items]) => {
               const categoryData = CATEGORIES.find((c) => c.name === category);
+              const CategoryIcon = categoryData?.icon;
               return (
                 <div key={category}>
                   {/* Category Header */}
                   <h2 className="text-xl font-bold mb-4 flex items-center gap-2" style={{ color: "var(--text-primary)" }}>
-                    <span>{categoryData?.emoji}</span>
+                    {CategoryIcon && <CategoryIcon className="h-5 w-5 text-[var(--brand)]" />}
                     <span>{category}</span>
                     <span
                       className="text-sm px-2 py-0.5 rounded-full"
@@ -227,7 +231,7 @@ export default function HelpFAQ() {
                       return (
                         <div
                           key={itemIndex}
-                          className="glass-card overflow-hidden transition-all"
+                          className="premium-card overflow-hidden transition-all"
                         >
                           {/* Question Header */}
                           <button

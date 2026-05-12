@@ -218,83 +218,83 @@ export default function Dashboard() {
 
   return (
     <DashboardLayout>
-      <div className="p-8 max-w-7xl mx-auto space-y-8">
+      <div className="page-shell space-y-8">
         {/* Welcome Banner */}
-        <div
-          className="rounded-2xl p-8 relative overflow-hidden"
-          style={{
-            background: "linear-gradient(135deg, rgba(124, 92, 252, 0.08) 0%, rgba(59, 130, 246, 0.08) 100%)",
-            border: "1px solid var(--border)",
-          }}
-        >
-          {/* Gradient Mesh Background */}
-          <div
-            className="absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl opacity-20 pointer-events-none"
-            style={{
-              background: "radial-gradient(circle, #7C5CFC 0%, #3B82F6 50%, transparent 100%)",
-            }}
-          />
-          
-          <div className="relative z-10 flex items-start justify-between">
-            <div className="space-y-2">
-              <h1 className="text-4xl font-bold" style={{ color: "var(--text-primary)" }}>
-                Welcome back, {user?.google_user_data.name || "there"}! 👋
+        <div className="surface-panel relative overflow-hidden p-8 md:p-10">
+          <div className="absolute right-8 top-8 hidden h-28 w-28 rounded-full border border-white/70 bg-white/35 md:block" />
+          <div className="relative z-10 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-2xl space-y-4">
+              <div className="section-eyebrow">AI SaaS Dashboard</div>
+              <h1 className="text-4xl font-bold leading-tight md:text-5xl" style={{ color: "var(--text-primary)" }}>
+                Welcome back, {user?.google_user_data.name || "there"}
               </h1>
-              <p className="text-lg" style={{ color: "var(--text-muted)" }}>
-                Build high-traffic, link-magnet tools for any niche in minutes.
+              <p className="text-base leading-7 md:text-lg" style={{ color: "var(--text-secondary)" }}>
+                Plan, generate, publish, and wrap high-traffic AI tools from one polished workspace.
               </p>
             </div>
+            <Link to="/projects/new">
+              <button className="btn-primary inline-flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-semibold">
+                <Plus className="h-4 w-4" />
+                New Project
+              </button>
+            </Link>
           </div>
         </div>
 
         {/* Stats Row */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="glass-card p-6 space-y-4">
-            <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center"
-              style={{ background: "rgba(124, 92, 252, 0.15)" }}
-            >
-              <Layers className="w-5 h-5" style={{ color: "var(--brand)" }} />
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+          <div className="premium-card p-6">
+            <div className="mb-6 flex items-center justify-between">
+              <div className="icon-tile">
+                <Layers className="w-5 h-5" />
+              </div>
+              <span className="rounded-full bg-[var(--brand-soft)] px-3 py-1 text-xs font-bold text-[var(--brand)]">
+                Workspace
+              </span>
             </div>
             <div>
-              <p className="text-4xl font-bold" style={{ color: "var(--text-primary)" }}>
+              <p className="text-4xl font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>
                 {loading ? "..." : animateNumber(stats?.projectCount || 0)}
               </p>
-              <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-                Projects
+              <p className="mt-1 text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
+                Active projects
               </p>
             </div>
           </div>
 
-          <div className="glass-card p-6 space-y-4">
-            <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center"
-              style={{ background: "rgba(16, 185, 129, 0.15)" }}
-            >
-              <BarChart className="w-5 h-5" style={{ color: "var(--accent-green)" }} />
+          <div className="premium-card p-6">
+            <div className="mb-6 flex items-center justify-between">
+              <div className="icon-tile text-[var(--accent-green)]">
+                <BarChart className="w-5 h-5" />
+              </div>
+              <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-600">
+                Output
+              </span>
             </div>
             <div>
-              <p className="text-4xl font-bold" style={{ color: "var(--text-primary)" }}>
+              <p className="text-4xl font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>
                 {loading ? "..." : animateNumber(stats?.toolCount || 0)}
               </p>
-              <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+              <p className="mt-1 text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
                 Assets Generated
               </p>
             </div>
           </div>
 
-          <div className="glass-card p-6 space-y-4">
-            <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center"
-              style={{ background: "rgba(59, 130, 246, 0.15)" }}
-            >
-              <Compass className="w-5 h-5" style={{ color: "#3B82F6" }} />
+          <div className="premium-card p-6">
+            <div className="mb-6 flex items-center justify-between">
+              <div className="icon-tile text-[var(--accent-blue)]">
+                <Compass className="w-5 h-5" />
+              </div>
+              <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-600">
+                Market
+              </span>
             </div>
             <div>
-              <p className="text-4xl font-bold" style={{ color: "var(--text-primary)" }}>
+              <p className="text-4xl font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>
                 {loading ? "..." : animateNumber(projects.length > 0 ? new Set(projects.map(p => p.niche)).size : 0)}
               </p>
-              <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+              <p className="mt-1 text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
                 Niches Explored
               </p>
             </div>
@@ -302,25 +302,16 @@ export default function Dashboard() {
         </div>
 
         {/* AI Recommendations Panel */}
-        <div
-          className="rounded-2xl p-6"
-          style={{
-            background: "rgba(245, 158, 11, 0.05)",
-            border: "1px solid rgba(245, 158, 11, 0.2)",
-          }}
-        >
-          <div className="flex items-start justify-between mb-6">
+        <div className="premium-card p-6">
+          <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div className="flex items-center gap-3">
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center"
-                style={{ background: "rgba(245, 158, 11, 0.2)" }}
-              >
-                <Sparkles className="w-5 h-5" style={{ color: "var(--accent-amber)" }} />
+              <div className="icon-tile text-[var(--accent-amber)]">
+                <Sparkles className="w-5 h-5" />
               </div>
               <div>
                 <h3 className="text-lg font-bold" style={{ color: "var(--text-primary)" }}>AI Recommended Tools</h3>
                 <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-                  Based on your project niches & goals
+                  Suggestions based on your niches, goals, and current project mix.
                 </p>
               </div>
             </div>
@@ -328,12 +319,9 @@ export default function Dashboard() {
               <button
                 onClick={handleGetRecommendations}
                 disabled={loadingRecs || projects.length === 0}
-                className="px-4 py-2 rounded-xl font-semibold text-white transition-all hover:brightness-110 disabled:opacity-50"
-                style={{
-                  background: "linear-gradient(135deg, var(--accent-amber), #D97706)",
-                }}
+                className="btn-secondary rounded-2xl px-4 py-2.5 text-sm font-semibold disabled:opacity-50"
               >
-                {loadingRecs ? "⚡ Thinking..." : "⚡ Get Suggestions"}
+                {loadingRecs ? "Thinking..." : "Get Suggestions"}
               </button>
             )}
           </div>
@@ -351,11 +339,10 @@ export default function Dashboard() {
               {[1, 2, 3].map((i) => (
                 <div
                   key={i}
-                  className="glass-card p-4 animate-pulse"
-                  style={{ background: "var(--bg-elevated)" }}
+                className="premium-card p-4 animate-pulse"
                 >
-                  <div className="h-4 bg-gray-600 rounded mb-2" />
-                  <div className="h-3 bg-gray-700 rounded w-3/4" />
+                  <div className="h-4 bg-slate-200 rounded mb-2" />
+                  <div className="h-3 bg-slate-100 rounded w-3/4" />
                 </div>
               ))}
             </div>
@@ -364,7 +351,7 @@ export default function Dashboard() {
           {recommendations.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {recommendations.map((rec, i) => (
-                <div key={i} className="glass-card p-4 space-y-3">
+                <div key={i} className="premium-card p-4 space-y-3">
                   <div className="flex items-start justify-between">
                     <h4 className="font-semibold" style={{ color: "var(--text-primary)" }}>{rec.name}</h4>
                     <span
@@ -381,10 +368,9 @@ export default function Dashboard() {
                     {rec.description}
                   </p>
                   <button
-                    className="w-full px-3 py-2 rounded-lg text-sm font-semibold transition-all hover:brightness-110"
-                    style={{ background: "var(--brand)", color: "white" }}
+                    className="btn-primary w-full rounded-xl px-3 py-2 text-sm font-semibold"
                   >
-                    Build →
+                    Build
                   </button>
                 </div>
               ))}
@@ -393,18 +379,16 @@ export default function Dashboard() {
         </div>
 
         {/* Your Projects Section */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
+        <div className="premium-card p-6">
+          <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <h2
-              className="text-xs font-bold tracking-wider"
-              style={{ color: "var(--text-muted)", letterSpacing: "0.1em" }}
+              className="section-eyebrow"
             >
               YOUR PROJECTS
             </h2>
             <Link to="/projects/new">
               <button
-                className="flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-white transition-all hover:brightness-110"
-                style={{ background: "var(--brand)" }}
+                className="btn-primary flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold"
               >
                 <Plus className="w-4 h-4" />
                 New Project
@@ -413,7 +397,7 @@ export default function Dashboard() {
           </div>
 
           {/* Filters */}
-          <div className="flex items-center gap-3 mb-6">
+          <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center">
             <div className="flex-1 relative">
               <Search
                 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
@@ -424,23 +408,13 @@ export default function Dashboard() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search by name or niche..."
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl transition-all"
-                style={{
-                  background: "var(--bg-elevated)",
-                  border: "1px solid var(--border-strong)",
-                  color: "var(--text-primary)",
-                }}
+                className="input-premium w-full pl-10 pr-4 py-3 text-sm"
               />
             </div>
             <select
               value={goalFilter}
               onChange={(e) => setGoalFilter(e.target.value)}
-              className="px-4 py-2.5 rounded-xl transition-all"
-              style={{
-                background: "var(--bg-elevated)",
-                border: "1px solid var(--border-strong)",
-                color: "var(--text-primary)",
-              }}
+              className="input-premium px-4 py-3 text-sm"
             >
               <option value="all">All Goals</option>
               <option value="backlinks">Backlinks</option>
@@ -457,7 +431,7 @@ export default function Dashboard() {
             </div>
           ) : filteredProjects.length === 0 ? (
             <div
-              className="rounded-2xl p-12 text-center"
+              className="rounded-[24px] p-12 text-center"
               style={{
                 background: "var(--bg-elevated)",
                 border: "1px solid var(--border)",
@@ -482,13 +456,9 @@ export default function Dashboard() {
               {projects.length === 0 && (
                 <Link to="/projects/new">
                   <button
-                    className="px-6 py-3 rounded-xl font-semibold text-white transition-all hover:brightness-110"
-                    style={{
-                      background: "linear-gradient(135deg, #7C5CFC, #5A3FD4)",
-                      boxShadow: "0 0 20px var(--brand-glow)",
-                    }}
+                    className="btn-primary rounded-2xl px-6 py-3 font-semibold"
                   >
-                    + Create Your First Project
+                    Create Your First Project
                   </button>
                 </Link>
               )}
@@ -498,10 +468,9 @@ export default function Dashboard() {
               {filteredProjects.map((project, index) => (
                 <div
                   key={project.id}
-                  className="w-full glass-card p-5 flex items-center gap-4 hover:scale-[1.01] transition-all group relative"
+                  className="w-full rounded-3xl border border-[var(--border)] bg-white/80 p-4 transition-all hover:border-[rgba(99,91,255,0.22)] hover:shadow-sm md:p-5 flex items-center gap-4 group relative"
                   style={{
-                    borderColor: hoveredProject === project.id ? "var(--brand)" : "var(--border)",
-                    boxShadow: hoveredProject === project.id ? "0 0 20px var(--brand-glow)" : "none",
+                    borderColor: hoveredProject === project.id ? "rgba(99, 91, 255, 0.24)" : "var(--border)",
                   }}
                   onMouseEnter={() => setHoveredProject(project.id)}
                   onMouseLeave={() => setHoveredProject(null)}
@@ -511,8 +480,8 @@ export default function Dashboard() {
                     className="flex items-center gap-4 flex-1 min-w-0"
                   >
                     <div
-                      className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-white text-lg flex-shrink-0"
-                      style={{ background: getProjectColor(index) }}
+                      className="w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-white text-lg flex-shrink-0 shadow-sm"
+                      style={{ background: `linear-gradient(135deg, ${getProjectColor(index)}, var(--brand-dim))` }}
                     >
                       {getProjectInitial(project.name)}
                     </div>
@@ -544,7 +513,7 @@ export default function Dashboard() {
                       <>
                         <button
                           onClick={(e) => handleArchiveProject(e, project)}
-                          className="p-2 rounded-lg transition-all hover:brightness-110"
+                          className="p-2 rounded-xl transition-all hover:brightness-110"
                           style={{
                             background: "rgba(245, 158, 11, 0.15)",
                             color: "var(--accent-amber)",
@@ -555,7 +524,7 @@ export default function Dashboard() {
                         </button>
                         <button
                           onClick={(e) => handleDeleteClick(e, project)}
-                          className="p-2 rounded-lg transition-all hover:brightness-110"
+                          className="p-2 rounded-xl transition-all hover:brightness-110"
                           style={{
                             background: "rgba(239, 68, 68, 0.15)",
                             color: "#EF4444",

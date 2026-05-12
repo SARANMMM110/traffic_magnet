@@ -5,15 +5,28 @@ import { useToast } from "@/react-app/components/Toast";
 import { NICHE_TEMPLATES } from "@/react-app/data/niches";
 import {
   ArrowLeft,
+  BadgeDollarSign,
+  BriefcaseBusiness,
+  Building2,
   ChevronDown,
   ChevronUp,
+  Dumbbell,
+  GraduationCap,
+  HeartPulse,
+  Home,
   Link2,
   Mail,
-  TrendingUp,
   MessageCircle,
+  PawPrint,
+  Plane,
+  Scale,
+  Search,
+  ShoppingBag,
   Loader2,
   AlertTriangle,
   Sparkles,
+  TrendingUp,
+  Utensils,
 } from "lucide-react";
 
 const getNicheColor = (index: number): string => {
@@ -51,6 +64,27 @@ const GOALS = [
     description: "Keep visitors on your site longer",
   },
 ];
+
+const NICHE_ICONS = [
+  Search,
+  BadgeDollarSign,
+  BriefcaseBusiness,
+  Building2,
+  Dumbbell,
+  TrendingUp,
+  BadgeDollarSign,
+  GraduationCap,
+  ShoppingBag,
+  PawPrint,
+  BadgeDollarSign,
+  Scale,
+  Home,
+  HeartPulse,
+  Utensils,
+  Plane,
+];
+
+const getNicheIcon = (index: number) => NICHE_ICONS[index % NICHE_ICONS.length];
 
 export default function NewProject() {
   const navigate = useNavigate();
@@ -228,37 +262,40 @@ export default function NewProject() {
 
   return (
     <DashboardLayout>
-      <div className="p-8 max-w-[720px] mx-auto">
+      <div className="page-shell max-w-[980px]">
         {/* Header */}
         <Link
           to="/dashboard"
-          className="inline-flex items-center gap-2 mb-4 text-sm hover:underline"
+          className="inline-flex items-center gap-2 mb-5 text-sm font-semibold transition-colors hover:text-[var(--brand)]"
           style={{ color: "var(--text-muted)" }}
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Projects
         </Link>
 
-        <h1 className="text-3xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>
-          Create Traffic Magnet Project
-        </h1>
-        <p className="text-base mb-8" style={{ color: "var(--text-muted)" }}>
-          Tell us your niche and we'll discover your best traffic magnet opportunities.
-        </p>
+        <div className="surface-panel mb-8 p-8">
+          <div className="section-eyebrow mb-3">Project Brief</div>
+          <h1 className="text-4xl font-bold leading-tight" style={{ color: "var(--text-primary)" }}>
+            Create a Traffic Magnet Project
+          </h1>
+          <p className="mt-3 max-w-2xl text-base leading-7" style={{ color: "var(--text-secondary)" }}>
+            Define your market, audience, and growth goal. The AI will turn the brief into high-value tool opportunities.
+          </p>
+        </div>
 
         {/* Hint if coming from niche selector */}
         {locationState?.niche && (
           <div
-            className="mb-6 p-4 rounded-xl flex items-start gap-3"
+            className="mb-6 flex items-start gap-3 rounded-2xl p-4"
             style={{
-              background: "rgba(124, 92, 252, 0.1)",
-              border: "1px solid rgba(124, 92, 252, 0.3)",
+              background: "var(--brand-soft)",
+              border: "1px solid rgba(99, 91, 255, 0.18)",
             }}
           >
             <Sparkles className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: "var(--brand)" }} />
             <div>
               <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
-                Selected: {locationState.niche} {locationState.subTopic && `→ ${locationState.subTopic}`}
+                Selected: {locationState.niche} {locationState.subTopic && `/ ${locationState.subTopic}`}
               </p>
               <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
                 You can edit the niche below or continue with this selection.
@@ -271,14 +308,12 @@ export default function NewProject() {
         <div className="mb-8">
           <button
             onClick={() => setGalleryOpen(!galleryOpen)}
-            className="w-full flex items-center justify-between p-4 rounded-xl transition-all mb-4"
-            style={{
-              background: "var(--bg-elevated)",
-              border: "1px solid var(--border)",
-            }}
+            className="premium-card mb-4 flex w-full items-center justify-between p-4 text-left"
           >
             <span className="text-sm font-medium flex items-center gap-2" style={{ color: "var(--text-primary)" }}>
-              <Sparkles className="w-4 h-4" style={{ color: "var(--brand)" }} />
+              <span className="icon-tile h-9 w-9 rounded-xl">
+                <Sparkles className="w-4 h-4" />
+              </span>
               Start from a template
               <span className="ml-3" style={{ color: "var(--text-muted)" }}>
                 16 niches
@@ -293,14 +328,21 @@ export default function NewProject() {
 
           {galleryOpen && (
             <div className="space-y-4 animate-fade-in-up">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                {NICHE_TEMPLATES.map((template, index) => (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                {NICHE_TEMPLATES.map((template, index) => {
+                  const NicheIcon = getNicheIcon(index);
+                  return (
                   <div key={template.id} className="space-y-2">
                     <button
                       onClick={() => handleNicheClick(template.id)}
-                      className="w-full glass-card p-4 text-left hover:scale-105 transition-all"
+                      className="premium-card flex h-full min-h-[172px] w-full flex-col p-4 text-left"
                     >
-                      <div className="text-2xl mb-2">{template.emoji}</div>
+                      <div
+                        className="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl border bg-white shadow-sm"
+                        style={{ borderColor: `${getNicheColor(index)}25`, color: getNicheColor(index) }}
+                      >
+                        <NicheIcon className="h-5 w-5" />
+                      </div>
                       <h3
                         className="font-semibold mb-1 text-sm"
                         style={{ color: getNicheColor(index) }}
@@ -310,8 +352,8 @@ export default function NewProject() {
                       <p className="text-xs mb-2" style={{ color: "var(--text-muted)" }}>
                         {template.description}
                       </p>
-                      <p className="text-xs" style={{ color: getNicheColor(index) }}>
-                        ↓ {template.subTopics.length} sub-topics
+                      <p className="mt-auto text-xs font-semibold" style={{ color: getNicheColor(index) }}>
+                        {template.subTopics.length} sub-topics
                       </p>
                     </button>
 
@@ -321,7 +363,7 @@ export default function NewProject() {
                           <button
                             key={subIndex}
                             onClick={() => handleSubTopicClick(subTopic, template)}
-                            className="w-full px-3 py-2 rounded-lg text-left text-sm transition-all hover:brightness-110"
+                            className="w-full rounded-xl px-3 py-2 text-left text-sm font-medium transition-all hover:brightness-105"
                             style={{
                               background: `${getNicheColor(index)}20`,
                               color: getNicheColor(index),
@@ -333,7 +375,8 @@ export default function NewProject() {
                       </div>
                     )}
                   </div>
-                ))}
+                  );
+                })}
               </div>
 
               <p className="text-center text-sm italic" style={{ color: "var(--text-muted)" }}>
@@ -344,7 +387,7 @@ export default function NewProject() {
         </div>
 
         {/* Project Form */}
-        <form onSubmit={handleSubmit} className="glass-card p-8 space-y-6">
+        <form onSubmit={handleSubmit} className="premium-card space-y-6 p-8">
           {/* Niche */}
           <div className="space-y-2">
             <label className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
@@ -355,12 +398,7 @@ export default function NewProject() {
               value={niche}
               onChange={(e) => setNiche(e.target.value.slice(0, 120))}
               placeholder="e.g. Email marketing, Fitness coaching, SaaS tools..."
-              className="w-full px-4 py-3 rounded-xl transition-all"
-              style={{
-                background: "var(--bg-elevated)",
-                border: "1px solid var(--border-strong)",
-                color: "var(--text-primary)",
-              }}
+              className="input-premium w-full px-4 py-3 transition-all"
               required
             />
             <div className="flex justify-end">
@@ -378,12 +416,7 @@ export default function NewProject() {
               value={projectName}
               onChange={(e) => setProjectName(e.target.value)}
               placeholder="e.g. Email Marketing Traffic Assets"
-              className="w-full px-4 py-3 rounded-xl transition-all"
-              style={{
-                background: "var(--bg-elevated)",
-                border: "1px solid var(--border-strong)",
-                color: "var(--text-primary)",
-              }}
+              className="input-premium w-full px-4 py-3 transition-all"
             />
             <p className="text-xs" style={{ color: "var(--text-muted)" }}>
               Auto-generated from your niche if left blank
@@ -397,10 +430,8 @@ export default function NewProject() {
               <button
                 type="button"
                 onClick={() => setGoalDropdownOpen(!goalDropdownOpen)}
-                className="w-full px-4 py-3 rounded-xl text-left flex items-center justify-between transition-all"
+                className="input-premium flex w-full items-center justify-between px-4 py-3 text-left transition-all"
                 style={{
-                  background: "var(--bg-elevated)",
-                  border: "1px solid var(--border-strong)",
                   color: goal ? "var(--text-primary)" : "var(--text-muted)",
                 }}
               >
@@ -414,9 +445,9 @@ export default function NewProject() {
 
               {goalDropdownOpen && (
                 <div
-                  className="absolute z-10 w-full mt-2 rounded-xl overflow-hidden"
+                  className="absolute z-10 mt-2 w-full overflow-hidden rounded-2xl shadow-xl"
                   style={{
-                    background: "var(--bg-elevated)",
+                    background: "rgba(255, 255, 255, 0.96)",
                     border: "1px solid var(--border-strong)",
                   }}
                 >
@@ -430,7 +461,7 @@ export default function NewProject() {
                           setGoal(goalOption.value);
                           setGoalDropdownOpen(false);
                         }}
-                        className="w-full px-4 py-3 text-left flex items-start gap-3 hover:brightness-110 transition-all"
+                        className="flex w-full items-start gap-3 px-4 py-3 text-left transition-all hover:bg-[var(--bg-overlay)]"
                         style={{
                           background:
                             goal === goalOption.value ? "var(--brand-glow)" : "transparent",
@@ -438,7 +469,7 @@ export default function NewProject() {
                       >
                         <Icon className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: "var(--brand)" }} />
                         <div>
-                          <p className="font-medium text-white text-sm">
+                          <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
                             {goalOption.label}
                           </p>
                           <p className="text-xs" style={{ color: "var(--text-muted)" }}>
@@ -455,7 +486,7 @@ export default function NewProject() {
 
           {/* Target Audience */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-white">
+            <label className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
               Target Audience (optional)
             </label>
             <input
@@ -463,12 +494,7 @@ export default function NewProject() {
               value={audience}
               onChange={(e) => setAudience(e.target.value)}
               placeholder="e.g. Small business owners, freelancers, SaaS founders..."
-              className="w-full px-4 py-3 rounded-xl transition-all"
-              style={{
-                background: "var(--bg-elevated)",
-                border: "1px solid var(--border-strong)",
-                color: "var(--text-primary)",
-              }}
+              className="input-premium w-full px-4 py-3 transition-all"
             />
           </div>
 
@@ -483,8 +509,8 @@ export default function NewProject() {
             >
               <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-medium text-white">
-                  ⊗ You have used all your Traffic Magnets. Upgrade your plan to create more
+                <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
+                  You have used all your Traffic Magnets. Upgrade your plan to create more
                   projects.
                 </p>
                 <Link
@@ -492,7 +518,7 @@ export default function NewProject() {
                   className="text-sm font-medium mt-1 inline-block hover:underline"
                   style={{ color: "var(--brand)" }}
                 >
-                  Upgrade Plan →
+                  Upgrade Plan
                 </Link>
               </div>
             </div>
@@ -503,23 +529,19 @@ export default function NewProject() {
             <Link to="/settings" className="block">
               <button
                 type="button"
-                className="w-full px-6 py-4 rounded-xl font-semibold text-white transition-all hover:brightness-110"
+                className="w-full rounded-2xl px-6 py-4 font-semibold text-white transition-all hover:brightness-110"
                 style={{
                   background: "linear-gradient(135deg, #F59E0B, #D97706)",
                 }}
               >
-                ⚠ Add API Key in Settings First
+                Add API Key in Settings First
               </button>
             </Link>
           ) : (
             <button
               type="submit"
               disabled={loading || isAtLimit || !niche.trim()}
-              className="w-full px-6 py-4 rounded-xl font-semibold text-white transition-all hover:brightness-110 disabled:opacity-50"
-              style={{
-                background: "linear-gradient(135deg, #7C5CFC, #5A3FD4)",
-                boxShadow: "0 0 20px var(--brand-glow)",
-              }}
+              className="btn-primary w-full rounded-2xl px-6 py-4 font-semibold disabled:opacity-50"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
@@ -527,23 +549,23 @@ export default function NewProject() {
                   Analyzing your niche...
                 </span>
               ) : (
-                "⚡ Discover Traffic Magnets"
+                "Discover Traffic Magnets"
               )}
             </button>
           )}
         </form>
 
         {/* Footer */}
-        <div className="mt-16 pt-8" style={{ borderTop: "1px solid var(--border)" }}>
+        <div className="premium-footer mt-12 p-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
             <div>
-              <h4 className="text-sm font-bold text-white mb-3">Our Other Apps</h4>
+              <h4 className="text-sm font-bold mb-3" style={{ color: "var(--text-primary)" }}>Our Other Apps</h4>
               <ul className="space-y-2 text-sm" style={{ color: "var(--text-secondary)" }}>
                 <li>AI Agent Factory <span style={{ color: "var(--accent-amber)" }}>(Coming Soon!)</span></li>
               </ul>
             </div>
             <div>
-              <h4 className="text-sm font-bold text-white mb-3">Free SEO Tools</h4>
+              <h4 className="text-sm font-bold mb-3" style={{ color: "var(--text-primary)" }}>Free SEO Tools</h4>
               <ul className="space-y-2 text-sm" style={{ color: "var(--text-secondary)" }}>
                 <li>AI Bot Checker</li>
                 <li>Traffic Magnets Opportunity Finder</li>
@@ -552,7 +574,7 @@ export default function NewProject() {
               </ul>
             </div>
             <div>
-              <h4 className="text-sm font-bold text-white mb-3">Free Traffic Tools</h4>
+              <h4 className="text-sm font-bold mb-3" style={{ color: "var(--text-primary)" }}>Free Traffic Tools</h4>
               <ul className="space-y-2 text-sm" style={{ color: "var(--text-secondary)" }}>
                 <li>HookViral</li>
                 <li>AI Writing Studio</li>
@@ -560,7 +582,7 @@ export default function NewProject() {
               </ul>
             </div>
             <div>
-              <h4 className="text-sm font-bold text-white mb-3">Free Marketing Tools</h4>
+              <h4 className="text-sm font-bold mb-3" style={{ color: "var(--text-primary)" }}>Free Marketing Tools</h4>
               <ul className="space-y-2 text-sm" style={{ color: "var(--text-secondary)" }}>
                 <li>HookViral</li>
                 <li>AI Writing Studio</li>
@@ -572,7 +594,7 @@ export default function NewProject() {
 
           <div className="text-center pt-6" style={{ borderTop: "1px solid var(--border)" }}>
             <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-              ⚡ Magnet Lab App by VibeLabs © {new Date().getFullYear()}
+              Traffic Magnet by VibeLabs © {new Date().getFullYear()}
             </p>
           </div>
         </div>

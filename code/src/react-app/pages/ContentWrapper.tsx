@@ -1406,25 +1406,28 @@ export default function ContentWrapper() {
 
   return (
     <DashboardLayout>
-      <div className="p-6 max-w-4xl mx-auto">
+      <div className="page-shell max-w-6xl">
         {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center gap-3 mb-2">
-            <FileText className="w-7 h-7" style={{ color: "#a78bfa" }} />
-            <h1 className="text-3xl font-bold text-foreground">Content Wrapper</h1>
+        <div className="surface-panel mb-6 p-8">
+          <div className="mb-3 flex items-center gap-3">
+            <div className="icon-tile">
+              <FileText className="w-5 h-5" />
+            </div>
+            <div className="section-eyebrow">Publishing Studio</div>
           </div>
-          <p className="text-sm text-muted-foreground">
-            Generate a complete SEO content package to wrap around your embedded tool widget.
+          <h1 className="text-4xl font-bold text-foreground">Content Wrapper</h1>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
+            Generate an SEO content package, full-page HTML, and a live preview around any embedded AI tool.
           </p>
         </div>
 
         {/* Tabs */}
-        <div className="bg-background rounded-2xl p-1 mb-6 flex gap-1 max-w-xl">
+        <div className="tab-pill mb-6 flex max-w-xl gap-1">
           <button
             onClick={() => setActiveTab("generate")}
             className={`flex-1 py-3 px-4 rounded-xl font-medium text-sm transition-all flex items-center justify-center gap-2 ${
               activeTab === "generate"
-                ? "bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-md"
+                ? "bg-white text-[var(--brand)] shadow-sm"
                 : "bg-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
@@ -1435,7 +1438,7 @@ export default function ContentWrapper() {
             onClick={() => setActiveTab("saved")}
             className={`flex-1 py-3 px-4 rounded-xl font-medium text-sm transition-all flex items-center justify-center gap-2 ${
               activeTab === "saved"
-                ? "bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-md"
+                ? "bg-white text-[var(--brand)] shadow-sm"
                 : "bg-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
@@ -1448,7 +1451,7 @@ export default function ContentWrapper() {
         {activeTab === "generate" && (
           <div className="space-y-5">
             {/* Input Form */}
-            <div className="bg-card border border-border rounded-2xl p-6 space-y-5">
+            <div className="premium-card space-y-5 p-6">
               {/* Blueprint */}
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
@@ -1458,13 +1461,13 @@ export default function ContentWrapper() {
                   value={blueprint}
                   onChange={(e) => handleBlueprintChange(e.target.value)}
                   placeholder="Paste your generated blueprint here — or paste a 'Copy All for Content Wrapper' bundle to auto-fill everything..."
-                  className="w-full px-4 py-3 bg-background border border-input rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 transition-shadow"
+                  className="input-premium w-full px-4 py-3 text-sm resize-none transition-shadow"
                   rows={6}
                 />
               </div>
 
               {/* Two Column Row */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
                     Target Keyword
@@ -1474,7 +1477,7 @@ export default function ContentWrapper() {
                     value={targetKeyword}
                     onChange={(e) => setTargetKeyword(e.target.value)}
                     placeholder="e.g., mortgage calculator"
-                    className="w-full px-4 py-2.5 bg-background border border-input rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 transition-shadow"
+                    className="input-premium w-full px-4 py-3 text-sm transition-shadow"
                   />
                 </div>
                 <div>
@@ -1486,7 +1489,7 @@ export default function ContentWrapper() {
                     value={nicheTopic}
                     onChange={(e) => setNicheTopic(e.target.value)}
                     placeholder="e.g., personal finance"
-                    className="w-full px-4 py-2.5 bg-background border border-input rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 transition-shadow"
+                    className="input-premium w-full px-4 py-3 text-sm transition-shadow"
                   />
                 </div>
               </div>
@@ -1503,7 +1506,7 @@ export default function ContentWrapper() {
                   value={embedCode}
                   onChange={(e) => setEmbedCode(e.target.value)}
                   placeholder="Paste your widget embed code here (auto-filled when using Copy All for Content Wrapper)..."
-                  className="w-full px-4 py-3 bg-muted/30 border border-input rounded-xl text-sm font-mono resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 transition-shadow"
+                  className="input-premium w-full px-4 py-3 text-sm font-mono resize-none transition-shadow"
                   rows={4}
                 />
               </div>
@@ -1515,7 +1518,7 @@ export default function ContentWrapper() {
                     type="checkbox"
                     checked={includeCta}
                     onChange={(e) => handleCtaCheckboxChange(e.target.checked)}
-                    className="w-4 h-4 rounded border-input accent-purple-600"
+                    className="premium-check"
                   />
                   <span className="text-sm font-medium text-foreground">
                     Include a Call to Action
@@ -1530,14 +1533,14 @@ export default function ContentWrapper() {
                       value={ctaGoal}
                       onChange={(e) => setCtaGoal(e.target.value)}
                       placeholder="CTA goal (e.g., Sign up for free)"
-                      className="w-full px-4 py-2.5 bg-background border border-input rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 transition-shadow"
+                      className="input-premium w-full px-4 py-3 text-sm transition-shadow"
                     />
                     <input
                       type="text"
                       value={ctaUrl}
                       onChange={(e) => setCtaUrl(e.target.value)}
                       placeholder="URL"
-                      className="w-full px-4 py-2.5 bg-background border border-input rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 transition-shadow"
+                      className="input-premium w-full px-4 py-3 text-sm transition-shadow"
                     />
                   </div>
                 )}
@@ -1547,7 +1550,7 @@ export default function ContentWrapper() {
               <button
                 onClick={handleGenerate}
                 disabled={generating || !blueprint || !targetKeyword || !nicheTopic}
-                className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-semibold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                className="btn-primary flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 font-semibold disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {generating ? (
                   <>
@@ -1574,21 +1577,21 @@ export default function ContentWrapper() {
                       navigator.clipboard.writeText(content);
                       showToast({ type: "success", title: "Copied!", message: "Content copied to clipboard" });
                     }}
-                    className="flex-1 py-2.5 bg-card border border-border hover:bg-muted/30 text-foreground font-medium rounded-xl transition-all flex items-center justify-center gap-2"
+                    className="btn-secondary flex-1 rounded-2xl py-2.5 font-medium flex items-center justify-center gap-2"
                   >
                     <Copy className="w-4 h-4" />
                     Copy All
                   </button>
                   <button
                     onClick={() => setShowSaveModal(true)}
-                    className="flex-1 py-2.5 bg-card border border-border hover:bg-muted/30 text-foreground font-medium rounded-xl transition-all flex items-center justify-center gap-2"
+                    className="btn-secondary flex-1 rounded-2xl py-2.5 font-medium flex items-center justify-center gap-2"
                   >
                     <Save className="w-4 h-4" />
                     Save Campaign
                   </button>
                   <button
                     onClick={handleExportHTML}
-                    className="flex-1 py-2.5 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-medium rounded-xl transition-all flex items-center justify-center gap-2 shadow-md"
+                    className="btn-primary flex-1 rounded-2xl py-2.5 font-medium flex items-center justify-center gap-2"
                   >
                     <Download className="w-4 h-4" />
                     Export HTML
@@ -1596,7 +1599,7 @@ export default function ContentWrapper() {
                 </div>
 
                 {/* Content Preview Card */}
-                <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
+                <div className="premium-card p-6 space-y-4">
                   <div>
                     <div className="text-xs font-medium text-muted-foreground mb-1">META TITLE</div>
                     <div className="text-sm text-foreground">{contentPackage.meta_title}</div>
@@ -1642,7 +1645,7 @@ export default function ContentWrapper() {
                 </div>
 
                 {/* Build Full Page Section */}
-                <div className="bg-card border border-border rounded-2xl p-6">
+                <div className="premium-card p-6">
                   <h3 className="text-lg font-bold text-foreground mb-4">Build a Full Page</h3>
                   
                   {!fullPageGenerated ? (
@@ -1656,7 +1659,7 @@ export default function ContentWrapper() {
                       <button
                         onClick={handleGenerateFullHtmlPage}
                         disabled={isGeneratingHtml}
-                        className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-semibold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                        className="btn-primary flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 font-semibold disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {isGeneratingHtml ? (
                           <>
@@ -1678,21 +1681,21 @@ export default function ContentWrapper() {
                       <div className="flex gap-3">
                         <button
                           onClick={handleDownloadHtml}
-                          className="flex-1 py-3 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                          className="btn-primary flex-1 rounded-2xl py-3 font-semibold flex items-center justify-center gap-2"
                         >
                           <Download className="w-5 h-5" />
                           Download as HTML File
                         </button>
                         <button
                           onClick={handleCopyHtml}
-                          className="flex-1 py-3 bg-card border border-border hover:bg-muted/30 text-foreground font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
+                          className="btn-secondary flex-1 rounded-2xl py-3 font-semibold flex items-center justify-center gap-2"
                         >
                           <Copy className="w-5 h-5" />
                           Copy HTML
                         </button>
                         <button
                           onClick={handleRegenerateHtml}
-                          className="px-6 py-3 bg-card border border-border hover:bg-muted/30 text-foreground font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
+                          className="btn-secondary rounded-2xl px-6 py-3 font-semibold flex items-center justify-center gap-2"
                         >
                           Re-generate
                         </button>
@@ -1717,9 +1720,9 @@ export default function ContentWrapper() {
                             <p className="text-sm text-muted-foreground">{buildStep}</p>
                           </div>
                         ) : fullPageGenerated && generatedHtml ? (
-                          <div className="w-full rounded-3xl overflow-hidden border border-border bg-white shadow-lg">
+                          <div className="browser-frame w-full">
                             {/* Browser Chrome Header */}
-                            <div className="h-14 bg-gray-50 border-b border-border flex items-center px-5 gap-4">
+                            <div className="h-14 bg-slate-50 border-b border-border flex items-center px-5 gap-4">
                               <div className="flex gap-2">
                                 <span className="w-3 h-3 rounded-full bg-red-500"></span>
                                 <span className="w-3 h-3 rounded-full bg-yellow-500"></span>
@@ -1741,7 +1744,7 @@ export default function ContentWrapper() {
                             </div>
                           </div>
                         ) : (
-                          <div className="w-full rounded-xl bg-muted/20 border border-border p-12 text-center">
+                          <div className="w-full rounded-3xl bg-muted/20 border border-border p-12 text-center">
                             <FileCode className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-30" />
                             <p className="text-sm text-muted-foreground">
                               Click "Generate Full HTML Page" to build and preview your content
@@ -1751,7 +1754,7 @@ export default function ContentWrapper() {
                       </div>
 
                       {/* Publish to WordPress section */}
-                      <div className="bg-card border border-border rounded-xl p-4">
+                      <div className="premium-card rounded-2xl p-4">
                         <h4 className="text-sm font-semibold text-foreground mb-2">Publish to WordPress</h4>
                         <p className="text-sm text-muted-foreground">
                           Use the WordPress REST API or plugins like WP All Import to publish this page directly to your site. Download the HTML file or copy the code above.
@@ -1770,7 +1773,7 @@ export default function ContentWrapper() {
           <div>
             {loadingCampaigns ? (
               <div className="flex items-center justify-center py-20">
-                <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+                <Loader2 className="w-8 h-8 animate-spin text-[var(--brand)]" />
               </div>
             ) : Object.keys(campaignsByProject).length === 0 ? (
               <div className="text-center py-20">
@@ -1789,7 +1792,7 @@ export default function ContentWrapper() {
                   const isExpanded = expandedProjects.has(projectId);
 
                   return (
-                    <div key={projectId} className="bg-card border border-border rounded-xl overflow-hidden">
+                    <div key={projectId} className="premium-card overflow-hidden rounded-2xl">
                       {/* Project Header */}
                       <button
                         onClick={() => toggleProject(projectId)}
@@ -1803,7 +1806,7 @@ export default function ContentWrapper() {
                           )}
                           <span className="font-semibold text-foreground">{projectName}</span>
                         </div>
-                        <div className="px-2.5 py-0.5 bg-purple-500/10 text-purple-600 text-xs font-medium rounded-full">
+                        <div className="px-2.5 py-0.5 bg-[var(--brand-soft)] text-[var(--brand)] text-xs font-medium rounded-full">
                           {projectCampaigns.length} campaign{projectCampaigns.length !== 1 ? "s" : ""}
                         </div>
                       </button>
@@ -1818,9 +1821,9 @@ export default function ContentWrapper() {
                             >
                               <button
                                 onClick={() => handleLoadCampaign(campaign)}
-                                className="flex-1 text-left hover:bg-purple-500/5 -mx-4 -my-3.5 px-4 py-3.5 rounded-lg transition-all"
+                                className="flex-1 text-left hover:bg-[var(--brand-soft)] -mx-4 -my-3.5 px-4 py-3.5 rounded-xl transition-all"
                               >
-                                <div className="font-semibold text-sm text-foreground mb-1 group-hover:text-purple-600 transition-colors">
+                                <div className="font-semibold text-sm text-foreground mb-1 group-hover:text-[var(--brand)] transition-colors">
                                   {campaign.name}
                                 </div>
                                 <div className="flex items-center gap-3 text-xs text-muted-foreground">
@@ -1847,7 +1850,7 @@ export default function ContentWrapper() {
                                   e.stopPropagation();
                                   handleDeleteCampaign(campaign.id);
                                 }}
-                                className="p-2 hover:bg-red-500/10 text-red-500 rounded-lg transition-colors ml-2 opacity-0 group-hover:opacity-100"
+                                className="p-2 hover:bg-red-500/10 text-red-500 rounded-xl transition-colors ml-2 opacity-0 group-hover:opacity-100"
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
@@ -1866,11 +1869,11 @@ export default function ContentWrapper() {
         {/* Save Modal */}
         {showSaveModal && (
           <div
-            className="fixed inset-0 flex items-center justify-center z-50 p-4 bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 flex items-center justify-center z-50 p-4 bg-slate-950/45 backdrop-blur-sm"
             onClick={() => setShowSaveModal(false)}
           >
             <div
-              className="bg-card border border-border p-6 max-w-md w-full rounded-2xl shadow-2xl"
+              className="premium-card p-6 max-w-md w-full rounded-3xl shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
               <h3 className="text-xl font-bold text-foreground mb-4">Save Campaign</h3>
@@ -1879,7 +1882,7 @@ export default function ContentWrapper() {
                 value={campaignName}
                 onChange={(e) => setCampaignName(e.target.value)}
                 placeholder="Enter campaign name..."
-                className="w-full px-4 py-3 bg-background border border-input rounded-xl text-sm mb-5 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="input-premium mb-5 w-full px-4 py-3 text-sm"
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && campaignName) {
@@ -1890,14 +1893,14 @@ export default function ContentWrapper() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowSaveModal(false)}
-                  className="flex-1 px-6 py-2.5 bg-background border border-input hover:bg-muted/30 text-foreground font-medium rounded-xl transition-all"
+                  className="btn-secondary flex-1 rounded-2xl px-6 py-2.5 font-medium"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSaveCampaign}
                   disabled={!campaignName}
-                  className="flex-1 px-6 py-2.5 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-medium rounded-xl transition-all disabled:opacity-50 shadow-md"
+                  className="btn-primary flex-1 rounded-2xl px-6 py-2.5 font-medium disabled:opacity-50"
                 >
                   Save
                 </button>

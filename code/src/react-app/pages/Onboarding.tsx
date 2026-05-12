@@ -1,18 +1,20 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
-import { Check, Key, Eye, EyeOff, ExternalLink, Sparkles, Target, Bolt, TrendingUp, Copy } from "lucide-react";
+import { BadgeDollarSign, BriefcaseBusiness, Check, Copy, Dumbbell, Eye, EyeOff, ExternalLink, Key, Search, ShoppingBag, Sparkles, Target, Bolt, TrendingUp } from "lucide-react";
 
 type Step = 1 | 2 | 3 | 4 | 5 | 6;
 type Provider = "openai" | "anthropic" | null;
 
 const NICHE_TEMPLATES = [
-  { emoji: "🔍", name: "SEO Agency", value: "SEO agency" },
-  { emoji: "💰", name: "Affiliate Marketing", value: "affiliate marketing" },
-  { emoji: "💼", name: "SaaS Product", value: "SaaS product" },
-  { emoji: "💪", name: "Health & Fitness", value: "health and fitness" },
-  { emoji: "📊", name: "Personal Finance", value: "personal finance" },
-  { emoji: "🛒", name: "E-Commerce", value: "e-commerce" },
+  { name: "SEO Agency", value: "SEO agency" },
+  { name: "Affiliate Marketing", value: "affiliate marketing" },
+  { name: "SaaS Product", value: "SaaS product" },
+  { name: "Health & Fitness", value: "health and fitness" },
+  { name: "Personal Finance", value: "personal finance" },
+  { name: "E-Commerce", value: "e-commerce" },
 ];
+
+const NICHE_ICONS = [Search, BadgeDollarSign, BriefcaseBusiness, Dumbbell, TrendingUp, ShoppingBag];
 
 const GOALS = [
   { value: "backlinks", label: "Drive Backlinks" },
@@ -365,7 +367,7 @@ export default function Onboarding() {
                     boxShadow: "0 0 20px var(--brand-glow)",
                   }}
                 >
-                  {savingKey ? "Saving..." : "Save Key & Continue →"}
+                  {savingKey ? "Saving..." : "Save Key & Continue"}
                 </button>
               </div>
             )}
@@ -396,15 +398,12 @@ export default function Onboarding() {
 
             {/* Flow Diagram */}
             <div className="space-y-4">
-              <div className="glass-card p-6 space-y-3">
-                <div
-                  className="w-12 h-12 rounded-xl flex items-center justify-center"
-                  style={{ background: "rgba(124, 92, 252, 0.15)" }}
-                >
+              <div className="premium-card p-6 space-y-3">
+                <div className="icon-tile h-12 w-12">
                   <Target className="w-6 h-6" style={{ color: "var(--brand)" }} />
                 </div>
                 <h3 className="text-lg font-bold" style={{ color: "var(--text-primary)" }}>
-                  🎯 Pick a Niche
+                  Pick a Niche
                 </h3>
                 <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
                   Tell us your market — SEO, fitness, finance, etc.
@@ -415,15 +414,12 @@ export default function Onboarding() {
                 <div className="w-px h-8" style={{ background: "var(--border)" }} />
               </div>
 
-              <div className="glass-card p-6 space-y-3">
-                <div
-                  className="w-12 h-12 rounded-xl flex items-center justify-center"
-                  style={{ background: "rgba(245, 158, 11, 0.15)" }}
-                >
+              <div className="premium-card p-6 space-y-3">
+                <div className="icon-tile h-12 w-12 text-[var(--accent-amber)]">
                   <Bolt className="w-6 h-6" style={{ color: "var(--accent-amber)" }} />
                 </div>
                 <h3 className="text-lg font-bold" style={{ color: "var(--text-primary)" }}>
-                  ⚡ AI Finds Opportunities
+                  AI Finds Opportunities
                 </h3>
                 <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
                   AI scans your niche for tool ideas nobody has built yet
@@ -434,15 +430,12 @@ export default function Onboarding() {
                 <div className="w-px h-8" style={{ background: "var(--border)" }} />
               </div>
 
-              <div className="glass-card p-6 space-y-3">
-                <div
-                  className="w-12 h-12 rounded-xl flex items-center justify-center"
-                  style={{ background: "rgba(0, 208, 132, 0.15)" }}
-                >
+              <div className="premium-card p-6 space-y-3">
+                <div className="icon-tile h-12 w-12 text-[var(--accent-green)]">
                   <TrendingUp className="w-6 h-6" style={{ color: "var(--accent-green)" }} />
                 </div>
                 <h3 className="text-lg font-bold" style={{ color: "var(--text-primary)" }}>
-                  🔨 Build & Deploy
+                  Build & Deploy
                 </h3>
                 <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
                   AI writes the HTML. You embed it. Google sends traffic.
@@ -456,7 +449,7 @@ export default function Onboarding() {
               style={{ background: "rgba(245, 158, 11, 0.1)", border: "1px solid rgba(245, 158, 11, 0.3)" }}
             >
               <p className="text-sm" style={{ color: "var(--text-primary)" }}>
-                <strong>💡 Pro tip:</strong> You don't win one big keyword. You win dozens of small
+                <strong>Pro tip:</strong> You don't win one big keyword. You win dozens of small
                 ones. Each tool targets a specific search. They stack. Traffic compounds every month.
               </p>
             </div>
@@ -469,7 +462,7 @@ export default function Onboarding() {
                 boxShadow: "0 0 20px var(--brand-glow)",
               }}
             >
-              Got it, let's build →
+              Got it, let's build
             </button>
           </div>
         )}
@@ -488,18 +481,23 @@ export default function Onboarding() {
 
             {/* Niche Templates */}
             <div className="grid grid-cols-2 gap-3">
-              {NICHE_TEMPLATES.map((template, i) => (
+              {NICHE_TEMPLATES.map((template, i) => {
+                const NicheIcon = NICHE_ICONS[i % NICHE_ICONS.length];
+                return (
                 <button
                   key={i}
                   onClick={() => setNiche(template.value)}
-                  className="glass-card p-4 text-left hover:scale-105 transition-all"
+                  className="premium-card p-4 text-left transition-all"
                 >
-                  <div className="text-2xl mb-2">{template.emoji}</div>
+                  <div className="icon-tile mb-3 h-10 w-10">
+                    <NicheIcon className="h-5 w-5" />
+                  </div>
                   <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
                     {template.name}
                   </p>
                 </button>
-              ))}
+                );
+              })}
             </div>
 
             {/* Custom Niche Input */}
@@ -572,7 +570,7 @@ export default function Onboarding() {
                 boxShadow: "0 0 20px var(--brand-glow)",
               }}
             >
-              {creatingProject ? "Creating..." : "Create Project →"}
+              {creatingProject ? "Creating..." : "Create Project"}
             </button>
           </div>
         )}
@@ -608,7 +606,7 @@ export default function Onboarding() {
                 style={{ background: "rgba(244, 63, 94, 0.1)", border: "1px solid rgba(244, 63, 94, 0.3)" }}
               >
                 <p className="text-sm" style={{ color: "var(--text-primary)" }}>
-                  ⚠️ Add your API key in Step 1 to unlock AI generation
+                  Add your API key in Step 1 to unlock AI generation
                 </p>
               </div>
             )}
@@ -623,7 +621,7 @@ export default function Onboarding() {
                   boxShadow: "0 0 20px var(--brand-glow)",
                 }}
               >
-                {generatingIdeas ? "⚡ Analyzing your niche..." : "⚡ Generate My Tool Ideas"}
+                {generatingIdeas ? "Analyzing your niche..." : "Generate My Tool Ideas"}
               </button>
             )}
 
@@ -661,7 +659,7 @@ export default function Onboarding() {
                     boxShadow: "0 0 20px var(--brand-glow)",
                   }}
                 >
-                  See All Ideas →
+                  See All Ideas
                 </button>
               </div>
             )}
@@ -769,7 +767,7 @@ export default function Onboarding() {
                     boxShadow: "0 0 20px var(--brand-glow)",
                   }}
                 >
-                  Continue →
+                  Continue
                 </button>
               </div>
             )}
@@ -848,7 +846,7 @@ export default function Onboarding() {
                 boxShadow: "0 0 20px var(--brand-glow)",
               }}
             >
-              🎉 Go to My Dashboard →
+              Go to My Dashboard
             </button>
           </div>
         )}

@@ -347,19 +347,19 @@ export default function BlueprintView() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-4xl mx-auto p-8">
+      <div className="page-shell max-w-5xl">
         {/* Header */}
-        <div className="mb-6">
+        <div className="surface-panel mb-6 p-6">
           <button
             onClick={() => navigate("/magnets")}
-            className="flex items-center gap-2 mb-4 text-sm hover:opacity-70 transition-opacity"
+            className="mb-4 flex items-center gap-2 text-sm font-semibold transition-colors hover:text-[var(--brand)]"
             style={{ color: "var(--text-muted)" }}
           >
             <ArrowLeft className="w-4 h-4" />
             Back to My Magnets
           </button>
 
-          <div className="flex items-start justify-between">
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div>
               <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>
                 {tool.category} {project && `· ${project.name}`}
@@ -384,23 +384,23 @@ export default function BlueprintView() {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-2 mb-6">
+        <div className="tab-pill mb-6 flex w-fit flex-wrap gap-2">
           <button
             onClick={() => setPanelTab("blueprint")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all`}
+            className="rounded-xl px-4 py-2 text-sm font-medium transition-all"
             style={{
-              background: panelTab === "blueprint" ? "var(--text-primary)" : "transparent",
-              color: panelTab === "blueprint" ? "white" : "var(--text-muted)",
+              background: panelTab === "blueprint" ? "white" : "transparent",
+              color: panelTab === "blueprint" ? "var(--brand)" : "var(--text-muted)",
             }}
           >
             Blueprint
           </button>
           <button
             onClick={() => setPanelTab("variations")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all`}
+            className="rounded-xl px-4 py-2 text-sm font-medium transition-all"
             style={{
-              background: panelTab === "variations" ? "var(--text-primary)" : "transparent",
-              color: panelTab === "variations" ? "white" : "var(--text-muted)",
+              background: panelTab === "variations" ? "white" : "transparent",
+              color: panelTab === "variations" ? "var(--brand)" : "var(--text-muted)",
             }}
           >
             <span className="flex items-center gap-1">
@@ -412,10 +412,10 @@ export default function BlueprintView() {
           </button>
           <button
             onClick={() => setPanelTab("landing")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all`}
+            className="rounded-xl px-4 py-2 text-sm font-medium transition-all"
             style={{
-              background: panelTab === "landing" ? "var(--text-primary)" : "transparent",
-              color: panelTab === "landing" ? "white" : "var(--text-muted)",
+              background: panelTab === "landing" ? "white" : "transparent",
+              color: panelTab === "landing" ? "var(--brand)" : "var(--text-muted)",
             }}
           >
             <span className="flex items-center gap-1">
@@ -428,7 +428,7 @@ export default function BlueprintView() {
         </div>
 
         {/* Content */}
-        <div className="glass-card p-8">
+        <div className="premium-card p-8">
           {panelTab === "blueprint" && tool.blueprint && (
             <div className="space-y-6">
               {/* Purpose */}
@@ -535,7 +535,7 @@ export default function BlueprintView() {
                   <div className="space-y-2">
                     {features.map((feature: string, i: number) => (
                       <div key={i} className="text-sm flex items-start gap-2" style={{ color: "var(--text-primary)" }}>
-                        <span style={{ color: "#10B981" }}>•</span>
+                        <Check className="mt-0.5 h-4 w-4 flex-shrink-0" style={{ color: "#10B981" }} />
                         <span>{feature}</span>
                       </div>
                     ))}
@@ -676,7 +676,7 @@ export default function BlueprintView() {
                   <div className="space-y-4">
                     {/* Success Banner */}
                     <div className="text-center py-3 px-4 rounded-lg" style={{ background: "#DCFCE7", border: "1px solid #86EFAC", color: "#15803D" }}>
-                      {buildResult.action === "standalone" ? "✅ Standalone page ready!" : "✅ Embeddable widget ready!"}
+                      {buildResult.action === "standalone" ? "Standalone page ready!" : "Embeddable widget ready!"}
                     </div>
 
                     {/* Primary Action Button */}
@@ -692,10 +692,9 @@ export default function BlueprintView() {
                           URL.revokeObjectURL(url);
                           showToast({ title: "Downloaded!", type: "success" });
                         }}
-                        className="w-full py-3 rounded-lg font-semibold text-white transition-all hover:brightness-110"
-                        style={{ background: "#1A1A1A" }}
+                        className="btn-primary w-full rounded-2xl py-3 font-semibold"
                       >
-                        ⬇ Download .html File
+                        Download .html File
                       </button>
                     ) : (
                       <button
@@ -708,8 +707,7 @@ export default function BlueprintView() {
                             showToast({ title: "Failed to copy", type: "error" });
                           });
                         }}
-                        className="w-full py-3 rounded-lg font-semibold text-white transition-all hover:brightness-110"
-                        style={{ background: "#1A1A1A" }}
+                        className="btn-primary w-full rounded-2xl py-3 font-semibold"
                       >
                         {copied ? "Copied!" : "</> Copy Embed Code"}
                       </button>
@@ -733,10 +731,9 @@ export default function BlueprintView() {
                           showToast({ title: "Failed to copy", type: "error" });
                         });
                       }}
-                      className="w-full py-3 rounded-lg font-semibold text-white transition-all hover:brightness-110"
-                      style={{ background: "#7C5CFC" }}
+                      className="btn-secondary w-full rounded-2xl py-3 font-semibold"
                     >
-                      📋 Copy All for Content Wrapper
+                      Copy All for Content Wrapper
                     </button>
 
                     {/* Back Link */}
@@ -789,7 +786,7 @@ export default function BlueprintView() {
 
               {/* Build Status */}
               {buildStep && (
-                <div className="w-full px-6 py-4 rounded-xl font-bold text-white transition-all" style={{ background: buildStep === "done" ? "#10B981" : "linear-gradient(135deg, #7C5CFC, #5A3FD4)", boxShadow: buildStep === "done" ? "0 0 25px #10B98140" : "0 0 20px var(--brand-glow)" }}>
+                <div className="w-full px-6 py-4 rounded-2xl font-bold text-white transition-all" style={{ background: buildStep === "done" ? "#10B981" : "linear-gradient(135deg, #635BFF, #4F46E5)", boxShadow: buildStep === "done" ? "0 12px 28px #10B98130" : "0 12px 28px var(--brand-glow)" }}>
                   {buildStep === "logic" && (
                     <span className="flex items-center justify-center gap-2">
                       <Loader2 className="w-5 h-5 animate-spin" />
@@ -827,10 +824,7 @@ export default function BlueprintView() {
               <button
                 onClick={generateBlueprint}
                 disabled={buildStep !== null}
-                className="px-6 py-3 rounded-lg font-semibold text-white transition-all hover:brightness-110 disabled:opacity-50"
-                style={{
-                  background: "linear-gradient(135deg, #7C5CFC, #5A3FD4)",
-                }}
+                className="btn-primary rounded-2xl px-6 py-3 font-semibold disabled:opacity-50"
               >
                 {buildStep === "analyzing" ? (
                   <span className="flex items-center gap-2">
@@ -868,11 +862,7 @@ export default function BlueprintView() {
               {!landingPageHtml && !generatingLanding && (
                 <button
                   onClick={generateLandingPageHandler}
-                  className="w-full px-6 py-4 rounded-xl font-semibold text-white transition-all hover:brightness-110 flex items-center justify-center gap-2"
-                  style={{
-                    background: "linear-gradient(135deg, #7C5CFC, #5A3FD4)",
-                    boxShadow: "0 0 20px var(--brand-glow)",
-                  }}
+                  className="btn-primary flex w-full items-center justify-center gap-2 rounded-2xl px-6 py-4 font-semibold"
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -898,7 +888,7 @@ export default function BlueprintView() {
               {landingPageHtml && !generatingLanding && (
                 <>
                   <div className="px-4 py-3 rounded-lg text-center font-medium" style={{ background: "#DCFCE7", border: "1px solid #86EFAC", color: "#15803D" }}>
-                    ✓ Landing page generated successfully!
+                    Landing page generated successfully!
                   </div>
 
                   <div className="space-y-3">
@@ -906,14 +896,14 @@ export default function BlueprintView() {
                       Your landing page includes:
                     </p>
                     <div className="grid grid-cols-2 gap-2 text-xs" style={{ color: "var(--text-secondary)" }}>
-                      <div>• Hero Section</div>
-                      <div>• Working Calculator Tool</div>
-                      <div>• Benefits Section</div>
-                      <div>• How It Works</div>
-                      <div>• Results/Value Prop</div>
-                      <div>• Testimonials</div>
-                      <div>• FAQ Section</div>
-                      <div>• Final CTA</div>
+                      <div>Hero Section</div>
+                      <div>Working Calculator Tool</div>
+                      <div>Benefits Section</div>
+                      <div>How It Works</div>
+                      <div>Results/Value Prop</div>
+                      <div>Testimonials</div>
+                      <div>FAQ Section</div>
+                      <div>Final CTA</div>
                     </div>
                   </div>
 
@@ -963,7 +953,7 @@ export default function BlueprintView() {
                   {/* Preview Info */}
                   <div className="p-4 rounded-lg" style={{ background: "var(--bg-overlay)", border: "1px solid var(--border)" }}>
                     <p className="text-xs font-semibold mb-2" style={{ color: "var(--text-primary)" }}>
-                      💡 Next Steps
+                      Next Steps
                     </p>
                     <ul className="text-xs space-y-1" style={{ color: "var(--text-muted)" }}>
                       <li>1. Download the HTML file</li>

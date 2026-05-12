@@ -4,13 +4,20 @@ import DashboardLayout from "@/react-app/components/DashboardLayout";
 import { useToast } from "@/react-app/components/Toast";
 import {
   ArrowLeft,
+  Calculator,
+  CheckCircle,
+  Code2,
   Search,
   Download,
+  FileText,
   X,
   Loader2,
   ChevronRight,
   ChevronDown,
+  Link2,
   Plus,
+  SearchCheck,
+  TrendingUp,
 } from "lucide-react";
 
 interface Project {
@@ -264,13 +271,14 @@ export default function ProjectView() {
   };
 
   const getToolIcon = (name: string) => {
-    if (name.toLowerCase().includes("calculator")) return "🧮";
-    if (name.toLowerCase().includes("keyword")) return "📝";
-    if (name.toLowerCase().includes("backlink")) return "📊";
-    if (name.toLowerCase().includes("roi")) return "💰";
-    if (name.toLowerCase().includes("content")) return "📄";
-    if (name.toLowerCase().includes("seo")) return "🔍";
-    return "⚡";
+    const iconClass = "h-5 w-5";
+    if (name.toLowerCase().includes("calculator")) return <Calculator className={iconClass} />;
+    if (name.toLowerCase().includes("keyword")) return <SearchCheck className={iconClass} />;
+    if (name.toLowerCase().includes("backlink")) return <Link2 className={iconClass} />;
+    if (name.toLowerCase().includes("roi")) return <TrendingUp className={iconClass} />;
+    if (name.toLowerCase().includes("content")) return <FileText className={iconClass} />;
+    if (name.toLowerCase().includes("seo")) return <Search className={iconClass} />;
+    return <Code2 className={iconClass} />;
   };
 
   const filteredTools = tools.filter((tool) => {
@@ -621,13 +629,13 @@ ${format}`;
 
   return (
     <DashboardLayout>
-      <div className="p-8 max-w-7xl mx-auto">
+      <div className="page-shell max-w-7xl">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="surface-panel mb-6 flex flex-col gap-5 p-6 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-4">
             <button
               onClick={() => navigate("/dashboard")}
-              className="p-2 rounded-lg hover:bg-gray-100 transition-all"
+              className="btn-secondary p-2 rounded-2xl transition-all"
             >
               <ArrowLeft className="w-5 h-5" style={{ color: "var(--text-secondary)" }} />
             </button>
@@ -642,8 +650,7 @@ ${format}`;
           </div>
           <button
             onClick={exportCSV}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg border transition-all hover:bg-gray-50"
-            style={{ borderColor: "var(--border)", color: "var(--text-primary)" }}
+            className="btn-secondary flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold"
           >
             <Download className="w-4 h-4" />
             Export CSV
@@ -651,11 +658,12 @@ ${format}`;
         </div>
 
         {/* Tabs */}
-        <div className="flex items-center gap-1 mb-6" style={{ borderBottom: "2px solid var(--border)" }}>
+        <div className="tab-pill mb-6 flex w-fit flex-wrap items-center gap-1">
           <button
             onClick={() => setActiveTab("categories")}
-            className="px-4 py-3 font-semibold text-sm transition-all relative"
+            className="rounded-xl px-4 py-3 font-semibold text-sm transition-all relative"
             style={{
+              background: activeTab === "categories" ? "white" : "transparent",
               color: activeTab === "categories" ? "var(--brand)" : "var(--text-secondary)",
             }}
           >
@@ -669,17 +677,12 @@ ${format}`;
             >
               {categories.length}
             </span>
-            {activeTab === "categories" && (
-              <div
-                className="absolute bottom-0 left-0 right-0 h-0.5"
-                style={{ background: "var(--brand)" }}
-              />
-            )}
           </button>
           <button
             onClick={() => setActiveTab("blueprint")}
-            className="px-4 py-3 font-semibold text-sm transition-all relative"
+            className="rounded-xl px-4 py-3 font-semibold text-sm transition-all relative"
             style={{
+              background: activeTab === "blueprint" ? "white" : "transparent",
               color: activeTab === "blueprint" ? "var(--brand)" : "var(--text-secondary)",
             }}
           >
@@ -693,34 +696,23 @@ ${format}`;
             >
               {blueprintCount}
             </span>
-            {activeTab === "blueprint" && (
-              <div
-                className="absolute bottom-0 left-0 right-0 h-0.5"
-                style={{ background: "var(--brand)" }}
-              />
-            )}
           </button>
           <button
             onClick={() => setActiveTab("export")}
-            className="px-4 py-3 font-semibold text-sm transition-all relative"
+            className="rounded-xl px-4 py-3 font-semibold text-sm transition-all relative"
             style={{
+              background: activeTab === "export" ? "white" : "transparent",
               color: activeTab === "export" ? "var(--brand)" : "var(--text-secondary)",
             }}
           >
             Export
-            {activeTab === "export" && (
-              <div
-                className="absolute bottom-0 left-0 right-0 h-0.5"
-                style={{ background: "var(--brand)" }}
-              />
-            )}
           </button>
         </div>
 
         {/* Filters Bar */}
         {activeTab === "categories" && (
           <>
-            <div className="flex items-center gap-3 mb-6">
+            <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center">
               <div className="flex-1 relative">
                 <Search
                   className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
@@ -731,22 +723,14 @@ ${format}`;
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search..."
-                  className="w-full pl-10 pr-4 py-2 rounded-lg text-sm border"
-                  style={{
-                    borderColor: "var(--border)",
-                    color: "var(--text-primary)",
-                  }}
+                  className="input-premium w-full pl-10 pr-4 py-3 text-sm"
                 />
               </div>
 
               <select
                 value={filterGoal}
                 onChange={(e) => setFilterGoal(e.target.value)}
-                className="px-4 py-2 rounded-lg text-sm border"
-                style={{
-                  borderColor: "var(--border)",
-                  color: "var(--text-primary)",
-                }}
+                className="input-premium px-4 py-3 text-sm"
               >
                 <option value="all">All Goals</option>
                 <option value="backlinks">Backlinks</option>
@@ -760,7 +744,7 @@ ${format}`;
                   type="checkbox"
                   checked={showArchived}
                   onChange={(e) => setShowArchived(e.target.checked)}
-                  className="rounded"
+                  className="premium-check"
                   style={{ accentColor: "var(--brand)" }}
                 />
                 <span style={{ color: "var(--text-secondary)" }}>Archived</span>
@@ -768,8 +752,7 @@ ${format}`;
 
               <Link to="/projects/new">
                 <button
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-white transition-all hover:brightness-110"
-                  style={{ background: "var(--brand)" }}
+                  className="btn-primary flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold"
                 >
                   <Plus className="w-4 h-4" />
                   New Project
@@ -814,13 +797,12 @@ ${format}`;
                       <button
                         key={tool.id}
                         onClick={() => openBuildPanel(tool)}
-                        className="glass-card p-5 text-left hover:shadow-lg transition-all group"
+                        className="premium-card p-5 text-left transition-all group"
                       >
                         <div className="flex items-start gap-4">
                           {/* Icon */}
                           <div
-                            className="w-12 h-12 rounded-lg flex items-center justify-center text-2xl flex-shrink-0"
-                            style={{ background: "var(--bg-elevated)" }}
+                            className="icon-tile h-12 w-12 flex-shrink-0"
                           >
                             {getToolIcon(tool.name)}
                           </div>
@@ -1329,8 +1311,9 @@ ${format}`;
                             </h4>
                             <div className="space-y-1">
                               {features.map((feature: string, i: number) => (
-                                <div key={i} className="text-sm" style={{ color: "var(--text-secondary)" }}>
-                                  • {feature}
+                                <div key={i} className="flex items-start gap-2 text-sm" style={{ color: "var(--text-secondary)" }}>
+                                  <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-500" />
+                                  <span>{feature}</span>
                                 </div>
                               ))}
                             </div>
@@ -1395,8 +1378,7 @@ ${format}`;
                       <button
                         onClick={() => buildTool("standalone")}
                         disabled={buildStep !== null}
-                        className="p-3 rounded-lg border text-left transition-all hover:brightness-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                        style={{ borderColor: "var(--border)", background: "var(--bg-overlay)" }}
+                        className="premium-card p-3 rounded-2xl text-left transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <p className="text-sm font-semibold mb-1" style={{ color: "var(--text-primary)" }}>
                           Standalone Page
@@ -1408,8 +1390,7 @@ ${format}`;
                       <button
                         onClick={() => buildTool("embed")}
                         disabled={buildStep !== null}
-                        className="p-3 rounded-lg border text-left transition-all hover:brightness-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                        style={{ borderColor: "var(--border)", background: "var(--bg-overlay)" }}
+                        className="premium-card p-3 rounded-2xl text-left transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <p className="text-sm font-semibold mb-1" style={{ color: "var(--text-primary)" }}>
                           Embeddable Widget
@@ -1432,23 +1413,14 @@ ${format}`;
                           message: "Blueprint copied to clipboard",
                         });
                       }}
-                      className="px-4 py-2.5 rounded-lg font-medium border transition-all hover:bg-gray-50"
-                      style={{
-                        borderColor: "var(--border)",
-                        color: "var(--text-primary)",
-                        background: "var(--bg-overlay)",
-                      }}
+                      className="btn-secondary rounded-2xl px-4 py-2.5 font-medium"
                     >
                       Copy Blueprint
                     </button>
                     <button
                       onClick={generateBlueprint}
                       disabled={buildStep !== null}
-                      className="px-4 py-2.5 rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110"
-                      style={{
-                        background: "var(--brand)",
-                        color: "white",
-                      }}
+                      className="btn-primary rounded-2xl px-4 py-2.5 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Regenerate
                     </button>
@@ -1456,13 +1428,13 @@ ${format}`;
 
                   {/* Build Status */}
                   {buildStep && (
-                    <div className="pt-6 w-full px-6 py-4 rounded-xl font-semibold text-white transition-all flex items-center justify-center gap-2" style={{ background: buildStep === "done" ? "#10B981" : "linear-gradient(135deg, #7C5CFC, #5A3FD4)", boxShadow: "0 0 20px var(--brand-glow)", borderTop: "1px solid var(--border)" }}>
+                    <div className="pt-6 w-full px-6 py-4 rounded-2xl font-semibold text-white transition-all flex items-center justify-center gap-2" style={{ background: buildStep === "done" ? "#10B981" : "linear-gradient(135deg, #635BFF, #4F46E5)", boxShadow: "0 12px 28px var(--brand-glow)", borderTop: "1px solid var(--border)" }}>
                       {buildStep !== "done" && <Loader2 className="w-5 h-5 animate-spin" />}
                       {buildStep === "analyzing" && "Regenerating blueprint..."}
                       {buildStep === "logic" && "Building calculation logic..."}
                       {buildStep === "styling" && "Applying theme..."}
                       {buildStep === "embed" && "Preparing embed code..."}
-                      {buildStep === "done" && `✓ ${buildMode === "standalone" ? "Standalone page ready!" : "Embeddable widget ready!"}`}
+                      {buildStep === "done" && (buildMode === "standalone" ? "Standalone page ready!" : "Embeddable widget ready!")}
                     </div>
                   )}
 
@@ -1470,8 +1442,8 @@ ${format}`;
                   {selectedTool.html_content && !buildStep && buildMode !== null && (
                     <div className="pt-6 space-y-3" style={{ borderTop: "1px solid var(--border)" }}>
                       {/* Success Message */}
-                      <div className="px-4 py-3 rounded-lg text-center font-medium" style={{ background: "#DCFCE7", border: "1px solid #86EFAC", color: "#15803D" }}>
-                        ✓ Tool built successfully!
+                      <div className="px-4 py-3 rounded-2xl text-center font-medium" style={{ background: "#DCFCE7", border: "1px solid #86EFAC", color: "#15803D" }}>
+                        Tool built successfully!
                       </div>
 
                       {/* Download/Copy Button based on mode */}
@@ -2008,8 +1980,8 @@ ${format}`;
                     {landingPageHtml && !generatingLanding && (
                       <>
                         {/* Success Message */}
-                        <div className="px-4 py-3 rounded-lg text-center font-medium" style={{ background: "#DCFCE7", border: "1px solid #86EFAC", color: "#15803D" }}>
-                          ✓ Tool built successfully!
+                        <div className="px-4 py-3 rounded-2xl text-center font-medium" style={{ background: "#DCFCE7", border: "1px solid #86EFAC", color: "#15803D" }}>
+                          Tool built successfully!
                         </div>
 
                         {/* Action Buttons */}
@@ -2018,10 +1990,7 @@ ${format}`;
                           <div className="space-y-2">
                             <button
                               onClick={downloadLandingPage}
-                              className="w-full px-4 py-3 rounded-lg font-semibold text-white transition-all hover:opacity-90 flex items-center justify-center gap-2"
-                              style={{
-                                background: "#111827",
-                              }}
+                              className="btn-primary flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 font-semibold"
                             >
                               <Download className="w-4 h-4" />
                               Download .html File
@@ -2034,10 +2003,7 @@ ${format}`;
                           {/* Copy All for Content Wrapper */}
                           <button
                             onClick={copyAllForContentWrapper}
-                            className="w-full px-4 py-3 rounded-lg font-semibold text-white transition-all hover:brightness-110 flex items-center justify-center gap-2"
-                            style={{
-                              background: "linear-gradient(135deg, #7C5CFC, #5A3FD4)",
-                            }}
+                            className="btn-secondary flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 font-semibold"
                           >
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -2068,11 +2034,7 @@ ${format}`;
                   <button
                     onClick={generateBlueprint}
                     disabled={buildStep === "analyzing"}
-                    className="w-full px-6 py-4 rounded-xl font-semibold text-white transition-all hover:brightness-110 disabled:opacity-50"
-                    style={{
-                      background: "linear-gradient(135deg, #7C5CFC, #5A3FD4)",
-                      boxShadow: "0 0 20px var(--brand-glow)",
-                    }}
+                    className="btn-primary w-full rounded-2xl px-6 py-4 font-semibold disabled:opacity-50"
                   >
                     {buildStep === "analyzing" ? (
                       <span className="flex items-center justify-center gap-2">
@@ -2080,7 +2042,7 @@ ${format}`;
                         Generating...
                       </span>
                     ) : (
-                      "📋 Generate Blueprint"
+                      "Generate Blueprint"
                     )}
                   </button>
                 </div>
