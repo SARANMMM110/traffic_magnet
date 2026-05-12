@@ -140,43 +140,6 @@ export default function Landing() {
           </div>
         </div>
 
-        <footer className="px-4 pb-8">
-          <div className="premium-footer mx-auto max-w-5xl p-8">
-            <div className="grid gap-8 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
-              <div>
-                <div className="mb-3 flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-950 text-white">
-                    <Sparkles className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <div className="font-bold">Traffic Magnet</div>
-                    <div className="text-xs" style={{ color: "var(--text-muted)" }}>AI growth studio</div>
-                  </div>
-                </div>
-                <p className="max-w-sm text-sm leading-6" style={{ color: "var(--text-secondary)" }}>
-                  Premium AI workflows for creating SEO tools, content wrappers, and publish-ready assets.
-                </p>
-              </div>
-              {[
-                ["Product", "Dashboard", "Content Wrapper", "My Magnets"],
-                ["Resources", "Help & FAQ", "SEO Tools", "WordPress"],
-                ["Company", "VibeLabs", "Roadmap", "Support"],
-              ].map(([title, ...items]) => (
-                <div key={title}>
-                  <h4 className="mb-3 text-sm font-bold">{title}</h4>
-                  <ul className="space-y-2 text-sm" style={{ color: "var(--text-secondary)" }}>
-                    {items.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-            <div className="mt-8 border-t border-[var(--border)] pt-5 text-sm" style={{ color: "var(--text-muted)" }}>
-              Traffic Magnet by VibeLabs © {new Date().getFullYear()}
-            </div>
-          </div>
-        </footer>
       </div>
     </div>
   );

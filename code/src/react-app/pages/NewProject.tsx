@@ -595,49 +595,6 @@ export default function NewProject() {
           )}
         </form>
 
-        {/* Footer */}
-        <div className="premium-footer mt-12 p-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-            <div>
-              <h4 className="text-sm font-bold mb-3" style={{ color: "var(--text-primary)" }}>Our Other Apps</h4>
-              <ul className="space-y-2 text-sm" style={{ color: "var(--text-secondary)" }}>
-                <li>AI Agent Factory <span style={{ color: "var(--accent-amber)" }}>(Coming Soon!)</span></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-sm font-bold mb-3" style={{ color: "var(--text-primary)" }}>Free SEO Tools</h4>
-              <ul className="space-y-2 text-sm" style={{ color: "var(--text-secondary)" }}>
-                <li>AI Bot Checker</li>
-                <li>Traffic Magnets Opportunity Finder</li>
-                <li>TM Keyword Intelligence</li>
-                <li>Rank New Websites Fast!</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-sm font-bold mb-3" style={{ color: "var(--text-primary)" }}>Free Traffic Tools</h4>
-              <ul className="space-y-2 text-sm" style={{ color: "var(--text-secondary)" }}>
-                <li>HookViral</li>
-                <li>AI Writing Studio</li>
-                <li>VidOptima</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-sm font-bold mb-3" style={{ color: "var(--text-primary)" }}>Free Marketing Tools</h4>
-              <ul className="space-y-2 text-sm" style={{ color: "var(--text-secondary)" }}>
-                <li>HookViral</li>
-                <li>AI Writing Studio</li>
-                <li>VidOptima</li>
-                <li>Hormozi Landing Page Pro</li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="text-center pt-6" style={{ borderTop: "1px solid var(--border)" }}>
-            <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-              Traffic Magnet by VibeLabs © {new Date().getFullYear()}
-            </p>
-          </div>
-        </div>
       </div>
     </DashboardLayout>
   );
