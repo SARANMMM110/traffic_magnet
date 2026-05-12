@@ -623,19 +623,178 @@ export default function ContentWrapper() {
       max-width: 1100px;
       min-width: 0;
       margin: 0 auto;
-      background: white;
-      border-radius: 28px;
-      padding: 40px;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
-      border: 1px solid #e5e7eb;
+      position: relative;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 10% 0%, rgba(124, 92, 252, 0.12), transparent 34%),
+        radial-gradient(circle at 92% 18%, rgba(37, 99, 235, 0.10), transparent 32%),
+        rgba(255, 255, 255, 0.88);
+      border-radius: 32px;
+      padding: 16px;
+      box-shadow: 0 30px 80px rgba(15, 23, 42, 0.10);
+      border: 1px solid rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(18px);
     }
     
     .tool-wrapper {
       width: 100%;
       max-width: 100%;
       overflow-x: auto;
+      border-radius: 26px;
+      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid rgba(226, 232, 240, 0.95);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+      padding: clamp(22px, 4vw, 36px);
     }
-    
+
+    .tool-wrapper > * {
+      max-width: 100% !important;
+    }
+
+    .tool-wrapper h1,
+    .tool-wrapper h2,
+    .tool-wrapper h3 {
+      color: #0f172a !important;
+      letter-spacing: -0.03em !important;
+    }
+
+    .tool-wrapper h2 {
+      font-size: clamp(26px, 4vw, 38px) !important;
+      line-height: 1.05 !important;
+      margin-bottom: 10px !important;
+    }
+
+    .tool-wrapper p {
+      color: #64748b !important;
+      line-height: 1.75 !important;
+    }
+
+    .tool-wrapper form,
+    .tool-wrapper .form-grid,
+    .tool-wrapper [class*="form"] {
+      width: 100% !important;
+    }
+
+    .tool-wrapper form {
+      margin-top: 24px !important;
+      padding: clamp(18px, 3vw, 28px) !important;
+      border-radius: 26px !important;
+      border: 1px solid #e5e7eb !important;
+      background:
+        linear-gradient(180deg, rgba(248, 250, 252, 0.92), rgba(255, 255, 255, 0.92)) !important;
+      box-shadow: 0 20px 45px rgba(15, 23, 42, 0.07) !important;
+    }
+
+    .tool-wrapper .form-grid,
+    .tool-wrapper form > div:first-child {
+      display: grid !important;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)) !important;
+      gap: 16px !important;
+    }
+
+    .tool-wrapper label {
+      display: flex !important;
+      align-items: center !important;
+      gap: 8px !important;
+      margin-bottom: 8px !important;
+      color: #475569 !important;
+      font-size: 12px !important;
+      font-weight: 800 !important;
+      letter-spacing: 0.08em !important;
+      text-transform: uppercase !important;
+    }
+
+    .tool-wrapper input,
+    .tool-wrapper select,
+    .tool-wrapper textarea {
+      width: 100% !important;
+      min-height: 50px !important;
+      padding: 14px 16px !important;
+      border-radius: 18px !important;
+      border: 1px solid #e2e8f0 !important;
+      background: rgba(255, 255, 255, 0.94) !important;
+      color: #0f172a !important;
+      font: 600 14px/1.4 Inter, system-ui, sans-serif !important;
+      outline: none !important;
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease !important;
+    }
+
+    .tool-wrapper select {
+      appearance: none !important;
+      background-image:
+        linear-gradient(45deg, transparent 50%, #6d5dfb 50%),
+        linear-gradient(135deg, #6d5dfb 50%, transparent 50%) !important;
+      background-position:
+        calc(100% - 20px) 22px,
+        calc(100% - 14px) 22px !important;
+      background-size: 6px 6px, 6px 6px !important;
+      background-repeat: no-repeat !important;
+      padding-right: 44px !important;
+    }
+
+    .tool-wrapper input:hover,
+    .tool-wrapper select:hover,
+    .tool-wrapper textarea:hover {
+      border-color: #c7d2fe !important;
+      transform: translateY(-1px) !important;
+    }
+
+    .tool-wrapper input:focus,
+    .tool-wrapper select:focus,
+    .tool-wrapper textarea:focus {
+      border-color: #7c5cfc !important;
+      box-shadow: 0 0 0 4px rgba(124, 92, 252, 0.14), 0 16px 34px rgba(15, 23, 42, 0.08) !important;
+      background: #ffffff !important;
+    }
+
+    .tool-wrapper button,
+    .tool-wrapper input[type="submit"] {
+      min-height: 52px !important;
+      border: 0 !important;
+      border-radius: 18px !important;
+      background: linear-gradient(135deg, #6d5dfb, #111827) !important;
+      color: #ffffff !important;
+      font: 800 14px/1 Inter, system-ui, sans-serif !important;
+      letter-spacing: -0.01em !important;
+      box-shadow: 0 18px 34px rgba(109, 93, 251, 0.24) !important;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease !important;
+    }
+
+    .tool-wrapper button:hover,
+    .tool-wrapper input[type="submit"]:hover {
+      transform: translateY(-2px) !important;
+      filter: brightness(1.04) !important;
+      box-shadow: 0 24px 44px rgba(109, 93, 251, 0.32) !important;
+    }
+
+    .tool-wrapper #result,
+    .tool-wrapper #results,
+    .tool-wrapper .result,
+    .tool-wrapper .results {
+      margin-top: 24px !important;
+      padding: clamp(18px, 3vw, 28px) !important;
+      border-radius: 24px !important;
+      border: 1px solid rgba(124, 92, 252, 0.20) !important;
+      border-left: 1px solid rgba(124, 92, 252, 0.20) !important;
+      background:
+        radial-gradient(circle at 0% 0%, rgba(124, 92, 252, 0.12), transparent 34%),
+        linear-gradient(180deg, #ffffff, #f8faff) !important;
+      box-shadow: 0 22px 48px rgba(15, 23, 42, 0.08) !important;
+      color: #0f172a !important;
+    }
+
+    .tool-wrapper #resultContent,
+    .tool-wrapper #resultsContent {
+      display: grid !important;
+      gap: 14px !important;
+    }
+
+    .tool-wrapper footer,
+    .tool-wrapper [class*="footer"] {
+      display: none !important;
+    }
+
     /* How It Works Section */
     .how-it-works-section {
       width: 100%;
@@ -973,7 +1132,13 @@ export default function ContentWrapper() {
       }
       
       .tool-card {
-        padding: 28px 20px;
+        border-radius: 24px;
+        padding: 10px;
+      }
+
+      .tool-wrapper {
+        border-radius: 20px;
+        padding: 18px;
       }
       
       .tool-section {

@@ -10,6 +10,7 @@ import {
   Search,
   Download,
   FileText,
+  DollarSign,
   X,
   Loader2,
   ChevronRight,
@@ -17,7 +18,10 @@ import {
   Link2,
   Plus,
   SearchCheck,
+  Sparkles,
+  Target,
   TrendingUp,
+  Users,
 } from "lucide-react";
 
 interface Project {
@@ -606,6 +610,83 @@ ${format}`;
     setLandingPageHtml(null);
     await generateLandingPageHandler();
   };
+
+  const audienceOptions = [
+    "General / Broad",
+    "Small Business Owners",
+    "Freelancers & Solopreneurs",
+    "Enterprise / B2B",
+    "Students & Beginners",
+    "E-commerce Sellers",
+    "Marketing Professionals",
+    "Real Estate Investors",
+  ];
+
+  const monetizationOptions = [
+    "Lead Generation (email capture)",
+    "Affiliate Links",
+    "SaaS / Tool Subscription",
+    "Consulting / Agency Lead Gen",
+    "Digital Product Sales",
+    "Display Ads / Programmatic",
+    "Direct Product / Service Upsell",
+  ];
+
+  const getAudiencePreview = (audience: string) => {
+    if (audience.includes("Small Business")) return "Local operators ready for practical growth audits and booked consultations.";
+    if (audience.includes("Freelancers")) return "Solo experts who need authority assets, packaged offers, and recurring clients.";
+    if (audience.includes("Enterprise")) return "B2B decision teams looking for proof, risk reduction, and revenue clarity.";
+    if (audience.includes("Students")) return "Beginners who need simple steps, confidence, and starter monetization paths.";
+    if (audience.includes("E-commerce")) return "Store owners focused on conversion lift, margin protection, and repeat buyers.";
+    if (audience.includes("Marketing")) return "Growth teams seeking SEO leverage, campaign proof, and better lead quality.";
+    if (audience.includes("Real Estate")) return "Investors evaluating opportunity, cash flow, and market timing.";
+    return "Broad audiences who need fast clarity, strong education, and simple next steps.";
+  };
+
+  const getMonetizationPreview = (monetization: string) => {
+    if (monetization.includes("Lead Generation")) return "Capture qualified leads with a value-first report and follow-up offer.";
+    if (monetization.includes("Affiliate")) return "Route buyer intent toward comparison content and high-fit partner offers.";
+    if (monetization.includes("SaaS")) return "Turn recurring usage into subscription trials and product-qualified leads.";
+    if (monetization.includes("Consulting")) return "Convert diagnostic insight into strategy calls and agency retainers.";
+    if (monetization.includes("Digital Product")) return "Position the result as a bridge into templates, courses, or playbooks.";
+    if (monetization.includes("Display Ads")) return "Scale informational traffic with authority content and ad-ready engagement.";
+    return "Use the outcome to introduce a direct offer, service, or premium next step.";
+  };
+
+  const getTrafficPreview = (monetization: string) => {
+    if (monetization.includes("Affiliate")) return "Buyer-intent SEO + comparison funnels";
+    if (monetization.includes("SaaS")) return "Product-led SEO + activation loops";
+    if (monetization.includes("Consulting")) return "Authority content + audit funnel";
+    if (monetization.includes("Display")) return "Topical clusters + long-tail traffic";
+    return "Lead magnet SEO + conversion retargeting";
+  };
+
+  const variationSetups = [
+    {
+      id: "A",
+      title: "Variation A",
+      subtitle: "Conversion-first opportunity path",
+      audience: audienceA,
+      monetization: monetizationA,
+      setAudience: setAudienceA,
+      setMonetization: setMonetizationA,
+      accent: "#6D5DFB",
+      soft: "rgba(109, 93, 251, 0.1)",
+      ring: "rgba(109, 93, 251, 0.28)",
+    },
+    {
+      id: "B",
+      title: "Variation B",
+      subtitle: "Revenue-focused monetization path",
+      audience: audienceB,
+      monetization: monetizationB,
+      setAudience: setAudienceB,
+      setMonetization: setMonetizationB,
+      accent: "#2563EB",
+      soft: "rgba(37, 99, 235, 0.1)",
+      ring: "rgba(37, 99, 235, 0.25)",
+    },
+  ];
 
   if (loading) {
     return (
@@ -1571,409 +1652,327 @@ ${format}`;
               )}
 
               {panelTab === "variations" && (
-                <>
-                  {/* Configure Variations Card */}
-                  <div 
-                    className="premium-card rounded-3xl p-5"
-                  >
-                    <h3 
-                      className="text-xs font-semibold uppercase tracking-wide"
-                      style={{ color: "var(--text-muted)", marginBottom: "16px" }}
+                <div className="space-y-5">
+                  <div className="premium-card overflow-hidden rounded-[28px] border border-white/70 p-0">
+                    <div
+                      className="relative overflow-hidden p-5"
+                      style={{
+                        background:
+                          "radial-gradient(circle at 18% 0%, rgba(109, 93, 251, 0.14), transparent 34%), radial-gradient(circle at 92% 12%, rgba(37, 99, 235, 0.1), transparent 32%), rgba(255, 255, 255, 0.86)",
+                      }}
                     >
-                      CONFIGURE VARIATIONS
-                    </h3>
-
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      {/* Variation A */}
-                      <div className="rounded-2xl border border-[var(--border)] bg-white/70 p-4">
-                        <div className="flex items-center gap-1.5" style={{ marginBottom: "12px" }}>
-                          <span 
-                            className="rounded flex items-center justify-center text-xs font-bold text-white"
-                            style={{ 
-                              background: "#7C5CFC",
-                              width: "20px",
-                              height: "20px"
-                            }}
-                          >
-                            A
-                          </span>
-                          <h4 className="font-semibold" style={{ color: "#111827", fontSize: "13px" }}>
-                            Variation A
-                          </h4>
+                      <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="flex gap-3">
+                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/80 bg-white text-[var(--brand)] shadow-sm">
+                            <Sparkles className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/80 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--brand)] shadow-sm">
+                              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                              AI strategy lab
+                            </div>
+                            <h3 className="text-lg font-bold tracking-[-0.02em]" style={{ color: "var(--text-primary)" }}>
+                              Configure Monetization Variations
+                            </h3>
+                            <p className="mt-1 max-w-xl text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                              Build two distinct business angles with audience, revenue model, traffic path, and conversion strategy previews before generating.
+                            </p>
+                          </div>
                         </div>
-
-                        <div style={{ marginBottom: "10px" }}>
-                          <label 
-                            className="flex items-center gap-1 text-xs font-medium"
-                            style={{ color: "#6B7280", marginBottom: "4px" }}
-                          >
-                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                            </svg>
-                            Audience
-                          </label>
-                          <select
-                            value={audienceA}
-                            onChange={(e) => setAudienceA(e.target.value)}
-                            className="input-premium w-full text-sm"
-                            style={{ 
-                              color: "#111827",
-                              fontSize: "13px"
-                            }}
-                          >
-                            <option value="General / Broad">General / Broad</option>
-                            <option value="Small Business Owners">Small Business Owners</option>
-                            <option value="Freelancers & Solopreneurs">Freelancers & Solopreneurs</option>
-                            <option value="Enterprise / B2B">Enterprise / B2B</option>
-                            <option value="Students & Beginners">Students & Beginners</option>
-                            <option value="E-commerce Sellers">E-commerce Sellers</option>
-                            <option value="Marketing Professionals">Marketing Professionals</option>
-                            <option value="Real Estate Investors">Real Estate Investors</option>
-                          </select>
-                        </div>
-
-                        <div>
-                          <label 
-                            className="flex items-center gap-1 text-xs font-medium"
-                            style={{ color: "#6B7280", marginBottom: "4px" }}
-                          >
-                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            Monetization
-                          </label>
-                          <select
-                            value={monetizationA}
-                            onChange={(e) => setMonetizationA(e.target.value)}
-                            className="input-premium w-full text-sm"
-                            style={{ 
-                              color: "#111827",
-                              fontSize: "13px"
-                            }}
-                          >
-                            <option value="Lead Generation (email capture)">Lead Generation (email capture)</option>
-                            <option value="Affiliate Links">Affiliate Links</option>
-                            <option value="SaaS / Tool Subscription">SaaS / Tool Subscription</option>
-                            <option value="Consulting / Agency Lead Gen">Consulting / Agency Lead Gen</option>
-                            <option value="Digital Product Sales">Digital Product Sales</option>
-                            <option value="Display Ads / Programmatic">Display Ads / Programmatic</option>
-                            <option value="Direct Product / Service Upsell">Direct Product / Service Upsell</option>
-                          </select>
+                        <div className="grid grid-cols-3 gap-2 rounded-2xl border border-white/80 bg-white/70 p-2 text-center shadow-sm">
+                          {[
+                            ["2x", "Strategies"],
+                            ["SEO", "Traffic"],
+                            ["AI", "Blueprints"],
+                          ].map(([value, label]) => (
+                            <div key={label} className="rounded-xl px-3 py-2">
+                              <div className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>{value}</div>
+                              <div className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>{label}</div>
+                            </div>
+                          ))}
                         </div>
                       </div>
 
-                      {/* Variation B */}
-                      <div className="rounded-2xl border border-[var(--border)] bg-white/70 p-4">
-                        <div className="flex items-center gap-1.5" style={{ marginBottom: "12px" }}>
-                          <span 
-                            className="rounded flex items-center justify-center text-xs font-bold text-white"
-                            style={{ 
-                              background: "#3B82F6",
-                              width: "20px",
-                              height: "20px"
+                      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+                        {variationSetups.map((variation) => (
+                          <div
+                            key={variation.id}
+                            className="group relative overflow-hidden rounded-[26px] border bg-white/80 p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:bg-white"
+                            style={{
+                              borderColor: variation.ring,
+                              boxShadow: `0 18px 42px ${variation.soft}`,
                             }}
                           >
-                            B
-                          </span>
-                          <h4 className="font-semibold" style={{ color: "#111827", fontSize: "13px" }}>
-                            Variation B
-                          </h4>
-                        </div>
+                            <div
+                              className="absolute -right-10 -top-10 h-28 w-28 rounded-full blur-2xl transition-opacity group-hover:opacity-100"
+                              style={{ background: variation.soft, opacity: 0.72 }}
+                            />
 
-                        <div style={{ marginBottom: "10px" }}>
-                          <label 
-                            className="flex items-center gap-1 text-xs font-medium"
-                            style={{ color: "#6B7280", marginBottom: "4px" }}
-                          >
-                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                            </svg>
-                            Audience
-                          </label>
-                          <select
-                            value={audienceB}
-                            onChange={(e) => setAudienceB(e.target.value)}
-                            className="input-premium w-full text-sm"
-                            style={{ 
-                              color: "#111827",
-                              fontSize: "13px"
-                            }}
-                          >
-                            <option value="General / Broad">General / Broad</option>
-                            <option value="Small Business Owners">Small Business Owners</option>
-                            <option value="Freelancers & Solopreneurs">Freelancers & Solopreneurs</option>
-                            <option value="Enterprise / B2B">Enterprise / B2B</option>
-                            <option value="Students & Beginners">Students & Beginners</option>
-                            <option value="E-commerce Sellers">E-commerce Sellers</option>
-                            <option value="Marketing Professionals">Marketing Professionals</option>
-                            <option value="Real Estate Investors">Real Estate Investors</option>
-                          </select>
-                        </div>
+                            <div className="relative mb-4 flex items-start justify-between gap-3">
+                              <div className="flex items-center gap-3">
+                                <div
+                                  className="flex h-10 w-10 items-center justify-center rounded-2xl text-sm font-black text-white shadow-sm"
+                                  style={{ background: `linear-gradient(135deg, ${variation.accent}, #111827)` }}
+                                >
+                                  {variation.id}
+                                </div>
+                                <div>
+                                  <h4 className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>
+                                    {variation.title}
+                                  </h4>
+                                  <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                                    {variation.subtitle}
+                                  </p>
+                                </div>
+                              </div>
+                              <span
+                                className="rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide"
+                                style={{ background: variation.soft, color: variation.accent }}
+                              >
+                                Strategy
+                              </span>
+                            </div>
 
-                        <div>
-                          <label 
-                            className="flex items-center gap-1 text-xs font-medium"
-                            style={{ color: "#6B7280", marginBottom: "4px" }}
-                          >
-                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            Monetization
-                          </label>
-                          <select
-                            value={monetizationB}
-                            onChange={(e) => setMonetizationB(e.target.value)}
-                            className="input-premium w-full text-sm"
-                            style={{ 
-                              color: "#111827",
-                              fontSize: "13px"
-                            }}
-                          >
-                            <option value="Lead Generation (email capture)">Lead Generation (email capture)</option>
-                            <option value="Affiliate Links">Affiliate Links</option>
-                            <option value="SaaS / Tool Subscription">SaaS / Tool Subscription</option>
-                            <option value="Consulting / Agency Lead Gen">Consulting / Agency Lead Gen</option>
-                            <option value="Digital Product Sales">Digital Product Sales</option>
-                            <option value="Display Ads / Programmatic">Display Ads / Programmatic</option>
-                            <option value="Direct Product / Service Upsell">Direct Product / Service Upsell</option>
-                          </select>
-                        </div>
+                            <div className="relative space-y-3">
+                              <label className="block rounded-2xl border border-[var(--border)] bg-white/80 p-3 shadow-sm transition-all focus-within:border-[var(--brand)] focus-within:shadow-md">
+                                <span className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>
+                                  <span className="flex h-7 w-7 items-center justify-center rounded-xl" style={{ background: variation.soft, color: variation.accent }}>
+                                    <Users className="h-3.5 w-3.5" />
+                                  </span>
+                                  Audience focus
+                                </span>
+                                <div className="relative">
+                                  <select
+                                    value={variation.audience}
+                                    onChange={(e) => variation.setAudience(e.target.value)}
+                                    className="w-full appearance-none rounded-2xl border border-transparent bg-[var(--bg-soft)] px-4 py-3 pr-10 text-sm font-semibold outline-none transition-all focus:bg-white"
+                                    style={{ color: "var(--text-primary)" }}
+                                  >
+                                    {audienceOptions.map((option) => (
+                                      <option key={option} value={option}>{option}</option>
+                                    ))}
+                                  </select>
+                                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: "var(--text-muted)" }} />
+                                </div>
+                              </label>
+
+                              <label className="block rounded-2xl border border-[var(--border)] bg-white/80 p-3 shadow-sm transition-all focus-within:border-[var(--brand)] focus-within:shadow-md">
+                                <span className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>
+                                  <span className="flex h-7 w-7 items-center justify-center rounded-xl" style={{ background: variation.soft, color: variation.accent }}>
+                                    <DollarSign className="h-3.5 w-3.5" />
+                                  </span>
+                                  Monetization model
+                                </span>
+                                <div className="relative">
+                                  <select
+                                    value={variation.monetization}
+                                    onChange={(e) => variation.setMonetization(e.target.value)}
+                                    className="w-full appearance-none rounded-2xl border border-transparent bg-[var(--bg-soft)] px-4 py-3 pr-10 text-sm font-semibold outline-none transition-all focus:bg-white"
+                                    style={{ color: "var(--text-primary)" }}
+                                  >
+                                    {monetizationOptions.map((option) => (
+                                      <option key={option} value={option}>{option}</option>
+                                    ))}
+                                  </select>
+                                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: "var(--text-muted)" }} />
+                                </div>
+                              </label>
+
+                              <div className="rounded-2xl border border-dashed border-[var(--border)] bg-white/70 p-4">
+                                <div className="mb-3 flex items-center gap-2">
+                                  <Target className="h-4 w-4" style={{ color: variation.accent }} />
+                                  <p className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--text-primary)" }}>
+                                    AI strategy preview
+                                  </p>
+                                </div>
+                                <div className="space-y-3">
+                                  <div>
+                                    <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Best for</p>
+                                    <p className="mt-1 text-sm leading-relaxed" style={{ color: "var(--text-primary)" }}>
+                                      {getAudiencePreview(variation.audience)}
+                                    </p>
+                                  </div>
+                                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                    <div className="rounded-xl bg-[var(--bg-soft)] p-3">
+                                      <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Traffic approach</p>
+                                      <p className="mt-1 text-xs font-semibold" style={{ color: "var(--text-primary)" }}>{getTrafficPreview(variation.monetization)}</p>
+                                    </div>
+                                    <div className="rounded-xl bg-[var(--bg-soft)] p-3">
+                                      <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Expected lift</p>
+                                      <p className="mt-1 text-xs font-semibold" style={{ color: "var(--text-primary)" }}>Sharper intent and stronger lead capture</p>
+                                    </div>
+                                  </div>
+                                  <p className="rounded-xl px-3 py-2 text-xs leading-relaxed" style={{ background: variation.soft, color: "var(--text-secondary)" }}>
+                                    {getMonetizationPreview(variation.monetization)}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
+
+                      <button
+                        onClick={generateVariations}
+                        disabled={generatingVariations}
+                        className="btn-primary group mt-5 flex w-full items-center justify-center gap-2 rounded-2xl px-5 py-4 text-sm font-bold shadow-lg transition-all hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {generatingVariations ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Building AI strategy variations...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="h-4 w-4 transition-transform group-hover:rotate-12" />
+                            Generate AI Strategy Variations
+                            <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                          </>
+                        )}
+                      </button>
                     </div>
-
-                    {/* Generate Button */}
-                    <button
-                      onClick={generateVariations}
-                      disabled={generatingVariations}
-                      className="btn-primary mt-4 flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      {generatingVariations ? (
-                        <>
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          Generating Variations...
-                        </>
-                      ) : (
-                        <>
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                          </svg>
-                          Generate 2 Blueprint Variations
-                        </>
-                      )}
-                    </button>
                   </div>
 
-                  {/* Variations Display - Accordion Layout */}
                   {variations && variations.length > 0 && (
-                    <div className="mt-6">
-                      <h3 className="text-base font-bold mb-4" style={{ color: "#111827" }}>
-                        Compare & Choose
-                      </h3>
-                      
-                      <div className="space-y-3">
-                        {/* Variation A */}
-                        <div 
-                          className="rounded-lg border transition-all"
-                          style={{ 
-                            background: "white",
-                            borderColor: expandedVariation === 0 ? "#7C5CFC" : "#E5E7EB",
-                            overflow: "hidden"
-                          }}
-                        >
-                          {/* Accordion Header */}
-                          <button
-                            onClick={() => setExpandedVariation(expandedVariation === 0 ? null : 0)}
-                            className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
-                          >
-                            <div className="flex items-center gap-3 flex-1 text-left">
-                              <span 
-                                className="w-8 h-8 rounded flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
-                                style={{ background: "#7C5CFC" }}
+                    <div className="premium-card rounded-[28px] p-5">
+                      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <p className="text-[11px] font-bold uppercase tracking-[0.22em]" style={{ color: "var(--brand)" }}>
+                            AI comparison
+                          </p>
+                          <h3 className="mt-1 text-lg font-bold" style={{ color: "var(--text-primary)" }}>
+                            Choose the strongest business angle
+                          </h3>
+                        </div>
+                        <span className="rounded-full border border-[var(--border)] bg-white px-3 py-1.5 text-xs font-semibold shadow-sm" style={{ color: "var(--text-muted)" }}>
+                          Expand for full blueprint logic
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+                        {variations.map((variation, index) => {
+                          const setup = variationSetups[index] || variationSetups[0];
+                          const isExpanded = expandedVariation === index;
+                          const keywords = Array.isArray(variation.target_keywords) ? variation.target_keywords : [];
+                          const audience = variation.audience || setup.audience;
+
+                          return (
+                            <div
+                              key={index}
+                              className="overflow-hidden rounded-[24px] border bg-white/80 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-white"
+                              style={{ borderColor: isExpanded ? setup.ring : "var(--border)" }}
+                            >
+                              <button
+                                onClick={() => setExpandedVariation(isExpanded ? null : index)}
+                                className="w-full p-4 text-left transition-all hover:bg-[var(--bg-soft)]"
                               >
-                                A
-                              </span>
-                              <div className="flex-1 min-w-0">
-                                <h4 className="font-semibold text-sm" style={{ color: "#111827" }}>
-                                  Variation A: {variations[0].audience}
-                                </h4>
-                                <p className="text-xs mt-0.5 line-clamp-1" style={{ color: "#6B7280" }}>
-                                  {variations[0].summary}
-                                </p>
-                              </div>
-                            </div>
-                            <ChevronDown 
-                              className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform ${expandedVariation === 0 ? 'rotate-180' : ''}`}
-                            />
-                          </button>
-
-                          {/* Accordion Content */}
-                          {expandedVariation === 0 && (
-                            <div className="px-4 pb-4 pt-2 space-y-4 border-t" style={{ borderColor: "#F3F4F6" }}>
-                              {/* Purpose */}
-                              <div>
-                                <h5 className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#6B7280" }}>
-                                  Purpose
-                                </h5>
-                                <p className="text-sm leading-relaxed" style={{ color: "#374151" }}>
-                                  {variations[0].purpose}
-                                </p>
-                              </div>
-
-                              {/* Keywords */}
-                              {variations[0].target_keywords && variations[0].target_keywords.length > 0 && (
-                                <div>
-                                  <h5 className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#6B7280" }}>
-                                    Keywords
-                                  </h5>
-                                  <div className="flex flex-wrap gap-1.5">
-                                    {variations[0].target_keywords.map((keyword: string, idx: number) => (
-                                      <span
-                                        key={idx}
-                                        className="px-2.5 py-1 rounded text-xs font-medium"
-                                        style={{ background: "#F3F4F6", color: "#374151" }}
-                                      >
-                                        {keyword}
-                                      </span>
-                                    ))}
+                                <div className="flex items-start justify-between gap-3">
+                                  <div className="flex gap-3">
+                                    <div
+                                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-sm font-black text-white shadow-sm"
+                                      style={{ background: `linear-gradient(135deg, ${setup.accent}, #111827)` }}
+                                    >
+                                      {setup.id}
+                                    </div>
+                                    <div>
+                                      <div className="mb-2 flex flex-wrap gap-2">
+                                        <span className="rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide" style={{ background: setup.soft, color: setup.accent }}>
+                                          {audience}
+                                        </span>
+                                        <span className="rounded-full bg-[var(--bg-soft)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>
+                                          {setup.monetization}
+                                        </span>
+                                      </div>
+                                      <h4 className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>
+                                        {setup.title}: {variation.title || "Monetization Strategy"}
+                                      </h4>
+                                      <p className="mt-1 line-clamp-2 text-xs leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                                        {variation.summary || variation.purpose || "AI-generated strategy blueprint tailored to this audience and monetization path."}
+                                      </p>
+                                    </div>
                                   </div>
+                                  <ChevronDown className={`mt-1 h-5 w-5 shrink-0 transition-transform ${isExpanded ? "rotate-180" : ""}`} style={{ color: "var(--text-muted)" }} />
+                                </div>
+                              </button>
+
+                              <div className="grid grid-cols-3 gap-2 px-4 pb-4">
+                                {[
+                                  ["Traffic", "SEO-led"],
+                                  ["Capture", "Lead-first"],
+                                  ["Revenue", "Offer-fit"],
+                                ].map(([label, value]) => (
+                                  <div key={label} className="rounded-2xl bg-[var(--bg-soft)] p-3">
+                                    <p className="text-[10px] font-bold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>{label}</p>
+                                    <p className="mt-1 text-xs font-bold" style={{ color: "var(--text-primary)" }}>{value}</p>
+                                  </div>
+                                ))}
+                              </div>
+
+                              {isExpanded && (
+                                <div className="space-y-4 border-t border-[var(--border)] px-4 pb-4 pt-4">
+                                  <div className="rounded-2xl bg-[var(--bg-soft)] p-4">
+                                    <h5 className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide" style={{ color: "var(--text-primary)" }}>
+                                      <CheckCircle className="h-4 w-4 text-emerald-500" />
+                                      Strategy purpose
+                                    </h5>
+                                    <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                                      {variation.purpose || "Not specified"}
+                                    </p>
+                                  </div>
+
+                                  {keywords.length > 0 && (
+                                    <div>
+                                      <h5 className="mb-2 text-xs font-bold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>
+                                        Search opportunities
+                                      </h5>
+                                      <div className="flex flex-wrap gap-2">
+                                        {keywords.map((keyword: string, idx: number) => (
+                                          <span key={idx} className="rounded-full border border-[var(--border)] bg-white px-3 py-1.5 text-xs font-semibold" style={{ color: "var(--text-secondary)" }}>
+                                            {keyword}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                    <div className="rounded-2xl border border-[var(--border)] bg-white p-4">
+                                      <h5 className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>
+                                        <DollarSign className="h-4 w-4" style={{ color: setup.accent }} />
+                                        Monetization
+                                      </h5>
+                                      <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                                        {variation.monetization_strategy || "Not specified"}
+                                      </p>
+                                    </div>
+                                    <div className="rounded-2xl border border-[var(--border)] bg-white p-4">
+                                      <h5 className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>
+                                        <Target className="h-4 w-4" style={{ color: setup.accent }} />
+                                        Conversion CTA
+                                      </h5>
+                                      <p className="text-sm font-semibold leading-relaxed" style={{ color: "var(--text-primary)" }}>
+                                        {variation.cta_text || variation.call_to_action || "Not specified"}
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  <button
+                                    onClick={() => useThisBlueprint(index)}
+                                    className="flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold text-white shadow-lg transition-all hover:-translate-y-0.5"
+                                    style={{ background: `linear-gradient(135deg, ${setup.accent}, #111827)` }}
+                                  >
+                                    <CheckCircle className="h-4 w-4" />
+                                    Use This Strategy Blueprint
+                                  </button>
                                 </div>
                               )}
-
-                              {/* Monetization */}
-                              <div>
-                                <h5 className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#6B7280" }}>
-                                  Monetization
-                                </h5>
-                                <p className="text-sm leading-relaxed" style={{ color: "#374151" }}>
-                                  {variations[0].monetization_strategy}
-                                </p>
-                              </div>
-
-                              {/* CTA */}
-                              <div className="p-3 rounded" style={{ background: "#FFF7ED", border: "1px solid #FDBA74" }}>
-                                <h5 className="text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: "#9A3412" }}>
-                                  CTA
-                                </h5>
-                                <p className="text-sm font-semibold" style={{ color: "#EA580C" }}>
-                                  {variations[0].cta_text}
-                                </p>
-                              </div>
-
-                              {/* Use This Blueprint Button */}
-                              <button
-                                onClick={() => useThisBlueprint(0)}
-                                className="w-full px-4 py-2.5 rounded-lg font-semibold text-white transition-all hover:opacity-90"
-                                style={{ background: "#111827" }}
-                              >
-                                Use This Blueprint
-                              </button>
                             </div>
-                          )}
-                        </div>
-
-                        {/* Variation B */}
-                        <div 
-                          className="rounded-lg border transition-all"
-                          style={{ 
-                            background: "white",
-                            borderColor: expandedVariation === 1 ? "#3B82F6" : "#E5E7EB",
-                            overflow: "hidden"
-                          }}
-                        >
-                          {/* Accordion Header */}
-                          <button
-                            onClick={() => setExpandedVariation(expandedVariation === 1 ? null : 1)}
-                            className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
-                          >
-                            <div className="flex items-center gap-3 flex-1 text-left">
-                              <span 
-                                className="w-8 h-8 rounded flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
-                                style={{ background: "#3B82F6" }}
-                              >
-                                B
-                              </span>
-                              <div className="flex-1 min-w-0">
-                                <h4 className="font-semibold text-sm" style={{ color: "#111827" }}>
-                                  Variation B: {variations[1].audience}
-                                </h4>
-                                <p className="text-xs mt-0.5 line-clamp-1" style={{ color: "#6B7280" }}>
-                                  {variations[1].summary}
-                                </p>
-                              </div>
-                            </div>
-                            <ChevronDown 
-                              className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform ${expandedVariation === 1 ? 'rotate-180' : ''}`}
-                            />
-                          </button>
-
-                          {/* Accordion Content */}
-                          {expandedVariation === 1 && (
-                            <div className="px-4 pb-4 pt-2 space-y-4 border-t" style={{ borderColor: "#F3F4F6" }}>
-                              {/* Purpose */}
-                              <div>
-                                <h5 className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#6B7280" }}>
-                                  Purpose
-                                </h5>
-                                <p className="text-sm leading-relaxed" style={{ color: "#374151" }}>
-                                  {variations[1].purpose}
-                                </p>
-                              </div>
-
-                              {/* Keywords */}
-                              {variations[1].target_keywords && variations[1].target_keywords.length > 0 && (
-                                <div>
-                                  <h5 className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#6B7280" }}>
-                                    Keywords
-                                  </h5>
-                                  <div className="flex flex-wrap gap-1.5">
-                                    {variations[1].target_keywords.map((keyword: string, idx: number) => (
-                                      <span
-                                        key={idx}
-                                        className="px-2.5 py-1 rounded text-xs font-medium"
-                                        style={{ background: "#F3F4F6", color: "#374151" }}
-                                      >
-                                        {keyword}
-                                      </span>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* Monetization */}
-                              <div>
-                                <h5 className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#6B7280" }}>
-                                  Monetization
-                                </h5>
-                                <p className="text-sm leading-relaxed" style={{ color: "#374151" }}>
-                                  {variations[1].monetization_strategy}
-                                </p>
-                              </div>
-
-                              {/* CTA */}
-                              <div className="p-3 rounded" style={{ background: "#FFF7ED", border: "1px solid #FDBA74" }}>
-                                <h5 className="text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: "#9A3412" }}>
-                                  CTA
-                                </h5>
-                                <p className="text-sm font-semibold" style={{ color: "#EA580C" }}>
-                                  {variations[1].cta_text}
-                                </p>
-                              </div>
-
-                              {/* Use This Blueprint Button */}
-                              <button
-                                onClick={() => useThisBlueprint(1)}
-                                className="w-full px-4 py-2.5 rounded-lg font-semibold text-white transition-all hover:opacity-90"
-                                style={{ background: "#111827" }}
-                              >
-                                Use This Blueprint
-                              </button>
-                            </div>
-                          )}
-                        </div>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
-                </>
+                </div>
               )}
 
               {panelTab === "landing" && (

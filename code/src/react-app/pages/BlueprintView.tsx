@@ -918,10 +918,52 @@ export default function BlueprintView() {
           )}
 
           {panelTab === "variations" && (
-            <div className="text-center py-12">
-              <p style={{ color: "var(--text-muted)" }}>
-                Variations feature coming soon
-              </p>
+            <div className="premium-card overflow-hidden rounded-3xl p-0">
+              <div
+                className="p-5"
+                style={{
+                  background:
+                    "radial-gradient(circle at 16% 0%, rgba(109, 93, 251, 0.14), transparent 34%), radial-gradient(circle at 92% 18%, rgba(37, 99, 235, 0.1), transparent 30%), rgba(255,255,255,0.9)",
+                }}
+              >
+                <div className="mb-5 flex items-start gap-3">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/80 bg-white text-[var(--brand)] shadow-sm">
+                    <Check className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/80 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--brand)] shadow-sm">
+                      AI strategy lab
+                    </div>
+                    <h3 className="text-lg font-bold tracking-[-0.02em]" style={{ color: "var(--text-primary)" }}>
+                      Premium Strategy Variations
+                    </h3>
+                    <p className="mt-1 text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                      Create audience-specific monetization angles, traffic strategies, and conversion CTAs from the full project workspace.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {[
+                    ["Audience Angle", "Compare creators, agencies, businesses, and buyer-intent segments."],
+                    ["Revenue Model", "Test lead generation, affiliate, SaaS, consulting, and product paths."],
+                    ["Traffic Strategy", "Preview organic search, authority content, and conversion journeys."],
+                    ["Blueprint Upgrade", "Apply the strongest generated strategy as the active blueprint."],
+                  ].map(([title, description]) => (
+                    <div key={title} className="rounded-2xl border border-white/80 bg-white/75 p-4 shadow-sm">
+                      <p className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>{title}</p>
+                      <p className="mt-1 text-xs leading-relaxed" style={{ color: "var(--text-muted)" }}>{description}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => navigate(`/projects/${tool?.project_id}`)}
+                  className="btn-primary mt-5 flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold"
+                >
+                  Open AI Strategy Configurator
+                </button>
+              </div>
             </div>
           )}
 
