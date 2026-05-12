@@ -250,11 +250,16 @@ export default function ProjectView() {
           setBuildStep(null);
         }, 1500);
       } else {
-        throw new Error("Failed to build tool");
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || errorData?.error || "Failed to build tool");
       }
     } catch (error) {
       console.error("Tool building failed:", error);
-      showToast({ title: "Failed to build tool. Please try again.", type: "error" });
+      showToast({
+        title: "Failed to build tool",
+        message: error instanceof Error ? error.message : "Please try again.",
+        type: "error",
+      });
       setBuildStep(null);
       setBuildMode(null);
     }

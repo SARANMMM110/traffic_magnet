@@ -817,8 +817,30 @@ app.post("/api/tools/:id/html", authMiddleware, async (c) => {
   }
 
   try {
+    let blueprint;
+    try {
+      blueprint = typeof tool.blueprint === "string"
+        ? JSON.parse(tool.blueprint)
+        : tool.blueprint;
+    } catch (parseError) {
+      console.warn("[HTML Endpoint] Blueprint JSON parse failed, using tool fallback:", parseError);
+      blueprint = {};
+    }
+
+    blueprint = {
+      title: tool.name,
+      category: tool.category || "Business Asset",
+      description: tool.description || "",
+      purpose: tool.description || `Help users with ${tool.name}`,
+      target_keywords: [],
+      inputs_required: [],
+      features: [],
+      cta_text: `Generate my ${action === "embed" ? "AI insights" : "opportunity report"}`,
+      ...blueprint,
+    };
+
     const html = await generateToolHTML(
-      tool.blueprint as string,
+      blueprint,
       action as "standalone" | "embed",
       anthropicKey,
       openaiKey
@@ -831,7 +853,10 @@ app.post("/api/tools/:id/html", authMiddleware, async (c) => {
     return c.json({ html });
   } catch (error) {
     console.error("HTML generation error:", error);
-    return c.json({ error: "Failed to generate HTML" }, 500);
+    return c.json({
+      error: "Failed to generate HTML",
+      message: error instanceof Error ? error.message : "Unknown HTML generation error"
+    }, 500);
   }
 });
 

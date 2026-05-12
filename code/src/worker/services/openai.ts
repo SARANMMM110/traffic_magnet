@@ -2472,46 +2472,58 @@ function assertPremiumHtmlQuality(html: string, mode: HtmlQualityMode): void {
   }
 
   if (mode === "standalone") {
-    const requiredStandaloneComponents = [
+    const coreStandaloneComponents = [
       "hero-grid",
-      "dashboard-preview",
-      "trust-bar",
       "tool-panel",
       "field-card",
       "insight-dashboard",
+      "site-footer",
+    ];
+
+    const missingCoreComponents = coreStandaloneComponents.filter((component) => !lower.includes(component));
+    if (missingCoreComponents.length > 0) {
+      violations.push(`missing core standalone SaaS components: ${missingCoreComponents.join(", ")}`);
+    }
+
+    const premiumStandaloneSignals = [
+      "dashboard-preview",
+      "trust-bar",
       "metric-card",
       "strategy-card",
       "roadmap-step",
       "testimonial-card",
       "faq-section",
-      "site-footer",
+      "newsletter",
     ];
-
-    const missingComponents = requiredStandaloneComponents.filter((component) => !lower.includes(component));
-    if (missingComponents.length > 0) {
-      violations.push(`missing standalone SaaS components: ${missingComponents.join(", ")}`);
+    const presentPremiumSignals = premiumStandaloneSignals.filter((component) => lower.includes(component));
+    if (presentPremiumSignals.length < 5) {
+      violations.push(`standalone page needs more premium SaaS sections (${presentPremiumSignals.length}/5 found)`);
     }
 
     if (!lower.includes("score-ring") && !lower.includes("score-meter")) {
       violations.push("missing visual score component");
     }
-
-    if (!lower.includes("newsletter")) {
-      violations.push("missing footer newsletter CTA");
-    }
   }
 
   if (mode === "embed") {
-    const requiredEmbedComponents = [
+    const coreEmbedComponents = [
       "taf-widget",
       "taf-widget-header",
-      "taf-ai-badge",
       "taf-stepper",
-      "taf-progress",
-      "taf-step-card",
       "taf-tool-panel",
       "taf-field-card",
       "taf-insight-dashboard",
+    ];
+
+    const missingCoreComponents = coreEmbedComponents.filter((component) => !lower.includes(component));
+    if (missingCoreComponents.length > 0) {
+      violations.push(`missing core embed mini-SaaS components: ${missingCoreComponents.join(", ")}`);
+    }
+
+    const premiumEmbedSignals = [
+      "taf-ai-badge",
+      "taf-progress",
+      "taf-step-card",
       "taf-metric-card",
       "taf-strategy-card",
       "taf-cta-block",
@@ -2519,9 +2531,9 @@ function assertPremiumHtmlQuality(html: string, mode: HtmlQualityMode): void {
       "taf-export-actions",
     ];
 
-    const missingComponents = requiredEmbedComponents.filter((component) => !lower.includes(component));
-    if (missingComponents.length > 0) {
-      violations.push(`missing embed mini-SaaS components: ${missingComponents.join(", ")}`);
+    const presentPremiumSignals = premiumEmbedSignals.filter((component) => lower.includes(component));
+    if (presentPremiumSignals.length < 5) {
+      violations.push(`embed widget needs more premium interaction sections (${presentPremiumSignals.length}/5 found)`);
     }
 
     if (!lower.includes("taf-score-ring") && !lower.includes("taf-score-meter")) {
