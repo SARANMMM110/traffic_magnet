@@ -2402,10 +2402,53 @@ Generate the complete PREMIUM landing page HTML now:`;
 type HtmlQualityMode = "landing" | "standalone" | "embed";
 
 function normalizeGeneratedHtml(html: string): string {
-  return html
+  let normalized = html
     .replace(/^```(?:html)?\s*\n?/i, "")
     .replace(/\n?```\s*$/i, "")
+    .replace(/--primary-color/gi, "--brand-primary")
+    .replace(/--secondary-color/gi, "--brand-secondary")
     .trim();
+
+  if (!normalized.toLowerCase().includes("@media") && /<\/style>/i.test(normalized)) {
+    const responsiveFallback = `
+
+@media (max-width: 900px) {
+  :where(.hero-grid, .tool-panel, .footer-grid, .testimonial-grid, .benefits-grid, .roadmap-section, .timeline-rail, .tool-form-grid) {
+    grid-template-columns: 1fr !important;
+  }
+
+  :where(.experience-shell, .taf-widget) {
+    overflow-x: hidden;
+  }
+
+  :where(.hero-composition, .ai-product-preview, .configurator-card, .analysis-workspace, .tool-card, .taf-tool-panel, .taf-insight-dashboard) {
+    border-radius: 22px;
+  }
+}
+
+@media (max-width: 640px) {
+  :where(body, .experience-shell) {
+    padding-inline: 0;
+  }
+
+  :where(.site-nav, .hero-grid, .tool-panel, .site-footer, .taf-widget) {
+    padding-inline: 18px !important;
+  }
+
+  :where(h1) {
+    font-size: clamp(2.35rem, 12vw, 3.6rem) !important;
+    line-height: 0.96 !important;
+  }
+
+  :where(.field-card, .signal-card, .strategy-card, .monetization-card, .taf-field-card, .taf-strategy-card) {
+    padding: 18px !important;
+  }
+}`;
+
+    normalized = normalized.replace(/<\/style>/i, `${responsiveFallback}\n</style>`);
+  }
+
+  return normalized;
 }
 
 function assertPremiumHtmlQuality(html: string, mode: HtmlQualityMode): void {
@@ -2466,17 +2509,25 @@ function assertPremiumHtmlQuality(html: string, mode: HtmlQualityMode): void {
   }
 
   if (mode !== "embed") {
+    const hasInteractiveControls =
+      lower.includes("<form") ||
+      ((lower.includes("<input") || lower.includes("<select") || lower.includes("<textarea")) &&
+        lower.includes("<button"));
+
     if (!lower.includes("<footer")) violations.push("missing premium footer");
-    if (!lower.includes("<form")) violations.push("missing interactive form");
+    if (!hasInteractiveControls) violations.push("missing interactive tool controls");
     if (!lower.includes("<script")) violations.push("missing interaction script");
   }
 
   if (mode === "standalone") {
     const coreStandaloneComponents = [
+      "experience-shell",
       "hero-grid",
+      "hero-composition",
       "tool-panel",
+      "configurator-card",
       "field-card",
-      "insight-dashboard",
+      "analysis-workspace",
       "site-footer",
     ];
 
@@ -2486,22 +2537,49 @@ function assertPremiumHtmlQuality(html: string, mode: HtmlQualityMode): void {
     }
 
     const premiumStandaloneSignals = [
-      "dashboard-preview",
+      "ai-product-preview",
       "trust-bar",
-      "metric-card",
+      "signal-card",
       "strategy-card",
-      "roadmap-step",
+      "monetization-card",
+      "timeline-rail",
       "testimonial-card",
       "faq-section",
+      "footer-grid",
       "newsletter",
     ];
     const presentPremiumSignals = premiumStandaloneSignals.filter((component) => lower.includes(component));
-    if (presentPremiumSignals.length < 5) {
-      violations.push(`standalone page needs more premium SaaS sections (${presentPremiumSignals.length}/5 found)`);
+    if (presentPremiumSignals.length < 7) {
+      violations.push(`standalone page needs more premium AI SaaS sections (${presentPremiumSignals.length}/7 found)`);
     }
 
     if (!lower.includes("score-ring") && !lower.includes("score-meter")) {
       violations.push("missing visual score component");
+    }
+
+    const fakeMetricPatterns = [
+      "traffic 120k",
+      "revenue 500k",
+      "$500k",
+      "120k visitors",
+      "500k revenue",
+    ];
+    const fakeMetricMatches = fakeMetricPatterns.filter((pattern) => lower.includes(pattern));
+    if (fakeMetricMatches.length > 0) {
+      violations.push(`contains fake vanity metrics: ${fakeMetricMatches.join(", ")}`);
+    }
+
+    const genericTemplatePhrases = [
+      "powerful features",
+      "why choose us",
+      "get started today",
+      "feature 1",
+      "feature 2",
+      "calculate now",
+    ];
+    const genericPhraseMatches = genericTemplatePhrases.filter((phrase) => lower.includes(phrase));
+    if (genericPhraseMatches.length > 0) {
+      violations.push(`contains generic template phrasing: ${genericPhraseMatches.join(", ")}`);
     }
   }
 
@@ -2709,33 +2787,46 @@ function generateHTMLPrompt(
 ): string {
   const standaloneRequirements = `
 STANDALONE EXPERIENCE CONTRACT
-You are not generating loose HTML sections. You are generating a complete premium SaaS product experience around the interactive business asset.
+You are not generating a landing page template. You are designing a complete premium AI SaaS product experience around the interactive business asset.
+The final page must feel custom, funded, modern, emotionally valuable, and production-ready.
 
 Required component architecture and class names:
-- site-nav: premium navigation with brand, product links, and CTA.
-- hero-grid: split hero with hero-copy on the left and dashboard-preview on the right.
-- dashboard-preview: SaaS-style product mockup with charts, rows, score cards, and floating-metric cards.
-- trust-bar: concise credibility row with business outcome proof points.
-- tool-panel: premium interactive form area with grouped field-card controls.
-- field-card: each input/select lives inside a modern card with label, microcopy, and icon-chip.
-- insight-dashboard: hidden results dashboard that appears after submit.
+- experience-shell: body-level layout wrapper with layered gradient atmosphere and refined spacing rhythm.
+- site-nav: minimal premium navigation with brand, product links, and one high-intent CTA.
+- hero-grid: cinematic split hero with hero-copy on the left and hero-composition on the right.
+- hero-composition: layered visual system containing ai-product-preview, floating insight chips, and subtle background orbs.
+- ai-product-preview: not a fake dashboard. Show qualitative AI analysis states, recommendation panels, opportunity breakdowns, and product UI fragments without fake vanity numbers.
+- trust-bar: concise credibility row with business outcome proof points and no fabricated metrics.
+- tool-panel: premium interactive product area, visually stronger than the surrounding sections.
+- configurator-card: app-like AI configurator container inside tool-panel.
+- field-card: each input/select lives inside a modern card with label, microcopy, icon-chip, and custom focus state.
+- analysis-workspace: hidden results dashboard that appears after submit and feels like a paid AI report.
 - score-ring or score-meter: visual opportunity score/progress indicator.
-- metric-card: result KPIs for traffic, conversion, revenue, and authority.
-- strategy-card: recommendations for monetization, traffic, conversion, and SEO.
+- signal-card: insight cards for traffic signals, conversion friction, authority gaps, and monetization readiness. Do not use fake numbers like "Traffic 120k" or "Revenue 500k".
+- strategy-card: actionable recommendations for monetization, traffic, conversion, and SEO.
+- monetization-card: revenue path cards with realistic strategy language, not made-up revenue claims.
 - benefits-grid: outcome-led benefit cards. Do not title this "Powerful Features".
-- roadmap-section with roadmap-step items for monetization or growth.
+- timeline-rail with roadmap-step items for monetization or growth.
 - testimonial-grid with testimonial-card outcome proof.
 - faq-section using details/summary or accessible accordion cards.
 - final-cta: premium closing CTA.
-- site-footer: modern multi-column footer with newsletter form and link groups.
+- site-footer with footer-grid: modern minimal footer with newsletter form and elegant link groups.
 
 Standalone visual requirements:
-- Hero must be split layout, not centered-only. Include left content, CTA group, trust indicators, and right dashboard preview.
-- Dashboard preview must look like an AI insights product: score, mini chart bars, traffic pipeline, conversion opportunities, monetization priorities.
-- Results must look like an AI insights dashboard, not text paragraphs. Use score ring/meter, metric cards, progress bars, and strategy cards.
-- Footer must be multi-column with brand, Product, Resources, Company, social text links, newsletter CTA, and subtle gradient/divider.
+- Hero must be split layout, not centered-only. Include left content, CTA group, trust indicators, and right product composition.
+- Use cinematic but restrained visual hierarchy: large expressive headline, crisp subcopy, layered gradients, floating UI blocks, and generous whitespace.
+- The right-side visual must look like a modern AI product interface, not a fake dashboard screenshot. Use recommendation queues, insight cards, score states, decision paths, and qualitative product UI.
+- Tool panel must contain a real interactive experience: use a literal <form id="business-asset-form"> with field-card inputs/selects, a submit button, and an analysis-workspace results area.
+- Tool panel should feel like a premium SaaS configurator with custom selects, input groups, progress state, subtle hover/focus transitions, and a premium gradient CTA.
+- Results must look like an AI insight dashboard, not text paragraphs. Use score ring/meter, signal cards, recommendation cards, monetization cards, progress bars, and strategy timelines.
+- Footer must be modern and minimal: footer-grid columns, brand statement, Product, Resources, Company, social text links, newsletter CTA, and subtle divider.
 - Copy should use outcomes such as revenue growth, traffic intelligence, lead capture, monetization, authority, and conversion momentum.
 - Avoid weak section titles like "Powerful Features" and "Why This Works"; use specific, premium headings such as "Revenue Signals Worth Acting On" or "From Traffic Insight To Monetization Plan".
+
+Hard design bans:
+- Do not create generic bright gradient hero banners, plain centered hero text, flat white card grids, Bootstrap-style rows, fake SaaS dashboards, or template-like sections.
+- Do not invent fake vanity metrics such as "Traffic 120k", "Revenue 500k", "$500k", or similar fabricated proof.
+- Do not use generic labels like "Feature 1", "Powerful Features", "Why Choose Us", "Get Started Today", or "Calculate Now".
 `;
 
   const embedRequirements = `
@@ -2789,7 +2880,7 @@ Standalone rules:
 - Include responsive CSS in one reusable <style> block with CSS variables and component classes.
 - Include Inter or Manrope from Google Fonts.
 - Include a premium multi-column footer inside the generated page.
-- Build it like a complete SaaS landing page around the interactive business asset.
+- Wrap the visible page in <main class="experience-shell"> and build it like a complete premium AI SaaS product experience around the interactive business asset.
 ${standaloneRequirements}
 ` : `
 Embed rules:
@@ -2803,18 +2894,19 @@ ${embedRequirements}
 `}
 
 Design mandate:
-- The output must feel like a modern premium SaaS startup interface, not an export page, old startup template, generic form builder, or random section stack.
-- Visual quality should feel inspired by Linear, Stripe, Framer, Webflow, Notion, and Vercel: premium hero, soft layered gradients, dashboard-style cards, trust indicators, refined spacing, clean hierarchy, elegant forms, subtle animations.
+- The output must feel like a modern premium AI SaaS startup interface, not an export page, old startup template, generic form builder, or random section stack.
+- Visual quality should feel inspired by Linear, Stripe, Framer, Raycast, Arc Browser, Notion AI, and Vercel: cinematic hero composition, soft layered gradients, app-like product UI, trust indicators, refined spacing, clean hierarchy, elegant forms, subtle animations.
 - Use reusable CSS classes, CSS variables, and polished responsive layouts. Minimize inline CSS.
+- Use premium token names like --brand-primary, --brand-secondary, --surface, --ink, --muted, and --line. Do not use generic legacy token names such as --primary-color or --secondary-color.
 - Use a light premium design: near-white surfaces, soft borders, rounded 24px-32px cards, calm gradients, layered shadows, glass-light panels, high readability.
 - Use Inter or Manrope. Never use Arial.
-- Avoid Bootstrap-style rows, generic gradient headers, tiny 8px radii, flat white boxes, emojis, vendor branding, copied layouts, Font Awesome, icon CDNs, Tailwind CDN, external images, and invalid CSS functions like darken().
+- Avoid Bootstrap-style rows, generic gradient headers, tiny 8px radii, flat white boxes, emojis, vendor branding, copied layouts, fake dashboards, Font Awesome, icon CDNs, Tailwind CDN, external images, and invalid CSS functions like darken().
 
 Business mandate:
 - This is a business opportunity asset, growth engine, lead magnet, conversion tool, traffic system, SEO system, or revenue optimization dashboard.
 - Avoid generic calculator framing. Button labels should say things like "Reveal My Opportunity", "Generate My Strategy", "Analyze Growth Potential", or "Build My Revenue Plan".
 - The results section must provide strategic recommendations, opportunity scores, prioritized next steps, and monetization guidance.
-- Standalone mode must include trust-building sections: split hero, dashboard mockup, who it is for, why it works, metrics/proof, process timeline, EEAT signals, FAQs, monetization section, final CTA, and footer.
+- Standalone mode must include trust-building sections: split hero, AI product preview, who it is for, outcome proof without fake numbers, process timeline, EEAT signals, FAQs, monetization section, final CTA, and footer.
 
 Functionality requirements:
 - Render every field listed in blueprint.inputs_required.
@@ -2862,7 +2954,7 @@ async function generateHTMLWithAnthropic(
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
-        max_tokens: mode === "standalone" ? 14000 : 10000,
+        max_tokens: mode === "standalone" ? 16000 : 10000,
         temperature: 0.3,
         messages: [{ role: "user", content: prompt }]
       })
@@ -2918,7 +3010,7 @@ async function generateHTMLWithOpenAI(
         messages: [
           {
             role: "system",
-            content: "You are a principal SaaS frontend engineer. Output only raw HTML. Create premium, modern, responsive business asset experiences with reusable component classes, Inter/Manrope typography, step-based widgets, polished forms, insight dashboards, and no generic templates."
+            content: "You are a principal SaaS product designer and frontend engineer. Output only raw HTML. Create premium, modern, responsive AI business asset experiences with reusable component classes, Inter/Manrope typography, cinematic product composition, app-like configurators, polished forms, strategic insight dashboards, no fake metrics, and no generic templates."
           },
           {
             role: "user",
@@ -2926,7 +3018,7 @@ async function generateHTMLWithOpenAI(
           }
         ],
         temperature: 0.3,
-        max_tokens: mode === "standalone" ? 14000 : 10000
+        max_tokens: mode === "standalone" ? 16000 : 10000
       })
     });
 

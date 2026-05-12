@@ -555,18 +555,56 @@ Generate the complete premium embed code now (wrapper div only):`;
   }
   
   // Standalone version
-  return `Create a premium standalone HTML page for: ${blueprint.title}
+  return `Create a premium standalone AI SaaS product page for: ${blueprint.title}
 
-OPTIMIZATION RULES:
-- Use CSS classes, NOT repeated inline styles
-- Single <style> block with reusable classes
-- Premium SaaS-style embedded tool card, not browser-default form UI
-- Modern custom inputs, selects, gradient CTA, and AI results dashboard
-- Lightweight but polished DOM structure
-- Total size under 40KB
-- NO markdown fences
+OUTPUT RULES:
+- Output ONLY raw HTML. No markdown fences or explanations.
+- Use a complete <!DOCTYPE html> document with html, head, body.
+- Use Inter or Manrope from Google Fonts.
+- Use one reusable <style> block and one small <script> block.
+- Avoid repeated inline styles, Font Awesome, Bootstrap, Tailwind CDN, icon CDNs, external images, and invalid CSS like darken().
+- Use premium token names like --brand-primary, --brand-secondary, --surface, --ink, --muted, and --line.
 
-${generateOptimizedLandingPagePrompt(blueprint).replace('Create a clean, optimized landing page for:', 'TEMPLATE:')}`;
+DESIGN DIRECTION:
+- This must feel like a funded modern AI startup product, not a generated landing page template.
+- Visual quality should feel close to Linear, Stripe, Framer, Raycast, Arc Browser, Notion AI, and Vercel.
+- Use soft neutral backgrounds, layered gradients, glass-light surfaces, large radius, refined shadows, elegant borders, and precise spacing rhythm.
+- Do not create generic bright gradient heroes, flat white card grids, fake SaaS dashboards, old startup sections, or Bootstrap-style rows.
+
+REQUIRED COMPONENT CLASSES:
+- experience-shell: main page wrapper with layered visual atmosphere.
+- site-nav: minimal premium navigation.
+- hero-grid: split cinematic hero.
+- hero-composition: right-side product composition.
+- ai-product-preview: qualitative AI analysis UI, not fake numbers.
+- trust-bar: proof row without fabricated metrics.
+- tool-panel: premium interactive product area.
+- configurator-card: app-like AI configurator.
+- field-card: custom grouped inputs/selects.
+- analysis-workspace: hidden paid-report style results dashboard.
+- score-ring or score-meter: visual opportunity score.
+- signal-card: traffic, conversion, authority, or monetization insight blocks.
+- strategy-card: actionable AI recommendations.
+- monetization-card: realistic revenue path cards.
+- timeline-rail: modern process or strategy timeline.
+- faq-section: polished FAQ.
+- site-footer and footer-grid: minimal premium SaaS footer.
+
+TOOL EXPERIENCE:
+- Use a literal <form id="business-asset-form"> with all blueprint inputs.
+- Inputs/selects must look custom and premium, with focus states and grouped labels.
+- Submit CTA should say something like "Reveal My Opportunity", "Generate My Strategy", or "Build My Revenue Plan".
+- Results must be an AI insight workspace with opportunity score, signal cards, strategy cards, monetization cards, and next steps.
+
+CONTENT RULES:
+- Avoid generic phrases like "Powerful Features", "Why Choose Us", "Get Started Today", and "Calculate Now".
+- Do not invent fake vanity metrics such as "Traffic 120k", "Revenue 500k", "$500k", or similar fabricated proof.
+- Copy should focus on revenue growth, traffic intelligence, lead capture, monetization, authority, and conversion momentum.
+
+BLUEPRINT:
+${JSON.stringify(blueprint, null, 2)}
+
+Generate the complete premium standalone HTML now:`;
 }
 
 function generateInputFields(inputs: any[]): string {
