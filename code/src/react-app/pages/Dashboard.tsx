@@ -110,8 +110,8 @@ export default function Dashboard() {
     setTimeout(() => {
       setRecommendations([
         {
-          name: "ROI Calculator",
-          description: "Help visitors calculate return on investment",
+          name: "ROI Opportunity Engine",
+          description: "Help visitors identify revenue upside and next best actions",
           score: 92,
         },
         {
@@ -229,7 +229,7 @@ export default function Dashboard() {
                 Welcome back, {user?.google_user_data.name || "there"}
               </h1>
               <p className="text-base leading-7 md:text-lg" style={{ color: "var(--text-secondary)" }}>
-                Plan, generate, publish, and wrap high-traffic AI tools from one polished workspace.
+                Plan, generate, publish, and wrap high-traffic AI business assets from one polished workspace.
               </p>
             </div>
             <Link to="/projects/new">
@@ -309,7 +309,7 @@ export default function Dashboard() {
                 <Sparkles className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-lg font-bold" style={{ color: "var(--text-primary)" }}>AI Recommended Tools</h3>
+                <h3 className="text-lg font-bold" style={{ color: "var(--text-primary)" }}>AI Recommended Assets</h3>
                 <p className="text-sm" style={{ color: "var(--text-muted)" }}>
                   Suggestions based on your niches, goals, and current project mix.
                 </p>
@@ -329,8 +329,8 @@ export default function Dashboard() {
           {recommendations.length === 0 && !loadingRecs && (
             <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
               {projects.length === 0
-                ? "Create your first project to get AI-powered tool suggestions tailored to your niche."
-                : "Click 'Get Suggestions' to get AI-powered tool ideas tailored to your existing projects."}
+                ? "Create your first project to get AI-powered asset suggestions tailored to your niche."
+                : "Click 'Get Suggestions' to get AI-powered business asset ideas tailored to your existing projects."}
             </p>
           )}
 
@@ -450,7 +450,7 @@ export default function Dashboard() {
               </h3>
               <p className="mb-6" style={{ color: "var(--text-secondary)" }}>
                 {projects.length === 0
-                  ? "Create a project to start building traffic-magnet tools"
+                  ? "Create a project to start building traffic-magnet business assets"
                   : "Try adjusting your filters"}
               </p>
               {projects.length === 0 && (
@@ -559,7 +559,7 @@ export default function Dashboard() {
             }}
             onConfirm={handleDeleteConfirm}
             title="Delete Project"
-            description={`Are you sure you want to delete "${projectToDelete.name}"? This will permanently delete all ${projectToDelete.tool_count} tools in this project. This action cannot be undone.`}
+            description={`Are you sure you want to delete "${projectToDelete.name}"? This will permanently delete all ${projectToDelete.tool_count} assets in this project. This action cannot be undone.`}
             confirmLabel="Delete Project"
             confirmVariant="danger"
           />

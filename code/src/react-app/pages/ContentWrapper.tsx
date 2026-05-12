@@ -1071,8 +1071,8 @@ export default function ContentWrapper() {
   <section class="tool-section" id="tool">
     <div class="page-container">
       <div class="tool-header">
-        <h2>Use the ${targetKeyword || 'Calculator'}</h2>
-        <p>Enter your information below to get instant, personalized results.</p>
+        <h2>Use the ${targetKeyword || 'Business Opportunity Asset'}</h2>
+        <p>Enter your information below to get instant, personalized strategy recommendations.</p>
       </div>
       <div class="tool-card">
         <div class="tool-wrapper">
@@ -1417,7 +1417,7 @@ export default function ContentWrapper() {
           </div>
           <h1 className="text-4xl font-bold text-foreground">Content Wrapper</h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
-            Generate an SEO content package, full-page HTML, and a live preview around any embedded AI tool.
+            Generate an authority SEO content package, full-page HTML, and a live preview around any embedded AI business asset.
           </p>
         </div>
 
@@ -1476,7 +1476,7 @@ export default function ContentWrapper() {
                     type="text"
                     value={targetKeyword}
                     onChange={(e) => setTargetKeyword(e.target.value)}
-                    placeholder="e.g., mortgage calculator"
+                    placeholder="e.g., affiliate revenue engine"
                     className="input-premium w-full px-4 py-3 text-sm transition-shadow"
                   />
                 </div>
@@ -1497,7 +1497,7 @@ export default function ContentWrapper() {
               {/* Embed Code */}
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
-                  Calculator Embed Code{" "}
+                  Business Asset Embed Code{" "}
                   <span className="text-muted-foreground font-normal">
                     (optional — auto-filled from Copy All)
                   </span>
@@ -1653,7 +1653,7 @@ export default function ContentWrapper() {
                     <div className="space-y-3">
                       {embedCode && (
                         <p className="text-sm text-muted-foreground">
-                          Calculator embed code detected - will be included in the full page
+                          Business asset embed code detected - will be included in the full page
                         </p>
                       )}
                       <button

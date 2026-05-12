@@ -267,9 +267,9 @@ export default function Onboarding() {
                 Power up your account
               </h1>
               <p className="text-base max-w-md mx-auto" style={{ color: "var(--text-secondary)" }}>
-                Magnet Lab uses AI to generate tool ideas and build working HTML tools. You need your
+                Magnet Lab uses AI to generate business asset ideas and build working HTML assets. You need your
                 own OpenAI or Anthropic API key — it takes 2 minutes and costs almost nothing to
-                generate a tool.
+                generate an asset.
               </p>
             </div>
 
@@ -417,7 +417,7 @@ export default function Onboarding() {
                   Now let it compound
                 </h2>
                 <p className="mt-2 text-sm leading-6" style={{ color: "var(--text-secondary)" }}>
-                  One tool is a start. Ten tools become a traffic machine. Each small, useful tool targets a search people already make.
+                  One asset is a start. A library of assets becomes a traffic and monetization machine. Each useful asset targets intent people already search for.
                 </p>
               </div>
 
@@ -425,7 +425,7 @@ export default function Onboarding() {
                 <div className="flex gap-3">
                   <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-orange-100 text-xs font-bold text-orange-600">1</span>
                   <p className="text-sm leading-6" style={{ color: "var(--text-secondary)" }}>
-                    Use the Bulk Generator to discover 50-100 more tool ideas for your niche.
+                    Use the generator to discover more premium business asset ideas for your niche.
                   </p>
                 </div>
                 <div className="flex gap-3">
@@ -437,7 +437,7 @@ export default function Onboarding() {
                 <div className="flex gap-3">
                   <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-orange-100 text-xs font-bold text-orange-600">3</span>
                   <p className="text-sm leading-6" style={{ color: "var(--text-secondary)" }}>
-                    Add more tools over time. Small search wins stack into compounding traffic.
+                    Add more assets over time. Small search wins stack into compounding traffic and revenue opportunities.
                   </p>
                 </div>
                 <button
@@ -503,7 +503,7 @@ export default function Onboarding() {
                   AI Finds Opportunities
                 </h3>
                 <p className="text-xs leading-5" style={{ color: "var(--text-secondary)" }}>
-                  Find tool ideas with useful search demand and clear intent.
+                  Find business asset ideas with useful search demand and clear monetization intent.
                 </p>
               </div>
 
@@ -548,7 +548,7 @@ export default function Onboarding() {
                 Start with a niche
               </h1>
               <p className="text-base" style={{ color: "var(--text-secondary)" }}>
-                A project groups all your tool ideas for one topic or market.
+                A project groups all your business asset ideas for one topic or market.
               </p>
             </div>
 
@@ -656,7 +656,7 @@ export default function Onboarding() {
                 Let AI find your best opportunities
               </h1>
               <p className="text-base" style={{ color: "var(--text-secondary)" }}>
-                We'll scan your niche and return the top tool ideas ranked by traffic potential.
+                We'll scan your niche and return premium business asset ideas ranked by traffic and monetization potential.
               </p>
             </div>
 
@@ -694,7 +694,7 @@ export default function Onboarding() {
                   boxShadow: "0 0 20px var(--brand-glow)",
                 }}
               >
-                {generatingIdeas ? "Analyzing your niche..." : "Generate My Tool Ideas"}
+                {generatingIdeas ? "Analyzing your niche..." : "Generate My Business Assets"}
               </button>
             )}
 
@@ -757,7 +757,7 @@ export default function Onboarding() {
                 Build your first real tool
               </h1>
               <p className="text-base" style={{ color: "var(--text-secondary)" }}>
-                Pick one idea and AI will write a complete working HTML calculator or tool.
+                Pick one idea and AI will write a complete working HTML business asset.
               </p>
             </div>
 
@@ -814,7 +814,7 @@ export default function Onboarding() {
               <div className="text-center space-y-3">
                 <div className="inline-block w-12 h-12 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: "var(--brand)" }} />
                 <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-                  Writing the calculator logic... Adding mobile styling... Generating embed code...
+                  Writing the business logic... Adding mobile styling... Generating embed code...
                 </p>
               </div>
             )}

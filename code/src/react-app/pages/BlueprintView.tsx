@@ -333,6 +333,17 @@ export default function BlueprintView() {
   }
 
   const purpose = blueprint.purpose || tool.description || "";
+  const strategySections = [
+    { title: "MARKET OPPORTUNITY", value: blueprint.market_opportunity },
+    { title: "SEO OPPORTUNITY", value: blueprint.seo_opportunity },
+    { title: "TRAFFIC ACQUISITION STRATEGY", value: blueprint.traffic_acquisition_strategy },
+    { title: "CONVERSION PSYCHOLOGY", value: blueprint.conversion_psychology },
+    { title: "AUTHORITY POSITIONING", value: blueprint.authority_positioning },
+    { title: "COMPETITOR ADVANTAGE", value: blueprint.competitor_advantage },
+  ].filter((section) => section.value);
+  const audiencePainPoints = Array.isArray(blueprint.audience_pain_points) ? blueprint.audience_pain_points : [];
+  const monetizationRoadmap = Array.isArray(blueprint.monetization_roadmap) ? blueprint.monetization_roadmap : [];
+  const eeatStructure = Array.isArray(blueprint.eeat_structure) ? blueprint.eeat_structure : [];
   const keywords = Array.isArray(blueprint.target_keywords) ? blueprint.target_keywords : [];
   const inputFields = Array.isArray(blueprint.inputs_required) ? blueprint.inputs_required : [];
   const output = blueprint.output_type || "";
@@ -446,6 +457,39 @@ export default function BlueprintView() {
                 </p>
               </div>
 
+              {strategySections.map((section) => (
+                <div key={section.title}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Check className="h-4 w-4" style={{ color: "var(--text-muted)" }} />
+                    <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+                      {section.title}
+                    </h4>
+                  </div>
+                  <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: "var(--text-primary)" }}>
+                    {section.value}
+                  </p>
+                </div>
+              ))}
+
+              {audiencePainPoints.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Check className="h-4 w-4" style={{ color: "var(--text-muted)" }} />
+                    <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+                      AUDIENCE PAIN POINTS
+                    </h4>
+                  </div>
+                  <div className="space-y-2">
+                    {audiencePainPoints.map((point: string, i: number) => (
+                      <div key={i} className="text-sm flex items-start gap-2" style={{ color: "var(--text-primary)" }}>
+                        <Check className="mt-0.5 h-4 w-4 flex-shrink-0" style={{ color: "#10B981" }} />
+                        <span>{point}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Target Keywords */}
               <div>
                 <div className="flex items-center gap-2 mb-3">
@@ -506,14 +550,14 @@ export default function BlueprintView() {
                 </p>
               </div>
 
-              {/* Calculation Logic */}
+              {/* Business Logic */}
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <svg className="w-4 h-4" style={{ color: "var(--text-muted)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                   </svg>
                   <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-                    CALCULATION LOGIC
+                    BUSINESS LOGIC
                   </h4>
                 </div>
                 <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: "var(--text-primary)" }}>
@@ -557,6 +601,43 @@ export default function BlueprintView() {
                   {monetization || "Not specified"}
                 </p>
               </div>
+
+              {monetizationRoadmap.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Check className="h-4 w-4" style={{ color: "var(--text-muted)" }} />
+                    <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+                      MONETIZATION ROADMAP
+                    </h4>
+                  </div>
+                  <div className="space-y-2">
+                    {monetizationRoadmap.map((item: string, i: number) => (
+                      <div key={i} className="text-sm" style={{ color: "var(--text-primary)" }}>
+                        {i + 1}. {item}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {eeatStructure.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Check className="h-4 w-4" style={{ color: "var(--text-muted)" }} />
+                    <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+                      EEAT STRUCTURE
+                    </h4>
+                  </div>
+                  <div className="space-y-2">
+                    {eeatStructure.map((item: string, i: number) => (
+                      <div key={i} className="text-sm flex items-start gap-2" style={{ color: "var(--text-primary)" }}>
+                        <Check className="mt-0.5 h-4 w-4 flex-shrink-0" style={{ color: "#10B981" }} />
+                        <span>{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Internal Linking Suggestions */}
               <div>
@@ -788,7 +869,7 @@ export default function BlueprintView() {
                   {buildStep === "logic" && (
                     <span className="flex items-center justify-center gap-2">
                       <Loader2 className="w-5 h-5 animate-spin" />
-                      Building calculation logic...
+                      Building business logic...
                     </span>
                   )}
                   {buildStep === "styling" && (
@@ -806,7 +887,7 @@ export default function BlueprintView() {
                   {buildStep === "done" && (
                     <span className="flex items-center justify-center gap-2">
                       <Check className="w-5 h-5" />
-                      Tool Built Successfully!
+                      Business Asset Built Successfully!
                     </span>
                   )}
                 </div>
@@ -852,7 +933,7 @@ export default function BlueprintView() {
                   Landing Page Generator
                 </h3>
                 <p className="text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>
-                  Generate a complete, production-ready landing page with 8 sections: Hero, Working Tool, Benefits, How It Works, Results, Testimonials, FAQ, and Final CTA. The tool will be fully functional with working calculation logic.
+                  Generate a production-ready SaaS landing page with a premium hero, interactive business asset, trust sections, monetization roadmap, FAQ, conversion CTAs, and polished footer.
                 </p>
               </div>
 
@@ -877,7 +958,7 @@ export default function BlueprintView() {
                     Generating Your Landing Page
                   </p>
                   <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                    This may take 30-60 seconds. Creating 8 sections with working calculator logic...
+                    This may take 30-60 seconds. Creating a polished conversion page with strategic business logic...
                   </p>
                 </div>
               )}
@@ -895,7 +976,7 @@ export default function BlueprintView() {
                     </p>
                     <div className="grid grid-cols-2 gap-2 text-xs" style={{ color: "var(--text-secondary)" }}>
                       <div>Hero Section</div>
-                      <div>Working Calculator Tool</div>
+                      <div>Interactive Business Asset</div>
                       <div>Benefits Section</div>
                       <div>How It Works</div>
                       <div>Results/Value Prop</div>

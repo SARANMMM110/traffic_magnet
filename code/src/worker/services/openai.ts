@@ -1,10 +1,4 @@
 import OpenAI from "openai";
-import { 
-  generateOptimizedLandingPagePrompt, 
-  generateOptimizedToolHTMLPrompt,
-  generateBlueprintPrompt,
-  generateRegenerateBlueprintPrompt
-} from "./prompts";
 
 interface ToolIdea {
   name: string;
@@ -40,17 +34,33 @@ export async function discoverToolIdeas(
   
   const client = new OpenAI({ apiKey });
 
-  const userPrompt = `Niche: ${niche}
-Goal: ${goal || "Generate traffic"}
+  const userPrompt = `Platform Positioning: AI Online Business Opportunity Engine
+Selected Niche and Category: ${niche}
+Goal: ${goal || "Generate traffic and monetizable opportunities"}
 Target Audience: ${audience || "General"}
 
-IMPORTANT: You MUST generate exactly 10 unique tool ideas.
+IMPORTANT: You MUST generate exactly 12 unique premium business asset ideas.
 
-Each tool must be a unique, specific calculator, generator, analyzer, or interactive tool that:
-- Solves a real problem in this niche
-- Can rank on Google for specific keywords
-- Attracts backlinks from other sites
-- Has monetization potential
+Do NOT generate generic calculator concepts.
+Avoid names that end with "Calculator" unless the selected category explicitly requires an ROI or savings estimator.
+
+Generate premium, startup-grade assets such as:
+- AI business assets
+- Traffic systems
+- Lead magnets
+- Monetization engines
+- Conversion tools
+- SEO opportunity systems
+- Growth dashboards
+- Revenue optimization systems
+- Authority-building interactive utilities
+
+Each asset must:
+- Solve an emotionally valuable business problem
+- Rank on Google for buyer-intent or opportunity keywords
+- Attract backlinks, shares, or embeds from other sites
+- Create a believable monetization path through leads, affiliate revenue, SaaS upsells, services, sponsorships, or digital products
+- Feel premium, conversion-focused, SEO-driven, and authority-building
 
 Return ONLY valid JSON in this exact format with NO additional text:
 {
@@ -68,7 +78,7 @@ Return ONLY valid JSON in this exact format with NO additional text:
   ]
 }
 
-Generate ALL 10 tools now.`;
+Generate ALL 12 premium business asset ideas now.`;
 
   try {
     console.log("[discoverToolIdeas] Starting discovery for niche:", niche);
@@ -80,7 +90,7 @@ Generate ALL 10 tools now.`;
         {
           role: "system",
           content:
-            "You are a traffic magnet strategist. Generate tool ideas that rank on Google and attract backlinks. Return ONLY valid JSON, no other text.",
+            "You are an AI online business opportunity strategist. Generate premium monetization assets, traffic systems, lead magnets, conversion engines, SEO opportunity systems, and growth dashboards. Do not generate generic calculators. Return ONLY valid JSON, no other text.",
         },
         {
           role: "user",
@@ -96,6 +106,8 @@ Generate ALL 10 tools now.`;
             properties: {
               tools: {
                 type: "array",
+                minItems: 12,
+                maxItems: 12,
                 items: {
                   type: "object",
                   properties: {
@@ -160,10 +172,10 @@ Generate ALL 10 tools now.`;
       throw new Error("OpenAI returned invalid tool structure");
     }
     
-    // Ensure we got at least 10 tools
-    if (result.tools.length < 10) {
-      console.warn(`[discoverToolIdeas] Only received ${result.tools.length} tools instead of 10. Retrying...`);
-      throw new Error(`Only ${result.tools.length} tools generated. Please try again or check your OpenAI API key quota.`);
+    // Ensure we got exactly 12 premium assets
+    if (result.tools.length !== 12) {
+      console.warn(`[discoverToolIdeas] Received ${result.tools.length} assets instead of 12. Retrying...`);
+      throw new Error(`${result.tools.length} assets generated instead of 12. Please try again or check your OpenAI API key quota.`);
     }
     
     console.log("[discoverToolIdeas] Successfully generated", result.tools.length, "tools");
@@ -184,354 +196,82 @@ function generateBlueprintPrompt(
   category: string | null,
   goal: string | null
 ): string {
-  return `You are generating clean, professional blueprint content for a premium SaaS dashboard application.
+  return `You are creating a premium business strategy blueprint for an AI Online Business Opportunity Engine.
 
-═══════════════════════════════════════════════════════════
-CRITICAL UI/UX REQUIREMENTS
-═══════════════════════════════════════════════════════════
+The output must feel like a real startup-grade strategy document, not a generic tool description.
+Do NOT position this as a calculator marketplace. Do NOT generate low-value calculator language unless the selected category specifically says ROI Estimators or Savings Calculators.
 
-This blueprint must be:
-✓ CLEAN and visually readable inside dashboard cards
-✓ CONCISE but valuable (not bloated)
-✓ PROFESSIONAL marketing language
-✓ SEO-FOCUSED with strategic keywords
-✓ FORMATTED for modern SaaS UI sections
+Return ONLY valid JSON. No markdown fences. No explanation. The response must work directly with JSON.parse().
 
-DO NOT generate:
-✗ Overly long paragraphs
-✗ Technical dumps or raw JSON
-✗ Broken formatting or serialized objects
-✗ Weak one-line filler content
-✗ Excessive or repetitive text
-
-═══════════════════════════════════════════════════════════
-JSON STRUCTURE RULES
-═══════════════════════════════════════════════════════════
-
-* Return ONLY pure valid JSON
-* Do NOT return markdown or code fences
-* Do NOT use \`\`\`json
-* Do NOT stringify JSON
-* Do NOT escape the entire object
-* Do NOT return nested JSON as strings
-* Every field must contain ONLY its own content
-* Never merge multiple sections together
-* The response must work directly with JSON.parse()
-
-═══════════════════════════════════════════════════════════
-RETURN THIS EXACT STRUCTURE
-═══════════════════════════════════════════════════════════
-
+Return this exact JSON structure:
 {
-"title": "",
-"category": "",
-"tool_type": "",
-"description": "",
-"purpose": "",
-"target_keywords": [],
-"inputs_required": [],
-"output_type": "",
-"calculation_logic": "",
-"features": [],
-"monetization_strategy": "",
-"internal_links": [],
-"cta_text": "",
-"theme_suggestions": [],
-"seo_title": "",
-"seo_description": ""
+  "title": "",
+  "category": "",
+  "tool_type": "",
+  "description": "",
+  "purpose": "",
+  "market_opportunity": "",
+  "target_audience": "",
+  "audience_pain_points": [],
+  "target_keywords": [],
+  "seo_opportunity": "",
+  "traffic_acquisition_strategy": "",
+  "inputs_required": [],
+  "output_type": "",
+  "calculation_logic": "",
+  "features": [],
+  "conversion_psychology": "",
+  "monetization_strategy": "",
+  "monetization_roadmap": [],
+  "authority_positioning": "",
+  "competitor_advantage": "",
+  "eeat_structure": [],
+  "internal_links": [],
+  "cta_text": "",
+  "theme_suggestions": [],
+  "seo_title": "",
+  "seo_description": ""
 }
 
-═══════════════════════════════════════════════════════════
-FIELD REQUIREMENTS (DASHBOARD-OPTIMIZED)
-═══════════════════════════════════════════════════════════
+Field requirements:
+- title: premium asset name only. Prefer names like Engine, Dashboard, Intelligence System, Opportunity Scanner, Revenue Maximizer, Growth System, Funnel Optimizer, or AI Analyzer.
+- category: the selected monetization category.
+- tool_type: one phrase such as "AI growth engine", "traffic intelligence dashboard", "lead magnet system", "conversion engine", "revenue optimization asset", or "SEO opportunity system". Avoid generic "calculator".
+- description: one compelling 15-25 word value proposition.
+- purpose: 70-110 words explaining what the asset does, who it helps, and why the business outcome matters.
+- market_opportunity: 50-90 words describing the commercial opportunity, demand, urgency, and why users would care now.
+- target_audience: specific audience segments and the buyer/user roles.
+- audience_pain_points: exactly 5 emotionally specific business pain points.
+- target_keywords: exactly 6-8 SEO phrases, focused on buyer intent, traffic, revenue, lead generation, or monetization.
+- seo_opportunity: 50-80 words explaining search demand, long-tail keyword angles, SERP opportunity, and topical authority potential.
+- traffic_acquisition_strategy: 60-100 words covering organic search, share loops, backlinks, creator/social distribution, embeds, and partnerships where relevant.
+- inputs_required: exactly 4-7 user-friendly fields that make the asset interactive and useful.
+- output_type: 25-45 words describing the strategic report, score, roadmap, forecast, dashboard, or recommendations users receive.
+- calculation_logic: 70-100 words explaining the business logic, scoring model, prioritization framework, or decision engine in plain language.
+- features: exactly 6-8 premium SaaS-style features, each 3-8 words.
+- conversion_psychology: 45-80 words explaining the trust triggers, urgency, personalization, proof, and decision-making psychology.
+- monetization_strategy: 50-90 words with realistic revenue channels: lead capture, affiliate revenue, premium reports, SaaS upsells, consultations, sponsorships, digital products, or paid audits.
+- monetization_roadmap: exactly 4 phased roadmap items from free asset to revenue capture.
+- authority_positioning: 45-75 words explaining why this asset builds brand authority and EEAT.
+- competitor_advantage: 40-70 words explaining how this asset is more valuable than static articles, generic templates, or simple calculators.
+- eeat_structure: exactly 5 trust-building content or UX elements.
+- internal_links: exactly 5-8 related premium business assets.
+- cta_text: one strong conversion-focused sentence.
+- theme_suggestions: exactly 3-5 premium SaaS visual themes.
+- seo_title: 50-60 characters, click-worthy, includes the primary keyword.
+- seo_description: 140-160 characters, high CTR, mentions the asset outcome.
 
-━━━ title ━━━
-• Tool name only (no extra text)
-• Professional and clear
-
-━━━ category ━━━
-• Single category name
-• Example: "Marketing", "Finance", "Real Estate"
-
-━━━ tool_type ━━━
-• Single tool type
-• Example: "calculator", "analyzer", "generator", "converter"
-
-━━━ description ━━━
-• ONE compelling sentence (15-25 words)
-• Professional marketing language
-• Clear value proposition
-
-━━━ purpose ━━━
-**STRICT REQUIREMENT: 60-100 WORDS EXACTLY (Dashboard Card Length)**
-
-Write ONE clean, professional paragraph that explains:
-• What the tool does
-• Who it helps
-• Why it is useful
-
-CRITICAL RULES:
-✓ Write exactly 60-100 words - count carefully
-✓ Natural, readable marketing language
-✓ Easy to scan inside dashboard card
-✓ Clear value proposition focused on user benefits
-✓ Professional tone - avoid hyperbole or excessive superlatives
-✓ Focus on practical use cases and outcomes
-
-PERFECT EXAMPLE (meets all requirements):
-"The Keyword Density Calculator helps users analyze keyword frequency within content to improve on-page SEO performance. It enables marketers, bloggers, and SEO professionals to optimize content strategically while avoiding keyword stuffing penalties and improving search engine visibility."
-
-REJECT THESE PATTERNS:
-✗ Too long (over 100 words)
-✗ Too technical or feature-focused instead of benefit-focused
-✗ Repetitive or bloated language
-✗ Weak generic statements
-
-━━━ target_keywords ━━━
-**STRICT REQUIREMENT: EXACTLY 5-8 KEYWORDS (Dashboard Badge-Friendly)**
-
-CRITICAL RULES:
-✓ Generate EXACTLY 5 to 8 keywords - no more, no less
-✓ Short SEO keyword phrases (2-4 words each)
-✓ Perfect for displaying as UI badges/tags
-✓ Focused on what users actually search for
-✓ Avoid long-tail phrases or full sentences
-
-PERFECT EXAMPLE (5 keywords, all short and focused):
-[
-"keyword density checker",
-"SEO content optimization",
-"on-page SEO tool",
-"keyword frequency analyzer",
-"SEO keyword calculator"
-]
-
-REJECT THESE PATTERNS:
-✗ Too many keywords (9+)
-✗ Too few keywords (under 5)
-✗ Long phrases like "how to check keyword density for SEO optimization"
-✗ Question format keywords
-
-━━━ inputs_required ━━━
-**STRICT REQUIREMENT: 3-8 USER-FRIENDLY INPUT FIELDS**
-
-List specific, clear field labels that users will fill in.
-
-CRITICAL RULES:
-✓ Exactly 3 to 8 inputs
-✓ Use clear, non-technical language
-✓ Professional field names
-✓ Practical and relevant to the tool
-
-PERFECT EXAMPLE (5 inputs):
-[
-"Content Text",
-"Target Keyword",
-"Minimum Word Count",
-"Language",
-"Analysis Depth"
-]
-
-REJECT THESE PATTERNS:
-✗ Too many inputs (9+ fields)
-✗ Too few inputs (under 3)
-✗ Technical jargon or developer language
-✗ Vague generic inputs
-
-━━━ output_type ━━━
-**STRICT REQUIREMENT: 1 CLEAR SENTENCE (20-40 WORDS)**
-
-Describe what result users receive - be specific about format and value.
-
-PERFECT EXAMPLE:
-"Displays a comprehensive ROI percentage, break-even timeline, annual profit projections, and a detailed financial summary with actionable recommendations."
-
-REJECT THESE PATTERNS:
-✗ Too vague: "Results"
-✗ Too short: "Percentage"
-✗ Too long (over 40 words with excessive detail)
-
-━━━ calculation_logic ━━━
-**STRICT REQUIREMENT: 60-80 WORDS EXACTLY (Dashboard Card Length)**
-
-Write a clear, professional explanation of HOW the tool works in plain business language.
-
-CRITICAL RULES:
-✓ Exactly 60-80 words - count carefully
-✓ Plain language explanation - avoid technical jargon
-✓ Focus on the process/methodology
-✓ Clear enough for non-technical users to understand
-✓ Professional and informative
-
-PERFECT EXAMPLE (meets all requirements):
-"The calculator analyzes text content and counts keyword occurrences, then divides by total word count to determine density percentage. It identifies optimal keyword usage ranges to help avoid over-optimization while maintaining SEO effectiveness."
-
-REJECT THESE PATTERNS:
-✗ Too technical with programming terms
-✗ Too long (over 80 words with excessive detail)
-✗ Too short (under 60 words, lacking depth)
-✗ Vague without explaining the actual process
-
-━━━ features ━━━
-**STRICT REQUIREMENT: 5-8 PREMIUM SAAS-STYLE FEATURES**
-
-List key features that make this tool valuable - written like premium SaaS feature bullets.
-
-CRITICAL RULES:
-✓ Exactly 5 to 8 features (count them)
-✓ Each feature should be 3-8 words maximum
-✓ Professional SaaS-quality language
-✓ Benefit-focused, not just feature names
-✓ Clear value in each bullet
-
-PERFECT EXAMPLE (6 features, all concise and valuable):
-[
-"Real-time keyword density analysis",
-"SEO optimization recommendations",
-"Content scoring and benchmarking",
-"Competitor keyword comparison",
-"Export detailed PDF reports",
-"Multi-keyword tracking dashboard"
-]
-
-REJECT THESE PATTERNS:
-✗ Too many features (9+ items)
-✗ Too few features (under 5)
-✗ Overly long feature descriptions (full sentences)
-✗ Generic features without clear value
-✗ Technical jargon that users won't understand
-
-━━━ monetization_strategy ━━━
-**STRICT REQUIREMENT: 40-80 WORDS EXACTLY (Dashboard Card Length)**
-
-Write a concise, business-focused explanation of how this tool generates revenue.
-
-CRITICAL RULES:
-✓ Exactly 40-80 words - count carefully
-✓ Professional business language
-✓ Focus on realistic monetization channels
-✓ Mention multiple revenue streams where applicable
-✓ Include: subscriptions, affiliate opportunities, premium tools, lead generation
-
-PERFECT EXAMPLE (meets all requirements):
-"Generate revenue through affiliate links to SEO tools and services, offer premium versions with additional features (like keyword tracking), and capture leads for digital marketing services through consultation offers."
-
-REJECT THESE PATTERNS:
-✗ Too long (over 80 words with excessive detail)
-✗ Too short (under 40 words, lacking substance)
-✗ Vague statements without specific monetization channels
-✗ Overly technical or implementation-focused
-
-━━━ internal_links ━━━
-**STRICT REQUIREMENT: 5-8 RELATED TOOLS**
-
-Suggest highly relevant complementary tools that users would naturally want to use next.
-
-CRITICAL RULES:
-✓ Exactly 5 to 8 related tools (count them)
-✓ Each tool name should be 2-5 words
-✓ Highly relevant to the main tool's purpose
-✓ Natural cross-sell opportunities
-✓ SEO-focused or marketing-focused tools
-
-PERFECT EXAMPLE (6 related tools):
-[
-"SEO Meta Tag Generator",
-"Readability Score Checker",
-"Backlink Analyzer",
-"Content Optimizer",
-"Keyword Research Tool",
-"Heading Tag Analyzer"
-]
-
-REJECT THESE PATTERNS:
-✗ Too many tools (9+ items)
-✗ Too few tools (under 5)
-✗ Unrelated or generic tools
-✗ Overly long tool names
-
-━━━ cta_text ━━━
-**STRICT REQUIREMENT: 1 SENTENCE ONLY - Strong Conversion-Focused CTA**
-
-Natural marketing language that creates urgency or demonstrates value.
-
-CRITICAL RULES:
-✓ Exactly 1 sentence (not a fragment, not multiple sentences)
-✓ Action-oriented and conversion-focused
-✓ Creates urgency or demonstrates clear value
-✓ Natural marketing language (not salesy or pushy)
-✓ Specific to the tool's benefit
-
-PERFECT EXAMPLES:
-"Calculate Your Keyword Density and Optimize Your SEO Content Today"
-"Start Optimizing - Get Your Free Keyword Analysis Now"
-"Improve Your Rankings - Check Your Keyword Density in Seconds"
-
-REJECT THESE PATTERNS:
-✗ Multiple sentences or overly long explanations
-✗ Weak generic CTAs like "Click here to use the tool"
-✗ Too pushy or salesy language
-✗ Questions instead of commands
-
-━━━ theme_suggestions ━━━
-• 3-5 design theme names
-• Relevant to the tool's purpose
-
-Example:
-[
-"Professional",
-"Modern SEO",
-"Clean Marketing",
-"Corporate"
-]
-
-━━━ seo_title ━━━
-• 50-60 characters
-• Include primary keyword
-• Compelling and click-worthy
-
-Example: "Free Keyword Density Calculator - SEO Optimization Tool"
-
-━━━ seo_description ━━━
-• 140-160 characters
-• High CTR marketing copy
-• Include call-to-action
-• Include primary keyword
-
-Example: "Analyze keyword density and optimize your content for SEO. Free calculator with instant results and actionable recommendations. Try it now!"
-
-═══════════════════════════════════════════════════════════
-FINAL VALIDATION CHECKLIST
-═══════════════════════════════════════════════════════════
-
-Before submitting your response, verify EVERY requirement:
-
-□ purpose is EXACTLY 60-100 words (count the words)
-□ target_keywords contains EXACTLY 5-8 keywords (count them)
-□ Each keyword is SHORT (2-4 words maximum)
-□ calculation_logic is EXACTLY 60-80 words (count the words)
-□ features contains 5-8 concise items
-□ monetization_strategy is EXACTLY 40-80 words (count the words)
-□ internal_links contains 5-8 related tools
-□ cta_text is EXACTLY 1 sentence with strong conversion focus
-□ All content is clean and readable in dashboard UI
-□ No overly long paragraphs or bloated text
-□ JSON is valid and properly formatted
-□ No fields contain serialized JSON or broken content
-□ No markdown code fences in the output
-
-CRITICAL: The AI model MUST count words carefully to meet exact requirements.
-
-═══════════════════════════════════════════════════════════
-GENERATE BLUEPRINT
-═══════════════════════════════════════════════════════════
-
-Tool Name: ${toolName}
-Niche: ${niche}
+Generate the blueprint for:
+Asset Name: ${toolName}
+Selected Niche and Category: ${niche}
 Category: ${category || "General"}
-Goal: ${goal || "Generate traffic"}
+Goal: ${goal || "Generate traffic and monetizable opportunities"}
 
-Return ONLY the complete JSON structure with premium-quality content. NO additional text, NO markdown fences:`;
+Final check before returning:
+- Must feel expensive, strategic, professional, conversion-focused, and startup-grade.
+- Must include pain points, monetization roadmap, SEO opportunity, traffic strategy, conversion psychology, authority positioning, competitor advantage, and EEAT structure.
+- Must avoid repetitive calculator language.
+- Return ONLY the complete JSON object.`;
 }
 
 export async function generateBlueprint(
@@ -719,7 +459,7 @@ async function generateBlueprintWithOpenAI(
         messages: [
           {
             role: "system",
-            content: "You are an expert at creating technical blueprints for interactive web tools. Output only valid JSON, no markdown or explanations."
+            content: "You are an expert AI business opportunity strategist creating premium startup-grade blueprints for monetization assets, traffic systems, SEO opportunity systems, and conversion engines. Output only valid JSON, no markdown or explanations."
           },
           {
             role: "user",
@@ -871,6 +611,43 @@ export async function generateLandingPage(
 }
 
 function generateLandingPagePrompt(blueprint: any): string {
+  return `You are a senior SaaS landing-page designer and conversion copywriter creating a production-ready landing page for an AI Online Business Opportunity Engine.
+
+Output ONLY a complete HTML document. No markdown fences. No explanations.
+
+Landing page quality bar:
+- Must feel like a premium modern SaaS startup page, not a generated export page.
+- Use Framer-quality visual hierarchy: premium hero, elegant gradients, glass-light cards, modern typography, metrics, trust indicators, animated sections, polished spacing, and strong CTA flow.
+- Use reusable CSS variables and classes in one <style> block.
+- Include responsive design for desktop, tablet, and mobile.
+- Include a polished premium footer within the generated landing page.
+- Use business opportunity language: growth engine, revenue system, traffic strategy, lead magnet, monetization roadmap, authority asset, SEO opportunity.
+- Avoid generic calculator positioning unless the blueprint specifically requires it.
+
+Required sections:
+1. Premium hero with badge, headline, subheadline, primary CTA, secondary CTA, and proof/trust row.
+2. Interactive business asset section using every field from blueprint.inputs_required.
+3. Results panel that reveals a strategic opportunity report with score, insights, prioritized actions, monetization path, and traffic recommendations.
+4. Metrics/proof section with 3-4 polished KPI cards.
+5. "Why this works" section using conversion psychology, SEO opportunity, and authority positioning from the blueprint.
+6. Feature grid using blueprint.features.
+7. Monetization roadmap section.
+8. EEAT/trust-building section.
+9. FAQ section with polished disclosure cards.
+10. Final CTA and premium footer.
+
+Functional requirements:
+- Include complete JavaScript, no missing functions, no console logs.
+- Prevent page reload.
+- Validate inputs.
+- Show the results panel with smooth scroll.
+- Use strategic scoring and recommendations based on the submitted inputs.
+
+Blueprint:
+${JSON.stringify(blueprint, null, 2)}
+
+Generate the complete HTML document now:`;
+
   // Build icon array for form inputs
   const iconOptions = ['sun', 'dollar-sign', 'wifi', 'globe', 'calendar', 'users', 'map-marker-alt', 'clock', 'percent', 'calculator', 'chart-line', 'database'];
   
@@ -1703,9 +1480,6 @@ Generate the complete landing page now:
 
 COMPLETE EXAMPLE TEMPLATE:
 Copy this structure exactly, filling in blueprint-specific content.
-
-Generate a complete, working HTML document now with all sections filled in.`;
-}
 
 <!-- Floating gradient orbs (background depth) -->
   <div style="position:absolute; top:0%; right:15%; width:600px; height:600px; background:radial-gradient(circle, rgba(124,58,237,0.25), transparent); filter:blur(80px); pointer-events:none;"></div>
@@ -2662,119 +2436,59 @@ function generateHTMLPrompt(
   blueprint: any,
   action: "standalone" | "embed"
 ): string {
-  return `You are an expert web developer generating a production-ready, premium-quality lead-generation tool for Magnet Lab. Output ONLY raw HTML — no markdown, no code fences, no explanations, no preamble.
+  return `You are an expert frontend engineer creating a production-ready premium SaaS business asset for an AI Online Business Opportunity Engine.
 
-═══════════════════════════════════════════════════════════
-MODE: ${action.toUpperCase()}
-═══════════════════════════════════════════════════════════
+Output ONLY raw HTML. No markdown, no code fences, no explanations, no preamble.
+
+Mode: ${action.toUpperCase()}
 
 ${action === "standalone" ? `
-STANDALONE MODE RULES:
-- Output a complete <!DOCTYPE html> document with <html>, <head>, <body>
-- Must work as a single .html file uploaded via FTP to any web host
-- Body background: linear-gradient(to right, #f0f0f0, #e0e0e0), min-height:100vh, padding:40px 20px, flex centered
-- Outer wrapper: width:100%, max-width:700px, margin:0 auto
-- Card: background:white, padding:48px, border-radius:16px, box-shadow:0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)
-- Use type="button" with onclick="functionName()" — NEVER form submit (prevents page reload)
-- Include in <head>:
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <title>[Tool Name]</title>
-  <style>body { font-family: 'Inter', sans-serif; }</style>
+Standalone rules:
+- Output a complete <!DOCTYPE html> document with html, head, and body.
+- Must work as one uploadable .html file.
+- Include responsive CSS in one reusable <style> block.
+- Include Inter or Plus Jakarta Sans from Google Fonts.
+- Include a premium footer inside the generated page.
 ` : `
-EMBED MODE RULES:
-- DO NOT include <!DOCTYPE>, <html>, <head>, <body> tags
-- Output starts with the Tailwind/Inter <link>/<script> tags, then a single <div> wrapper
-- Wrapper div: id="taf-[tool-slug]", style="width:100%; padding:40px 20px; box-sizing:border-box; font-family:'Inter',sans-serif;"
-- Inner card: style="background:#FFFFFF; max-width:600px; margin:0 auto; border-radius:16px; box-shadow:0 10px 40px rgba(0,0,0,0.08); padding:40px; box-sizing:border-box;"
-- ALL styling must be inline via style="" attributes — NO <style> blocks
-- Prefix all input IDs with "taf-" to avoid conflicts (e.g., id="taf-age" not id="age")
-- Wrap script in document.addEventListener('DOMContentLoaded', function() { ... })
-- Use form submit with event.preventDefault() OR button onclick — both work
-- Include at the very top (before the wrapper div):
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.tailwindcss.com"></script>
+Embed rules:
+- Do not include <!DOCTYPE>, html, head, or body tags.
+- Output one embeddable wrapper div plus scoped CSS and JavaScript.
+- Prefix wrapper, form, input, and result IDs with "taf-" to avoid page conflicts.
+- Keep the embed self-contained and responsive.
+- Do not include a full site footer in embed mode.
 `}
 
-═══════════════════════════════════════════════════════════
-DESIGN SYSTEM (NON-NEGOTIABLE — applies to BOTH modes)
-═══════════════════════════════════════════════════════════
+Design mandate:
+- The page must feel like a modern SaaS startup website, not an export page.
+- Visual quality should feel Framer-quality: premium hero, soft gradients, modern cards, trust indicators, metrics, refined spacing, clean hierarchy, elegant forms, and subtle animations.
+- Use reusable CSS classes, CSS variables, and polished responsive layouts.
+- Use a light premium design: white surfaces, soft borders, rounded cards, calm gradients, minimal shadows, high readability.
+- Avoid cheap template styling, heavy blur, emojis, vendor branding, or copied layouts.
 
-TYPOGRAPHY:
-- Font family: Inter, sans-serif
-- Heading (h1/h2): font-size:28px, font-weight:700, color:#111827, text-align:center, margin-bottom:8px
-- Subheading/description: font-size:15px, color:#6B7280, text-align:center, margin-bottom:32px, line-height:1.6
-- Labels: font-size:13px, font-weight:600, color:#374151, display:block, margin-bottom:6px
+Business mandate:
+- This is a business opportunity asset, growth engine, lead magnet, conversion tool, traffic system, SEO system, or revenue optimization dashboard.
+- Avoid generic calculator framing. Button labels should say things like "Reveal My Opportunity", "Generate My Strategy", "Analyze Growth Potential", or "Build My Revenue Plan".
+- The results section must provide strategic recommendations, opportunity scores, prioritized next steps, and monetization guidance.
+- Include trust-building sections: who it is for, why it works, metrics/proof, EEAT signals, FAQs, and conversion-focused CTA sections.
 
-FORM ELEMENTS:
-- Inputs/selects: width:100%, padding:12px 16px, border:2px solid #E5E7EB, border-radius:10px, font-size:15px, outline:none, box-sizing:border-box, margin-bottom:20px, font-family:inherit
-- Focus state (add via :focus or onfocus inline): border-color:#1A1A1A
-- Placeholders must be helpful hints, not just "Enter value"
+Functionality requirements:
+- Render every field listed in blueprint.inputs_required.
+- Validate required inputs.
+- Show a hidden results panel after submission without page reload.
+- Use JavaScript that is complete, safe, and has no undefined variables.
+- The output can use a strategic scoring model based on inputs; it does not need to be a numeric-only calculator.
+- Results should include formatted HTML, clear headings, premium cards, and action steps.
 
-BUTTON:
-- background-color:#1A1A1A, color:white, width:100%, padding:14px, border:none, border-radius:12px, font-size:16px, font-weight:600, cursor:pointer, margin-top:8px, font-family:inherit
-- Button text should be action-oriented (e.g., "Calculate My [Result]", "Get My [Outcome]", "Show My Results")
-
-RESULTS BOX:
-- Hidden by default: style="display:none;"
-- When shown: background:#F9731618, border:2px solid #F9731640, border-radius:12px, padding:24px, margin-top:28px
-- Result heading: font-size:22px, font-weight:700, color:#111827, margin-bottom:12px
-- Result text: font-size:15px, color:#374151, line-height:1.7
-- Use <strong> tags around key numbers in results
-- Round all numbers with Math.round()
-
-FOOTER:
-- Do NOT include any footer with brand name, copyright, or external links
-- Tool should end with the results section
-
-═══════════════════════════════════════════════════════════
-FUNCTIONALITY REQUIREMENTS
-═══════════════════════════════════════════════════════════
-
-1. INPUT VALIDATION:
-   - Every form input listed in the blueprint MUST be rendered
-   - Mark required fields with the required attribute
-   - Use type="number" with min/max where applicable
-   - Use <select> for finite choices, <input type="radio"> only when blueprint specifies
-
-2. CALCULATION INTEGRITY (CRITICAL):
-   - Every variable used in calculations MUST have a corresponding form input
-   - If the blueprint formula needs "height", the form MUST have a height input
-   - Before writing the script, list every variable in the formulas, then verify each one is collected from the form
-   - Handle edge cases: division by zero, negative values, empty inputs (use parseFloat() || 0 as fallback only when safe)
-
-3. RESULT DISPLAY:
-   - Use innerHTML to inject formatted results with <strong> around key numbers
-   - Show a clear primary result first, then supporting details
-   - Toggle results div from display:none to display:block
-   - Scroll results into view: document.getElementById('results').scrollIntoView({behavior:'smooth'})
-
-4. NO BROKEN CODE:
-   - No undefined variables
-   - No syntax errors
-   - No console.log statements
-   - No TODO comments
-
-═══════════════════════════════════════════════════════════
-BLUEPRINT TO IMPLEMENT
-═══════════════════════════════════════════════════════════
-
+Blueprint to implement:
 ${JSON.stringify(blueprint, null, 2)}
 
-═══════════════════════════════════════════════════════════
-PRE-FLIGHT CHECKLIST (verify mentally before outputting)
-═══════════════════════════════════════════════════════════
-
-□ Every formula variable has a matching form input with correct id
-□ All IDs match between HTML elements and JavaScript getElementById calls
-□ ${action === "embed" ? "All IDs prefixed with 'taf-'" : "Standard IDs used"}
-□ ${action === "standalone" ? "Complete <!DOCTYPE html> document" : "NO doctype/html/head/body tags"}
-□ Tailwind CDN and Inter font included
-□ Submit ${action === "standalone" ? "uses type='button' with onclick (no page reload)" : "uses preventDefault() if form submit"}
-□ Results div has display:none initially
-□ Math.round() used on all numeric outputs
-□ Footer with © year and brand included
-□ No markdown fences in output
+Pre-flight checklist:
+- Raw HTML only.
+- Responsive on desktop, tablet, and mobile.
+- Uses premium reusable CSS.
+- No generic calculator wording unless the blueprint specifically requires it.
+- Standalone mode includes a polished footer; embed mode does not.
+- JavaScript runs without errors.
 
 Generate the complete HTML now:`;
 }
@@ -2920,6 +2634,63 @@ function generateRegenerateBlueprintPrompt(
   niche: string,
   goal: string
 ): string {
+  return `Regenerate this blueprint as a premium AI Online Business Opportunity strategy document.
+
+Return ONLY valid JSON. No markdown fences. No explanations.
+
+Current Blueprint:
+${currentBlueprint}
+
+Context:
+- Niche and Category: ${niche}
+- Goal: ${goal}
+
+Improve it so it feels startup-grade, monetizable, authority-building, SEO-driven, and conversion-focused.
+
+Required strategy coverage:
+- Market opportunity
+- Target audience
+- Emotional audience pain points
+- SEO opportunity
+- Traffic acquisition strategy
+- Conversion psychology
+- Monetization strategy and roadmap
+- Authority positioning
+- Competitor advantage
+- EEAT structure
+
+Keep all existing useful fields and add any missing strategy fields from this schema:
+{
+  "title": "",
+  "category": "",
+  "tool_type": "",
+  "description": "",
+  "purpose": "",
+  "market_opportunity": "",
+  "target_audience": "",
+  "audience_pain_points": [],
+  "target_keywords": [],
+  "seo_opportunity": "",
+  "traffic_acquisition_strategy": "",
+  "inputs_required": [],
+  "output_type": "",
+  "calculation_logic": "",
+  "features": [],
+  "conversion_psychology": "",
+  "monetization_strategy": "",
+  "monetization_roadmap": [],
+  "authority_positioning": "",
+  "competitor_advantage": "",
+  "eeat_structure": [],
+  "internal_links": [],
+  "cta_text": "",
+  "theme_suggestions": [],
+  "seo_title": "",
+  "seo_description": ""
+}
+
+Avoid generic calculator framing unless explicitly required. Return ONLY the improved JSON object.`;
+
   return `You are regenerating clean, professional blueprint content for a premium SaaS dashboard application.
 
 ═══════════════════════════════════════════════════════════
@@ -3137,7 +2908,7 @@ async function regenerateBlueprintWithOpenAI(prompt: string, apiKey: string): Pr
         messages: [
           {
             role: "system",
-            content: "You are an expert at creating technical blueprints for interactive web tools. Output only valid JSON, no markdown or explanations."
+            content: "You are an expert AI business opportunity strategist creating premium monetization, SEO, authority, and conversion blueprints. Output only valid JSON, no markdown or explanations."
           },
           {
             role: "user",
@@ -3200,19 +2971,19 @@ export async function generateSEOContent(
 ): Promise<SEOContent> {
   const client = new OpenAI({ apiKey });
 
-  const prompt = `Generate SEO-optimized content for this web tool:
+  const prompt = `Generate high-authority semantic SEO content for this premium business opportunity asset:
 
-Tool Name: ${toolName}
+Asset Name: ${toolName}
 Description: ${toolDescription}
 Niche: ${niche}
 
-Create comprehensive SEO content that will help this tool rank in search engines and provide value to users:
+Create comprehensive SEO content that helps this asset rank, builds EEAT, and converts high-intent visitors:
 
-1. intro_text: 2-3 paragraph introduction (150-200 words) that explains what the tool does, why it's useful, and how to use it. Should be engaging and include the tool name naturally.
+1. intro_text: 2-3 paragraph introduction (150-220 words) that explains the business opportunity, user pain, monetization value, and how to use the asset. Include the asset name naturally.
 
-2. h2_sections: 3 content sections with H2 headings and detailed content (100-150 words each). Topics might include: how it works, benefits, use cases, tips, best practices, etc.
+2. h2_sections: 3 content sections with H2 headings and detailed content (110-170 words each). Cover market opportunity, how the asset works, traffic strategy, monetization use cases, and implementation best practices.
 
-3. faqs: 5 frequently asked questions with detailed answers (50-75 words each). Cover common questions users might search for.
+3. faqs: 5 frequently asked questions with detailed answers (60-90 words each). Cover buyer-intent questions, trust objections, monetization potential, SEO value, and implementation.
 
 4. meta_title: SEO-optimized page title (50-60 characters) that includes the tool name and primary keyword
 
@@ -3220,7 +2991,7 @@ Create comprehensive SEO content that will help this tool rank in search engines
 
 6. cta_text: Call-to-action text (20-40 words) that encourages users to try the tool or take next steps
 
-Focus on natural language, helpful information, and incorporating relevant keywords without keyword stuffing.`;
+Focus on semantic SEO, NLP keyword coverage, expert-style formatting, EEAT signals, conversion copywriting, and internal linking opportunities. Avoid generic calculator/blog language.`;
 
   try {
     const response = await client.chat.completions.create({
@@ -3229,7 +3000,7 @@ Focus on natural language, helpful information, and incorporating relevant keywo
         {
           role: "system",
           content:
-            "You are an expert SEO content writer who creates high-quality, search-optimized content for web tools.",
+            "You are an expert SEO strategist and conversion copywriter who creates high-authority, EEAT-focused content for premium business opportunity assets.",
         },
         {
           role: "user",
@@ -3307,7 +3078,7 @@ export async function generateVariation(
   anthropicKey: string | null,
   openaiKey: string | null
 ): Promise<string> {
-  const prompt = `You are generating a VARIATION of an existing tool blueprint optimized for a specific audience and monetization strategy.
+  const prompt = `You are generating a premium VARIATION of an existing AI business opportunity blueprint optimized for a specific audience and monetization strategy.
 
 ORIGINAL BLUEPRINT:
 ${JSON.stringify(blueprint, null, 2)}
@@ -3315,14 +3086,15 @@ ${JSON.stringify(blueprint, null, 2)}
 NEW TARGET AUDIENCE: ${audience}
 NEW MONETIZATION STRATEGY: ${monetization}
 
-Your task: Generate a NEW blueprint that reimagines this tool for the specified audience and monetization approach.
+Your task: Generate a NEW blueprint that reimagines this asset as a startup-grade business opportunity system for the specified audience and monetization approach.
 
 KEY REQUIREMENTS:
-1. Keep the same core tool concept and category
+1. Keep the same core business asset concept and category
 2. Adapt ALL content to appeal to the new target audience
 3. Redesign the monetization strategy to align with the specified approach
 4. Update keywords, features, and CTAs to match the new focus
-5. Maintain the exact same JSON structure and field requirements as the original
+5. Strengthen SEO opportunity, traffic strategy, authority positioning, conversion psychology, and EEAT
+6. Avoid generic calculator framing unless explicitly required by the category
 
 ═══════════════════════════════════════════════════════════
 RETURN THIS EXACT STRUCTURE
@@ -3334,12 +3106,22 @@ RETURN THIS EXACT STRUCTURE
 "tool_type": "",
 "description": "",
 "purpose": "",
+"market_opportunity": "",
+"target_audience": "",
+"audience_pain_points": [],
 "target_keywords": [],
+"seo_opportunity": "",
+"traffic_acquisition_strategy": "",
 "inputs_required": [],
 "output_type": "",
 "calculation_logic": "",
 "features": [],
+"conversion_psychology": "",
 "monetization_strategy": "",
+"monetization_roadmap": [],
+"authority_positioning": "",
+"competitor_advantage": "",
+"eeat_structure": [],
 "internal_links": [],
 "cta_text": "",
 "theme_suggestions": [],
@@ -3355,6 +3137,9 @@ CRITICAL FIELD REQUIREMENTS:
 - monetization_strategy: EXACTLY 40-80 words (must align with: ${monetization})
 - internal_links: 5-8 related tools
 - cta_text: 1 sentence, conversion-focused
+- audience_pain_points: exactly 5 items
+- monetization_roadmap: exactly 4 items
+- eeat_structure: exactly 5 items
 
 Return ONLY valid JSON, NO markdown fences, NO additional text.`;
 
@@ -3468,7 +3253,7 @@ async function generateVariationWithOpenAI(
         messages: [
           {
             role: "system",
-            content: "You are an expert at creating technical blueprints for interactive web tools. Output only valid JSON, no markdown or explanations."
+            content: "You are an expert AI business opportunity strategist. Create premium monetization asset variations with strong SEO, conversion, authority, and revenue strategy. Output only valid JSON, no markdown or explanations."
           },
           {
             role: "user",
@@ -3537,11 +3322,11 @@ export async function generateContentWrapper(
 ): Promise<any> {
   console.log("[Content Wrapper] Generating with keyword:", keyword, "niche:", niche);
 
-  const userPrompt = `Generate a premium SEO content package for a calculator/tool landing page.
+  const userPrompt = `Generate a premium semantic SEO content package for an AI business opportunity asset landing page.
 
 Target Keyword: ${keyword}
 Niche: ${niche}
-Tool Blueprint: ${blueprint}
+Business Asset Blueprint: ${blueprint}
 Include CTA: ${includeCta}
 CTA Type: ${ctaType || "N/A"}
 CTA Text: ${ctaText || "N/A"}
@@ -3549,15 +3334,22 @@ CTA URL: ${ctaUrl || "N/A"}
 
 REQUIREMENTS:
 
-1. Page H1: Engaging, keyword-rich headline (8-12 words)
-2. Introduction: Compelling opening paragraph (150-200 words) that hooks the reader and naturally includes the target keyword
-3. How It Works: 3-5 numbered steps explaining the tool/calculator functionality
-4. Key Benefits: 5-8 specific benefits (each 1-2 sentences)
-5. Semantic Keywords: 15-20 related keywords/entities for SEO
-6. FAQ Section: 6-8 common questions with detailed answers
+1. Page H1: Engaging, keyword-rich headline (8-12 words) with premium business positioning
+2. Introduction: Expert-written opening section (180-240 words) that frames the audience pain, business opportunity, monetization value, and naturally includes the target keyword
+3. How It Works: 3-5 numbered steps explaining the strategy asset, scoring logic, recommendations, and business outcome
+4. Key Benefits: 5-8 specific benefits tied to traffic, leads, revenue, authority, conversion, or monetization
+5. Semantic Keywords: 18-25 related keywords/entities for NLP coverage, topical authority, and search intent
+6. FAQ Section: 6-8 common questions with detailed EEAT-style answers
 7. Meta Title: SEO-optimized title (55-60 chars)
 8. Meta Description: Compelling meta description (150-155 chars)
 9. CTA Block: Conversion-focused call-to-action HTML
+
+CONTENT QUALITY RULES:
+- Must feel like high-authority content, not an AI-generated blog post.
+- Include semantic SEO, NLP keyword coverage, EEAT structure, expert-style formatting, internal linking opportunities, conversion copy, rich sections, FAQs, and trust-building blocks.
+- Use language around business opportunity, monetization, traffic generation, lead generation, affiliate revenue, SEO growth, creator revenue, SaaS growth, and passive income when relevant.
+- Avoid generic calculator wording unless the blueprint explicitly requires it.
+- Write for readers who want a serious online business advantage.
 
 Return ONLY valid JSON in this exact format:
 {
@@ -3594,7 +3386,7 @@ Return ONLY valid JSON in this exact format:
         messages: [
           {
             role: "system",
-            content: "You are an expert SEO content strategist and conversion copywriter. Generate premium, publish-ready content that ranks well and converts visitors. Return ONLY valid JSON with no markdown formatting."
+            content: "You are an expert semantic SEO strategist, EEAT editor, and conversion copywriter for premium online business assets. Generate publish-ready authority content that ranks and converts. Return ONLY valid JSON with no markdown formatting."
           },
           {
             role: "user",

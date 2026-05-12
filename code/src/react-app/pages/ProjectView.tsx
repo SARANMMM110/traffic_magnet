@@ -773,7 +773,7 @@ ${format}`;
                   Generating your traffic magnets...
                 </h3>
                 <p className="mb-6" style={{ color: "var(--text-secondary)" }}>
-                  AI is discovering 12 tool ideas for your niche
+                  AI is discovering 12 premium business asset ideas for this opportunity category
                 </p>
               </div>
             )}
@@ -889,7 +889,7 @@ ${format}`;
         {activeTab === "blueprint" && (
           <div className="space-y-4">
             <p className="text-sm mb-4" style={{ color: "var(--text-muted)" }}>
-              Tools with generated blueprints ({blueprintCount})
+              Assets with generated strategy blueprints ({blueprintCount})
             </p>
             <div className="space-y-6">
               {tools.filter(t => t.blueprint).map((tool) => {
@@ -1206,6 +1206,17 @@ ${format}`;
                     }
 
                     const purpose = blueprint.purpose || selectedTool.description || "";
+                    const strategySections = [
+                      { title: "Market Opportunity", value: blueprint.market_opportunity },
+                      { title: "SEO Opportunity", value: blueprint.seo_opportunity },
+                      { title: "Traffic Acquisition Strategy", value: blueprint.traffic_acquisition_strategy },
+                      { title: "Conversion Psychology", value: blueprint.conversion_psychology },
+                      { title: "Authority Positioning", value: blueprint.authority_positioning },
+                      { title: "Competitor Advantage", value: blueprint.competitor_advantage },
+                    ].filter((section) => section.value);
+                    const audiencePainPoints = Array.isArray(blueprint.audience_pain_points) ? blueprint.audience_pain_points : [];
+                    const monetizationRoadmap = Array.isArray(blueprint.monetization_roadmap) ? blueprint.monetization_roadmap : [];
+                    const eeatStructure = Array.isArray(blueprint.eeat_structure) ? blueprint.eeat_structure : [];
                     const keywords = Array.isArray(blueprint.target_keywords) ? blueprint.target_keywords : [];
                     const inputFields = Array.isArray(blueprint.inputs_required) ? blueprint.inputs_required : [];
                     const output = blueprint.output_type || "";
@@ -1226,6 +1237,33 @@ ${format}`;
                             {purpose}
                           </p>
                         </div>
+
+                        {strategySections.map((section) => (
+                          <div key={section.title}>
+                            <h4 className="text-sm font-bold mb-2" style={{ color: "var(--text-primary)" }}>
+                              {section.title}
+                            </h4>
+                            <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                              {section.value}
+                            </p>
+                          </div>
+                        ))}
+
+                        {audiencePainPoints.length > 0 && (
+                          <div>
+                            <h4 className="text-sm font-bold mb-2" style={{ color: "var(--text-primary)" }}>
+                              Audience Pain Points
+                            </h4>
+                            <div className="space-y-1">
+                              {audiencePainPoints.map((point: string, i: number) => (
+                                <div key={i} className="flex items-start gap-2 text-sm" style={{ color: "var(--text-secondary)" }}>
+                                  <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-500" />
+                                  <span>{point}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
 
                         {/* Target Keywords */}
                         <div>
@@ -1280,10 +1318,10 @@ ${format}`;
                           )}
                         </div>
 
-                        {/* Calculation Logic */}
+                        {/* Business Logic */}
                         <div>
                           <h4 className="text-sm font-bold mb-2" style={{ color: "var(--text-primary)" }}>
-                            Calculation Logic
+                            Business Logic
                           </h4>
                           {calculationLogic ? (
                             <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: "var(--text-secondary)" }}>
@@ -1324,6 +1362,37 @@ ${format}`;
                             <p className="text-sm italic" style={{ color: "var(--text-muted)" }}>Not specified</p>
                           )}
                         </div>
+
+                        {monetizationRoadmap.length > 0 && (
+                          <div>
+                            <h4 className="text-sm font-bold mb-2" style={{ color: "var(--text-primary)" }}>
+                              Monetization Roadmap
+                            </h4>
+                            <div className="space-y-1">
+                              {monetizationRoadmap.map((item: string, i: number) => (
+                                <div key={i} className="text-sm" style={{ color: "var(--text-secondary)" }}>
+                                  {i + 1}. {item}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {eeatStructure.length > 0 && (
+                          <div>
+                            <h4 className="text-sm font-bold mb-2" style={{ color: "var(--text-primary)" }}>
+                              EEAT Structure
+                            </h4>
+                            <div className="space-y-1">
+                              {eeatStructure.map((item: string, i: number) => (
+                                <div key={i} className="flex items-start gap-2 text-sm" style={{ color: "var(--text-secondary)" }}>
+                                  <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-500" />
+                                  <span>{item}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
 
                         {/* Internal Linking */}
                         <div>
@@ -1428,7 +1497,7 @@ ${format}`;
                     <div className="pt-6 w-full px-6 py-4 rounded-2xl font-semibold text-white transition-all flex items-center justify-center gap-2" style={{ background: buildStep === "done" ? "#10B981" : "linear-gradient(135deg, #635BFF, #4F46E5)", boxShadow: "0 12px 28px var(--brand-glow)", borderTop: "1px solid var(--border)" }}>
                       {buildStep !== "done" && <Loader2 className="w-5 h-5 animate-spin" />}
                       {buildStep === "analyzing" && "Regenerating blueprint..."}
-                      {buildStep === "logic" && "Building calculation logic..."}
+                      {buildStep === "logic" && "Building business logic..."}
                       {buildStep === "styling" && "Applying theme..."}
                       {buildStep === "embed" && "Preparing embed code..."}
                       {buildStep === "done" && (buildMode === "standalone" ? "Standalone page ready!" : "Embeddable widget ready!")}
@@ -1440,7 +1509,7 @@ ${format}`;
                     <div className="pt-6 space-y-3" style={{ borderTop: "1px solid var(--border)" }}>
                       {/* Success Message */}
                       <div className="px-4 py-3 rounded-2xl text-center font-medium" style={{ background: "#DCFCE7", border: "1px solid #86EFAC", color: "#15803D" }}>
-                        Tool built successfully!
+                        Business asset built successfully!
                       </div>
 
                       {/* Download/Copy Button based on mode */}
@@ -1919,7 +1988,7 @@ ${format}`;
                         Landing Page Generator
                       </h3>
                       <p className="text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>
-                        Generate a complete, production-ready landing page with 8 sections: Hero, Working Tool, Benefits, How It Works, Results, Testimonials, FAQ, and Final CTA. The tool will be fully functional with working calculation logic.
+                        Generate a complete, production-ready SaaS landing page with premium hero, interactive business asset, metrics, trust sections, monetization roadmap, FAQ, conversion CTAs, and polished footer.
                       </p>
                     </div>
 
@@ -1948,7 +2017,7 @@ ${format}`;
                           Generating Your Landing Page
                         </p>
                         <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                          This may take 30-60 seconds. Creating 8 sections with working calculator logic...
+                          This may take 30-60 seconds. Creating a polished conversion page with strategic business logic...
                         </p>
                       </div>
                     )}
@@ -1958,7 +2027,7 @@ ${format}`;
                       <>
                         {/* Success Message */}
                         <div className="px-4 py-3 rounded-2xl text-center font-medium" style={{ background: "#DCFCE7", border: "1px solid #86EFAC", color: "#15803D" }}>
-                          Tool built successfully!
+                          Landing page built successfully!
                         </div>
 
                         {/* Action Buttons */}

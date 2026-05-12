@@ -177,7 +177,7 @@ export default function MyMagnets() {
             </div>
             <h3 className="text-2xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>No magnets yet</h3>
             <p className="mb-6" style={{ color: "var(--text-secondary)" }}>
-              Create a project to start generating tool ideas
+              Create a project to start generating business asset ideas
             </p>
             <Link to="/projects/new">
               <button

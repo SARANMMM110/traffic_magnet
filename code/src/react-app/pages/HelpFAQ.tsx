@@ -22,13 +22,13 @@ const FAQ_DATA: FAQItem[] = [
   },
   {
     category: "Pricing & Plans",
-    question: "If my tools get a lot of traffic, will I be charged more?",
-    answer: "No. Magnet Lab has no usage-based pricing. Your subscription covers tool generation. The tools themselves are plain static HTML — once built, they cost nothing extra to run no matter how much traffic they receive. The only variable cost is your own API key (OpenAI/Anthropic), billed directly by those providers, and only used during the build stage — not when visitors use your tools.",
+    question: "If my assets get a lot of traffic, will I be charged more?",
+    answer: "No. Magnet Lab has no usage-based pricing. Your subscription covers asset generation. The assets themselves are plain static HTML — once built, they cost nothing extra to run no matter how much traffic they receive. The only variable cost is your own API key (OpenAI/Anthropic), billed directly by those providers, and only used during the build stage — not when visitors use your assets.",
   },
   {
-    category: "Building Tools",
-    question: "Can I have a free public version of a tool and a paid/gated version at the same time?",
-    answer: "Yes — and it's a great strategy. Build the tool once, then:<br/><ul style='margin: 8px 0; padding-left: 20px;'><li style='margin: 4px 0;'>Embed the free version on a public page to attract traffic and backlinks</li><li style='margin: 4px 0;'>Embed a second version on a members-only or gated page with custom branding</li></ul>The embed code is fully customisable HTML so you have complete control over both versions.",
+    category: "Building Assets",
+    question: "Can I have a free public version of an asset and a paid/gated version at the same time?",
+    answer: "Yes — and it's a great strategy. Build the asset once, then:<br/><ul style='margin: 8px 0; padding-left: 20px;'><li style='margin: 4px 0;'>Embed the free version on a public page to attract traffic and backlinks</li><li style='margin: 4px 0;'>Embed a second version on a members-only or gated page with custom branding</li></ul>The embed code is fully customisable HTML so you have complete control over both versions.",
   },
   {
     category: "API Keys",
@@ -48,14 +48,14 @@ const FAQ_DATA: FAQItem[] = [
   {
     category: "Use Cases",
     question: "Can Magnet Lab be used to build a toolkit page for local or small business owners?",
-    answer: "Absolutely — local business is one of the strongest niches for this strategy. Great tool ideas include:<br/><ul style='margin: 8px 0; padding-left: 20px;'><li style='margin: 4px 0;'>ROI calculator</li><li style='margin: 4px 0;'>Break-even calculator</li><li style='margin: 4px 0;'>Profit margin calculator</li><li style='margin: 4px 0;'>Customer lifetime value calculator</li><li style='margin: 4px 0;'>Ad spend ROI estimator</li><li style='margin: 4px 0;'>Foot traffic estimator</li></ul>Bundle several on one page targeting searches like \"free tools for small business owners\" and you create a page that local marketing agencies, business blogs, and chambers of commerce will naturally link to. Set Primary Goal to Drive Backlinks or Generate Leads depending on your objective.",
+    answer: "Absolutely — local business is one of the strongest niches for this strategy. Strong asset ideas include:<br/><ul style='margin: 8px 0; padding-left: 20px;'><li style='margin: 4px 0;'>Local SEO growth engine</li><li style='margin: 4px 0;'>Client conversion scorecard</li><li style='margin: 4px 0;'>Booking optimization audit</li><li style='margin: 4px 0;'>Reputation opportunity dashboard</li><li style='margin: 4px 0;'>Ad spend optimization system</li><li style='margin: 4px 0;'>Service revenue estimator</li></ul>Bundle several on one page targeting searches like \"growth tools for small business owners\" and you create a page that local marketing agencies, business blogs, and chambers of commerce will naturally link to. Set Primary Goal to Drive Backlinks or Generate Leads depending on your objective.",
   },
 ];
 
 const CATEGORIES = [
   { icon: Rocket, name: "Getting Started" },
   { icon: CircleDollarSign, name: "Pricing & Plans" },
-  { icon: Hammer, name: "Building Tools" },
+  { icon: Hammer, name: "Building Assets" },
   { icon: KeyRound, name: "API Keys" },
   { icon: TrendingUp, name: "Traffic & SEO" },
   { icon: Globe2, name: "Domains & Embedding" },

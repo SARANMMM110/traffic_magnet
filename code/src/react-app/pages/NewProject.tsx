@@ -10,23 +10,16 @@ import {
   Building2,
   ChevronDown,
   ChevronUp,
-  Dumbbell,
   GraduationCap,
-  HeartPulse,
-  Home,
   Link2,
   Mail,
   MessageCircle,
-  PawPrint,
-  Plane,
-  Scale,
   Search,
   ShoppingBag,
   Loader2,
   AlertTriangle,
   Sparkles,
   TrendingUp,
-  Utensils,
 } from "lucide-react";
 
 const getNicheColor = (index: number): string => {
@@ -70,18 +63,18 @@ const NICHE_ICONS = [
   BadgeDollarSign,
   BriefcaseBusiness,
   Building2,
-  Dumbbell,
+  Sparkles,
   TrendingUp,
   BadgeDollarSign,
-  GraduationCap,
+  MessageCircle,
   ShoppingBag,
-  PawPrint,
+  BriefcaseBusiness,
+  Sparkles,
+  TrendingUp,
+  Mail,
+  GraduationCap,
+  Building2,
   BadgeDollarSign,
-  Scale,
-  Home,
-  HeartPulse,
-  Utensils,
-  Plane,
 ];
 
 const getNicheIcon = (index: number) => NICHE_ICONS[index % NICHE_ICONS.length];
@@ -89,15 +82,20 @@ const getNicheIcon = (index: number) => NICHE_ICONS[index % NICHE_ICONS.length];
 const SUBTOPIC_ICONS = [Search, Link2, Sparkles, Building2, ShoppingBag, TrendingUp];
 
 const SUBTOPIC_DESCRIPTIONS: Record<string, string> = {
-  "Technical SEO": "Site speed, crawl budget and Core Web Vitals tools.",
-  "Link Building": "Backlink value, anchor text and outreach calculators.",
-  "Content SEO": "Content gap analysis and keyword difficulty helpers.",
-  "Local SEO": "Local rankings, citation score and map visibility tools.",
-  "E-Commerce SEO": "Product schema, silo structure and category SEO tools.",
+  "Search Intent Intelligence": "Buyer intent, keyword demand, and SERP opportunity systems.",
+  "Topical Authority Systems": "Authority maps, cluster strategy, and content moat assets.",
+  "AI Content Optimization": "AI-assisted content scoring, briefs, and optimization engines.",
+  "Competitor Traffic Analysis": "Traffic gap intelligence and competitor opportunity dashboards.",
+  "Local SEO Growth": "Local visibility, map-pack, and reputation growth systems.",
+  "Buyer Intent Analysis": "Purchase-readiness scoring and conversion opportunity assets.",
+  "Product Comparison Funnels": "Comparison pages, decision tools, and affiliate funnel assets.",
+  "Commission Optimization": "EPC analysis, payout strategy, and revenue maximization systems.",
+  "Affiliate SEO Systems": "SEO-led affiliate traffic systems and high-intent keyword assets.",
+  "Review Funnel Assets": "Trust-building review, proof, and product positioning systems.",
 };
 
 const getSubTopicDescription = (subTopic: string, nicheTitle: string) => {
-  return SUBTOPIC_DESCRIPTIONS[subTopic] || `${subTopic} calculators, checkers and lead magnets for ${nicheTitle}.`;
+  return SUBTOPIC_DESCRIPTIONS[subTopic] || `${subTopic} business assets, growth systems, and monetization engines for ${nicheTitle}.`;
 };
 
 export default function NewProject() {
@@ -152,16 +150,16 @@ export default function NewProject() {
   };
 
   const handleSubTopicClick = (subTopic: string, nicheTemplate: any) => {
-    setNiche(subTopic);
+    setNiche(`${nicheTemplate.title} - ${subTopic}`);
     setExpandedNiche(null);
     setGalleryOpen(false);
     
     // Auto-populate project name
-    setProjectName(`${subTopic} Traffic Magnets`);
+    setProjectName(`${subTopic} Opportunity Engine`);
     
     // Auto-suggest goal based on niche characteristics
     let suggestedGoal = "traffic"; // default
-    if (nicheTemplate.profitable) {
+    if (nicheTemplate.title.includes("Affiliate") || nicheTemplate.title.includes("Revenue") || nicheTemplate.profitable) {
       suggestedGoal = "leads";
     } else if (nicheTemplate.trending) {
       suggestedGoal = "engagement";
@@ -174,22 +172,22 @@ export default function NewProject() {
     
     // Auto-suggest audience based on niche
     const audienceMap: { [key: string]: string } = {
-      "SEO Agency": "SEO professionals, digital marketing agencies, website owners",
-      "Affiliate Marketing": "affiliate marketers, content creators, online publishers",
-      "SaaS Product": "SaaS founders, product managers, startup teams",
-      "Real Estate": "real estate investors, property buyers, agents and brokers",
-      "Health & Fitness": "fitness enthusiasts, personal trainers, health-conscious individuals",
-      "B2B / Lead Gen": "B2B marketers, sales teams, business development professionals",
-      "Finance & Investing": "investors, financial advisors, personal finance enthusiasts",
-      "E-Learning / EdTech": "educators, course creators, students and learners",
-      "E-Commerce": "online store owners, dropshippers, e-commerce entrepreneurs",
-      "Pet Care": "pet owners, veterinarians, pet care professionals",
-      "Personal Finance": "individuals managing personal budgets, debt-free seekers",
-      "Legal / Immigration": "immigrants, visa applicants, legal professionals",
-      "Home Improvement": "homeowners, contractors, DIY enthusiasts",
-      "Relationships": "couples, singles seeking compatibility insights",
-      "Food & Nutrition": "health-conscious eaters, recipe enthusiasts, nutritionists",
-      "Travel & Expat": "travelers, digital nomads, expats and relocators",
+      "AI SEO Traffic Systems": "SEO operators, content teams, niche site builders, and agencies",
+      "Affiliate Revenue Systems": "affiliate marketers, review publishers, creators, and deal-site operators",
+      "AI Creator Monetization": "creators, coaches, influencers, and solo media brands",
+      "SaaS Growth Intelligence": "SaaS founders, growth teams, product marketers, and operators",
+      "Digital Product Empire": "course creators, digital product sellers, coaches, and educators",
+      "AI Lead Generation Engines": "B2B founders, agencies, consultants, and service businesses",
+      "Viral Interactive Tools": "publishers, creators, social media teams, and community builders",
+      "Local Business Growth": "local service businesses, agencies, franchises, and consultants",
+      "E-Commerce Revenue Systems": "Shopify brands, DTC teams, e-commerce founders, and marketplace sellers",
+      "Freelance & Agency Growth": "freelancers, agency owners, consultants, and service providers",
+      "AI Automation Business": "automation consultants, operations teams, SMB owners, and AI agencies",
+      "YouTube & Content Business": "YouTubers, content teams, video creators, and media entrepreneurs",
+      "Newsletter & Audience Growth": "newsletter operators, audience builders, creators, and publishers",
+      "High-Income Skills Economy": "freelancers, consultants, career builders, and expert creators",
+      "AI Startup Builders": "founders, indie hackers, product builders, and startup teams",
+      "Passive Income Systems": "side-hustle builders, creators, investors, and online entrepreneurs",
     };
     
     setAudience(audienceMap[nicheTemplate.title] || "");
@@ -230,7 +228,7 @@ export default function NewProject() {
 
         if (!discoverResponse.ok) {
           const error = await discoverResponse.json().catch(() => ({}));
-          const errorMessage = error.error || error.details || "Could not discover tools";
+          const errorMessage = error.error || error.details || "Could not discover business assets";
           console.error("Discovery error:", error);
           showToast({
             type: "error",
@@ -245,7 +243,7 @@ export default function NewProject() {
         showToast({
           type: "success",
           title: "Discovery complete!",
-          message: `Generated ${discoverData.toolCount || 0} traffic magnets`,
+          message: `Generated ${discoverData.toolCount || 0} opportunity assets`,
         });
         
         // Wait a bit to ensure database writes complete
@@ -293,7 +291,7 @@ export default function NewProject() {
             Create a Traffic Magnet Project
           </h1>
           <p className="mt-3 max-w-2xl text-base leading-7" style={{ color: "var(--text-secondary)" }}>
-            Define your market, audience, and growth goal. The AI will turn the brief into high-value tool opportunities.
+            Define your market, audience, and growth goal. The AI will turn the brief into high-value online business opportunities.
           </p>
         </div>
 
@@ -375,7 +373,7 @@ export default function NewProject() {
                       </p>
                       <p className="mt-auto flex items-center gap-1 text-xs font-semibold" style={{ color: accent }}>
                         {isSelected ? <ChevronUp className="h-3 w-3" /> : null}
-                        {template.subTopics.length} sub-topics
+                        {template.subTopics.length} categories
                       </p>
                     </button>
 
@@ -383,9 +381,9 @@ export default function NewProject() {
                       <div className="col-span-full animate-fade-in-up rounded-[28px] border border-dashed border-[var(--border-strong)] bg-white/70 p-4">
                         <div className="mb-3 flex items-center gap-2 text-sm font-semibold" style={{ color: "var(--text-muted)" }}>
                           <span className="h-5 w-px bg-[var(--border-strong)]" />
-                          Pick a sub-topic for {template.title}
+                          Pick a monetization category for {template.title}
                         </div>
-                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
                           {template.subTopics.map((subTopic, subIndex) => {
                             const SubTopicIcon = SUBTOPIC_ICONS[subIndex % SUBTOPIC_ICONS.length];
 
@@ -420,7 +418,7 @@ export default function NewProject() {
               </div>
 
               <p className="text-center text-sm italic" style={{ color: "var(--text-muted)" }}>
-                Click a niche to expand sub-topics, or write your own below.
+                Click a niche to expand monetization categories, or write your own below.
               </p>
             </div>
           )}
@@ -437,7 +435,7 @@ export default function NewProject() {
               type="text"
               value={niche}
               onChange={(e) => setNiche(e.target.value.slice(0, 120))}
-              placeholder="e.g. Email marketing, Fitness coaching, SaaS tools..."
+              placeholder="e.g. Affiliate Revenue Systems - Buyer Intent Analysis"
               className="input-premium w-full px-4 py-3 transition-all"
               required
             />
@@ -589,7 +587,7 @@ export default function NewProject() {
                   Analyzing your niche...
                 </span>
               ) : (
-                "Discover Traffic Magnets"
+                "Discover Opportunity Assets"
               )}
             </button>
           )}

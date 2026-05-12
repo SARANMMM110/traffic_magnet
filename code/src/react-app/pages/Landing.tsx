@@ -20,31 +20,31 @@ import {
 } from "lucide-react";
 
 const proofPoints = [
-  "Find niche tool ideas in minutes",
-  "Generate blueprints and pages with AI",
-  "Export HTML, embeds, and content packages",
+  "Discover monetizable asset ideas in minutes",
+  "Generate strategy blueprints and SaaS pages",
+  "Export HTML, embeds, and authority content",
 ];
 
 const metrics = [
-  { value: "50+", label: "tool ideas per niche" },
-  { value: "60s", label: "to generate a working asset" },
-  { value: "3x", label: "more publishing formats" },
+  { value: "12", label: "premium assets per category" },
+  { value: "16", label: "online business niches" },
+  { value: "3x", label: "publish-ready formats" },
 ];
 
 const workflow = [
   {
     title: "Choose a niche",
-    text: "Start with a market, audience, or keyword cluster. Traffic Magnet turns broad ideas into focused search opportunities.",
+    text: "Start with a monetization niche, audience, or traffic category. Traffic Magnet turns broad markets into focused online business opportunities.",
     icon: Target,
   },
   {
     title: "Generate the asset",
-    text: "Create a calculator, checker, landing page, and content wrapper with a guided AI workflow built for SEO.",
+    text: "Create an AI business asset, strategy blueprint, landing page, HTML experience, and authority content wrapper with a guided SEO workflow.",
     icon: WandSparkles,
   },
   {
     title: "Publish and compound",
-    text: "Export clean HTML or embed code, publish fast, and build a library of small tools that can rank over time.",
+    text: "Export clean HTML or embed code, publish fast, and build a library of conversion assets that can rank and monetize over time.",
     icon: TrendingUp,
   },
 ];
@@ -52,40 +52,40 @@ const workflow = [
 const featureCards = [
   {
     title: "Opportunity discovery",
-    text: "Uncover useful tool ideas your customers are already searching for, then prioritize them by traffic potential.",
+    text: "Uncover premium business asset ideas your customers are already searching for, then prioritize them by traffic and revenue potential.",
     icon: Search,
   },
   {
     title: "Blueprint intelligence",
-    text: "Turn a raw idea into a structured product brief with inputs, logic, conversion angles, and monetization options.",
+    text: "Turn a raw idea into a business strategy document with pain points, SEO opportunity, traffic strategy, authority, and monetization roadmap.",
     icon: BrainCircuit,
   },
   {
-    title: "No-code tool builder",
-    text: "Generate working HTML tools and widgets without wrestling with code, plugins, or a developer backlog.",
+    title: "No-code asset builder",
+    text: "Generate working HTML business assets and widgets without wrestling with code, plugins, or a developer backlog.",
     icon: Code2,
   },
   {
     title: "Content wrapper",
-    text: "Package every tool with SEO titles, intros, benefits, how-it-works sections, and publish-ready page content.",
+    text: "Package every asset with semantic SEO, EEAT content, NLP keyword coverage, FAQs, internal links, and conversion copy.",
     icon: FileText,
   },
   {
     title: "Landing page generator",
-    text: "Create polished standalone pages around each tool so every traffic magnet has a clear conversion path.",
+    text: "Create polished standalone SaaS pages around each asset so every opportunity has a clear conversion path.",
     icon: Globe2,
   },
   {
     title: "Repeatable growth system",
-    text: "Build one useful asset, then repeat the same workflow across dozens of long-tail search opportunities.",
+    text: "Build one monetizable asset, then repeat the same workflow across dozens of traffic and revenue opportunities.",
     icon: Layers3,
   },
 ];
 
 const customerOutcomes = [
-  "Launch useful calculators, checkers, and lead magnets without starting from a blank page.",
-  "Create assets that educate visitors before asking them to book, buy, subscribe, or share.",
-  "Build a compounding library of SEO pages instead of relying only on ads or social posts.",
+  "Launch premium business assets, lead magnets, revenue engines, and SEO systems without starting from a blank page.",
+  "Create assets that educate visitors before asking them to book, buy, subscribe, apply, or share.",
+  "Build a compounding library of authority pages instead of relying only on ads or social posts.",
 ];
 
 export default function Landing() {
@@ -110,7 +110,7 @@ export default function Landing() {
             <span>
               <span className="block text-sm font-extrabold tracking-tight">Traffic Magnet</span>
               <span className="block text-xs" style={{ color: "var(--text-muted)" }}>
-                AI tool factory
+                AI opportunity engine
               </span>
             </span>
           </Link>
@@ -145,21 +145,21 @@ export default function Landing() {
             <div className="animate-fade-in-up">
               <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[rgba(99,91,255,0.22)] bg-white/75 px-4 py-2 text-xs font-extrabold uppercase tracking-[0.14em]" style={{ color: "var(--brand)" }}>
                 <Sparkles className="h-3.5 w-3.5" />
-                AI-powered SEO asset engine
+                AI online business opportunity engine
               </div>
 
               <h1 className="max-w-3xl text-5xl font-extrabold leading-[1.02] tracking-[-0.055em] md:text-6xl lg:text-7xl">
-                Build useful AI tools that attract customers while you sleep.
+                Build premium AI business assets that attract, convert, and monetize.
               </h1>
 
               <p className="mt-6 max-w-2xl text-base leading-8 md:text-lg" style={{ color: "var(--text-secondary)" }}>
-                Traffic Magnet helps founders, agencies, and creators turn niche ideas into calculators, checkers, landing pages, and SEO content packages that people actually want to use and share.
+                Traffic Magnet helps founders, agencies, creators, and publishers turn niche opportunities into traffic systems, lead magnets, revenue engines, landing pages, and authority content people want to use and share.
               </p>
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Link to="/signup">
                   <button className="btn-primary inline-flex w-full items-center justify-center gap-2 rounded-2xl px-6 py-3.5 font-bold sm:w-auto">
-                    Create your first magnet
+                  Create your first opportunity asset
                     <ArrowRight className="h-4 w-4" />
                   </button>
                 </Link>
@@ -200,8 +200,8 @@ export default function Landing() {
                   <div className="rounded-3xl border border-[var(--border)] bg-gradient-to-br from-slate-950 to-slate-800 p-5 text-white">
                     <div className="mb-8 flex items-start justify-between">
                       <div>
-                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/[0.55]">Generated tool</p>
-                        <h3 className="mt-2 text-2xl font-extrabold">Local SEO ROI Calculator</h3>
+                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/[0.55]">Generated asset</p>
+                        <h3 className="mt-2 text-2xl font-extrabold">Local SEO Growth Engine</h3>
                       </div>
                       <div className="rounded-2xl bg-white/10 p-3">
                         <Gauge className="h-6 w-6" />
@@ -251,7 +251,7 @@ export default function Landing() {
                         </div>
                       </div>
                       <div className="space-y-2">
-                        {["HTML tool", "Landing page", "SEO wrapper"].map((item) => (
+                        {["HTML asset", "SaaS landing page", "Authority wrapper"].map((item) => (
                           <div key={item} className="flex items-center gap-2 text-xs font-semibold" style={{ color: "var(--text-secondary)" }}>
                             <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
                             {item}
@@ -288,7 +288,7 @@ export default function Landing() {
                   From niche idea to customer-ready asset in one guided system.
                 </h2>
                 <p className="mt-4 text-sm leading-7" style={{ color: "var(--text-secondary)" }}>
-                  Instead of writing another generic blog post, build interactive assets that give visitors a reason to click, calculate, save, and share.
+                  Instead of writing another generic blog post, build interactive assets that give visitors a reason to analyze, plan, save, subscribe, and share.
                 </p>
               </div>
 
@@ -325,7 +325,7 @@ export default function Landing() {
                 </h2>
               </div>
               <p className="max-w-md text-sm leading-7" style={{ color: "var(--text-secondary)" }}>
-                Traffic Magnet is built to help you ship practical tools that make visitors trust your brand faster.
+                Traffic Magnet is built to help you ship practical business assets that make visitors trust your brand faster.
               </p>
             </div>
 
@@ -357,7 +357,7 @@ export default function Landing() {
                   Designed to impress visitors, not just search engines.
                 </h2>
                 <p className="mt-4 text-sm leading-7" style={{ color: "var(--text-secondary)" }}>
-                  Interactive tools help customers understand their problem, see the value of your solution, and take the next step with more confidence.
+                  Interactive business assets help customers understand their opportunity, see the value of your solution, and take the next step with more confidence.
                 </p>
                 <Link to="/signup">
                   <button className="btn-primary mt-7 inline-flex items-center gap-2 rounded-2xl px-5 py-3 font-bold">
@@ -393,13 +393,13 @@ export default function Landing() {
               <div className="relative mx-auto max-w-3xl">
                 <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-xs font-extrabold uppercase tracking-[0.14em] text-white/80">
                   <Sparkles className="h-3.5 w-3.5" />
-                  Build your first traffic magnet
+                  Build your first opportunity engine
                 </div>
                 <h2 className="text-3xl font-extrabold tracking-tight md:text-5xl">
-                  Turn one niche into a library of useful tools.
+                  Turn one niche into a library of monetizable business assets.
                 </h2>
                 <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-white/70 md:text-base">
-                  Start with one calculator, checker, or widget. Then repeat the workflow until your site becomes the most useful resource in your market.
+                  Start with one traffic system, lead magnet, or revenue engine. Then repeat the workflow until your site becomes the most useful resource in your market.
                 </p>
                 <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
                   <Link to="/signup">
