@@ -3,7 +3,7 @@ import { Link } from "react-router";
 import DashboardLayout from "@/react-app/components/DashboardLayout";
 import { useAuth } from "@getmocha/users-service/react";
 import { useToast } from "@/react-app/components/Toast";
-import { ArrowLeft, Eye, EyeOff, Info, Check, KeyRound } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Info, Check, KeyRound, Save, ShieldCheck } from "lucide-react";
 
 interface UsageData {
   projects: number;
@@ -188,7 +188,7 @@ export default function SettingsPage() {
 
   return (
     <DashboardLayout>
-      <div className="page-shell max-w-2xl">
+      <div className="page-shell max-w-5xl">
         {/* Back Link */}
         <Link
           to="/dashboard"
@@ -200,15 +200,29 @@ export default function SettingsPage() {
         </Link>
 
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>Account Settings</h1>
-          <p style={{ color: "var(--text-muted)" }}>
-            Manage your profile and API keys
-          </p>
+        <div className="surface-panel mb-8 p-8">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="section-eyebrow mb-3">Workspace Controls</div>
+              <h1 className="text-4xl font-bold" style={{ color: "var(--text-primary)" }}>Account Settings</h1>
+              <p className="mt-3 max-w-2xl text-sm leading-6" style={{ color: "var(--text-muted)" }}>
+                Manage your profile, plan usage, and API keys from one secure settings page.
+              </p>
+            </div>
+            <button
+              onClick={handleSaveKeys}
+              disabled={saving || loading}
+              className="btn-primary inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 font-semibold disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Save className="h-4 w-4" />
+              {saving ? "Saving..." : "Save changes"}
+            </button>
+          </div>
         </div>
 
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[0.85fr_1.15fr]">
         {/* Profile Card */}
-        <div className="premium-card p-6 mb-6">
+        <div className="premium-card p-6">
           {/* Top Row */}
           <div className="flex items-start gap-4 mb-4">
             <div
@@ -290,7 +304,7 @@ export default function SettingsPage() {
                 >
                   <Check className="w-3 h-3 text-white" />
                 </div>
-                <span className="text-sm text-white">
+                <span className="text-sm" style={{ color: "var(--text-primary)" }}>
                   {usage.limit} lifetime Traffic Magnets
                 </span>
               </div>
@@ -317,11 +331,7 @@ export default function SettingsPage() {
 
             {usage.plan === "trial" && (
               <button
-                className="w-full py-3 rounded-xl font-semibold text-white transition-all hover:brightness-110"
-                style={{
-                  background: "linear-gradient(135deg, #7C5CFC, #5A3FD4)",
-                  boxShadow: "0 0 20px var(--brand-glow)",
-                }}
+                className="btn-primary w-full rounded-2xl py-3 font-semibold"
               >
                 Upgrade Plan
               </button>
@@ -377,7 +387,7 @@ export default function SettingsPage() {
                   if (errors.openai) setErrors({ ...errors, openai: undefined });
                 }}
                 placeholder="sk-..."
-                className="w-full px-4 py-3 pr-12 rounded-lg text-sm"
+                className="input-premium w-full px-4 py-3 pr-12 text-sm"
                 style={{
                   background: "var(--bg-elevated)",
                   border: errors.openai
@@ -439,7 +449,7 @@ export default function SettingsPage() {
                   if (errors.anthropic) setErrors({ ...errors, anthropic: undefined });
                 }}
                 placeholder="sk-ant-..."
-                className="w-full px-4 py-3 pr-12 rounded-lg text-sm"
+                className="input-premium w-full px-4 py-3 pr-12 text-sm"
                 style={{
                   background: "var(--bg-elevated)",
                   border: errors.anthropic
@@ -491,7 +501,7 @@ export default function SettingsPage() {
                 value={ideogramKey}
                 onChange={(e) => setIdeogramKey(e.target.value)}
                 placeholder="api_key..."
-                className="w-full px-4 py-3 pr-12 rounded-lg text-sm"
+                className="input-premium w-full px-4 py-3 pr-12 text-sm"
                 style={{
                   background: "var(--bg-elevated)",
                   border: "1px solid var(--border-strong)",
@@ -517,31 +527,39 @@ export default function SettingsPage() {
 
           {/* Info Banner */}
           <div
-            className="flex gap-3 p-4 rounded-lg mb-6"
+            className="flex gap-3 p-4 rounded-2xl mb-6"
             style={{
-              background: "rgba(59, 130, 246, 0.1)",
-              border: "1px solid rgba(59, 130, 246, 0.3)",
+              background: "rgba(37, 99, 235, 0.08)",
+              border: "1px solid rgba(37, 99, 235, 0.18)",
             }}
           >
-            <Info className="w-5 h-5 flex-shrink-0" style={{ color: "#3B82F6" }} />
-            <p className="text-sm" style={{ color: "#93C5FD" }}>
+            <Info className="w-5 h-5 flex-shrink-0" style={{ color: "#2563EB" }} />
+            <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
               Usage costs are billed directly to your API account — Magnet Lab does not
               charge for AI usage. Make sure you have credits available.
             </p>
+          </div>
+
+          <div className="mb-6 flex items-start gap-3 rounded-2xl border border-[var(--border)] bg-white/70 p-4">
+            <ShieldCheck className="mt-0.5 h-5 w-5 flex-shrink-0" style={{ color: "var(--accent-green)" }} />
+            <div>
+              <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Secure key storage</p>
+              <p className="mt-1 text-xs leading-5" style={{ color: "var(--text-muted)" }}>
+                Save only the keys you want to use. Empty fields will remain unset.
+              </p>
+            </div>
           </div>
 
           {/* Save Button */}
           <button
             onClick={handleSaveKeys}
             disabled={saving || loading}
-            className="w-full py-4 rounded-xl font-semibold text-white transition-all disabled:opacity-50"
-            style={{
-              background: "var(--bg-elevated)",
-              border: "1px solid var(--border-strong)",
-            }}
+            className="btn-primary flex w-full items-center justify-center gap-2 rounded-2xl py-4 font-semibold disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {saving ? "Saving..." : "💾 Save Keys"}
+            <Save className="h-4 w-4" />
+            {saving ? "Saving..." : "Save API keys"}
           </button>
+        </div>
         </div>
       </div>
     </DashboardLayout>

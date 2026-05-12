@@ -26,7 +26,7 @@ const GOALS = [
 
 export default function Onboarding() {
   const navigate = useNavigate();
-  const [currentStep, setCurrentStep] = useState<Step>(1);
+  const [currentStep, setCurrentStep] = useState<Step>(2);
   
   // Step 1 state
   const [provider, setProvider] = useState<Provider>(null);
@@ -182,22 +182,41 @@ export default function Onboarding() {
 
   return (
     <DashboardLayout>
-      <div className="page-shell max-w-4xl">
-      {/* Progress Bar */}
-      <div className="premium-card mb-8 p-6">
-          <p className="text-sm mb-4" style={{ color: "var(--text-secondary)" }}>
-            Step {currentStep} of 6
+      <div className="page-shell max-w-[760px]">
+      <div className="mb-6 flex items-center gap-3">
+        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-orange-500 text-white shadow-sm">
+          <Bolt className="h-5 w-5" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>
+            Start Here
+          </h1>
+          <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+            Build your first traffic magnet with a simple guided flow.
           </p>
+        </div>
+      </div>
+
+      {/* Progress Bar */}
+      <div className="premium-card mb-8 p-5">
+          <div className="mb-4 flex items-center justify-between">
+            <p className="text-xs font-bold uppercase tracking-[0.18em]" style={{ color: "var(--text-muted)" }}>
+              Your progress
+            </p>
+            <p className="text-xs font-semibold" style={{ color: "var(--brand)" }}>
+              {currentStep} / 6 steps done
+            </p>
+          </div>
           <div className="flex items-center justify-between">
             {[1, 2, 3, 4, 5, 6].map((step) => (
               <div key={step} className="flex items-center flex-1 last:flex-none">
                 <div className="relative">
                   <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${
+                    className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all ${
                       step < currentStep
                         ? "border-transparent"
                         : step === currentStep
-                        ? "border-4 animate-pulse"
+                        ? "border-2"
                         : ""
                     }`}
                     style={{
@@ -229,7 +248,7 @@ export default function Onboarding() {
       </div>
 
       {/* Content */}
-      <div className="mx-auto max-w-[620px]">
+      <div className="mx-auto max-w-[700px]">
         {/* Step 1: Add API Key */}
         {currentStep === 1 && (
           <div className="space-y-8 animate-fade-in-up">
@@ -387,58 +406,116 @@ export default function Onboarding() {
         {/* Step 2: How It Works */}
         {currentStep === 2 && (
           <div className="space-y-8 animate-fade-in-up">
-            <div className="text-center space-y-2">
-              <h1 className="text-3xl font-bold" style={{ color: "var(--text-primary)" }}>
-                Here's how Magnet Lab works
-              </h1>
-              <p className="text-base" style={{ color: "var(--text-secondary)" }}>
-                You're about to build a traffic machine. Here's the 3-step loop:
-              </p>
+            <div className="premium-card overflow-hidden p-0">
+              <div className="border-b border-[var(--border)] bg-amber-50/70 p-6">
+                <div className="mb-3 flex items-center gap-2">
+                  <span className="rounded-full bg-white px-3 py-1 text-xs font-bold uppercase tracking-[0.14em]" style={{ color: "var(--accent-amber)" }}>
+                    Step 1 of 5
+                  </span>
+                </div>
+                <h2 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>
+                  Now let it compound
+                </h2>
+                <p className="mt-2 text-sm leading-6" style={{ color: "var(--text-secondary)" }}>
+                  One tool is a start. Ten tools become a traffic machine. Each small, useful tool targets a search people already make.
+                </p>
+              </div>
+
+              <div className="space-y-3 p-6">
+                <div className="flex gap-3">
+                  <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-orange-100 text-xs font-bold text-orange-600">1</span>
+                  <p className="text-sm leading-6" style={{ color: "var(--text-secondary)" }}>
+                    Use the Bulk Generator to discover 50-100 more tool ideas for your niche.
+                  </p>
+                </div>
+                <div className="flex gap-3">
+                  <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-orange-100 text-xs font-bold text-orange-600">2</span>
+                  <p className="text-sm leading-6" style={{ color: "var(--text-secondary)" }}>
+                    Generate a full landing page from any blueprint, then capture leads or publish directly.
+                  </p>
+                </div>
+                <div className="flex gap-3">
+                  <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-orange-100 text-xs font-bold text-orange-600">3</span>
+                  <p className="text-sm leading-6" style={{ color: "var(--text-secondary)" }}>
+                    Add more tools over time. Small search wins stack into compounding traffic.
+                  </p>
+                </div>
+                <button
+                  onClick={() => navigate("/dashboard")}
+                  className="btn-primary inline-flex items-center justify-center rounded-2xl px-5 py-3 text-sm font-semibold"
+                >
+                  Go to Dashboard
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {[
+                { title: "How to navigate the app", desc: "What every sidebar item does", icon: Target },
+                { title: "How to add your API key", desc: "OpenAI or Anthropic setup", icon: Key },
+                { title: "Full feature reference", desc: "Use every builder feature", icon: Sparkles },
+              ].map((item, index) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.title}
+                    onClick={() => index === 1 && setCurrentStep(1)}
+                    className="premium-card flex w-full items-center justify-between gap-4 rounded-2xl p-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-sm"
+                  >
+                    <span className="flex items-center gap-3">
+                      <span className="icon-tile h-9 w-9 rounded-xl">
+                        <Icon className="h-4 w-4" />
+                      </span>
+                      <span>
+                        <span className="block text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+                          {item.title}
+                        </span>
+                        <span className="block text-xs" style={{ color: "var(--text-muted)" }}>
+                          {item.desc}
+                        </span>
+                      </span>
+                    </span>
+                    <span className="text-lg" style={{ color: "var(--text-muted)" }}>{">"}</span>
+                  </button>
+                );
+              })}
             </div>
 
             {/* Flow Diagram */}
-            <div className="space-y-4">
-              <div className="premium-card p-6 space-y-3">
-                <div className="icon-tile h-12 w-12">
-                  <Target className="w-6 h-6" style={{ color: "var(--brand)" }} />
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="premium-card p-5 space-y-3">
+                <div className="icon-tile h-11 w-11">
+                  <Target className="w-5 h-5" style={{ color: "var(--brand)" }} />
                 </div>
-                <h3 className="text-lg font-bold" style={{ color: "var(--text-primary)" }}>
+                <h3 className="font-bold" style={{ color: "var(--text-primary)" }}>
                   Pick a Niche
                 </h3>
-                <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-                  Tell us your market — SEO, fitness, finance, etc.
+                <p className="text-xs leading-5" style={{ color: "var(--text-secondary)" }}>
+                  Choose SEO, fitness, finance, or any focused market.
                 </p>
               </div>
 
-              <div className="flex justify-center">
-                <div className="w-px h-8" style={{ background: "var(--border)" }} />
-              </div>
-
-              <div className="premium-card p-6 space-y-3">
-                <div className="icon-tile h-12 w-12 text-[var(--accent-amber)]">
-                  <Bolt className="w-6 h-6" style={{ color: "var(--accent-amber)" }} />
+              <div className="premium-card p-5 space-y-3">
+                <div className="icon-tile h-11 w-11 text-[var(--accent-amber)]">
+                  <Bolt className="w-5 h-5" style={{ color: "var(--accent-amber)" }} />
                 </div>
-                <h3 className="text-lg font-bold" style={{ color: "var(--text-primary)" }}>
+                <h3 className="font-bold" style={{ color: "var(--text-primary)" }}>
                   AI Finds Opportunities
                 </h3>
-                <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-                  AI scans your niche for tool ideas nobody has built yet
+                <p className="text-xs leading-5" style={{ color: "var(--text-secondary)" }}>
+                  Find tool ideas with useful search demand and clear intent.
                 </p>
               </div>
 
-              <div className="flex justify-center">
-                <div className="w-px h-8" style={{ background: "var(--border)" }} />
-              </div>
-
-              <div className="premium-card p-6 space-y-3">
-                <div className="icon-tile h-12 w-12 text-[var(--accent-green)]">
-                  <TrendingUp className="w-6 h-6" style={{ color: "var(--accent-green)" }} />
+              <div className="premium-card p-5 space-y-3">
+                <div className="icon-tile h-11 w-11 text-[var(--accent-green)]">
+                  <TrendingUp className="w-5 h-5" style={{ color: "var(--accent-green)" }} />
                 </div>
-                <h3 className="text-lg font-bold" style={{ color: "var(--text-primary)" }}>
+                <h3 className="font-bold" style={{ color: "var(--text-primary)" }}>
                   Build & Deploy
                 </h3>
-                <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-                  AI writes the HTML. You embed it. Google sends traffic.
+                <p className="text-xs leading-5" style={{ color: "var(--text-secondary)" }}>
+                  Generate the page, publish it, and repeat the workflow.
                 </p>
               </div>
             </div>
@@ -456,11 +533,7 @@ export default function Onboarding() {
 
             <button
               onClick={() => setCurrentStep(3)}
-              className="w-full px-6 py-3 rounded-xl font-semibold text-white transition-all hover:brightness-110"
-              style={{
-                background: "linear-gradient(135deg, #7C5CFC, #5A3FD4)",
-                boxShadow: "0 0 20px var(--brand-glow)",
-              }}
+              className="btn-primary w-full rounded-2xl px-6 py-3 font-semibold"
             >
               Got it, let's build
             </button>

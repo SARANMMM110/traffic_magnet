@@ -1101,21 +1101,20 @@ ${format}`;
               </div>
 
               {/* Tabs */}
-              <div className="flex gap-2 mt-4">
+              <div className="tab-pill mt-5 flex gap-1">
                 <button
                   onClick={() => {
                     setPanelTab("blueprint");
                     setBuildMode(null);
                     setBuildStep(null);
                   }}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    panelTab === "blueprint" ? "text-white" : ""
+                  className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all ${
+                    panelTab === "blueprint"
+                      ? "bg-white text-[var(--brand)] shadow-sm"
+                      : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                   }`}
-                  style={{
-                    background: panelTab === "blueprint" ? "var(--text-primary)" : "transparent",
-                    color: panelTab === "blueprint" ? "white" : "var(--text-muted)",
-                  }}
                 >
+                  <FileText className="h-4 w-4" />
                   Blueprint
                 </button>
                 <button
@@ -1124,18 +1123,14 @@ ${format}`;
                     setBuildMode(null);
                     setBuildStep(null);
                   }}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all`}
-                  style={{
-                    background: panelTab === "variations" ? "var(--text-primary)" : "transparent",
-                    color: panelTab === "variations" ? "white" : "var(--text-muted)",
-                  }}
+                  className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all ${
+                    panelTab === "variations"
+                      ? "bg-white text-[var(--brand)] shadow-sm"
+                      : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                  }`}
                 >
-                  <span className="flex items-center gap-1">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    Variations
-                  </span>
+                  <TrendingUp className="h-4 w-4" />
+                  Variations
                 </button>
                 <button
                   onClick={() => {
@@ -1143,18 +1138,14 @@ ${format}`;
                     setBuildMode(null);
                     setBuildStep(null);
                   }}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all`}
-                  style={{
-                    background: panelTab === "landing" ? "var(--text-primary)" : "transparent",
-                    color: panelTab === "landing" ? "white" : "var(--text-muted)",
-                  }}
+                  className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all ${
+                    panelTab === "landing"
+                      ? "bg-white text-[var(--brand)] shadow-sm"
+                      : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                  }`}
                 >
-                  <span className="flex items-center gap-1">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    Landing Page
-                  </span>
+                  <Code2 className="h-4 w-4" />
+                  Landing Page
                 </button>
               </div>
             </div>
@@ -1374,12 +1365,15 @@ ${format}`;
                     <h4 className="text-sm font-bold mb-3" style={{ color: "var(--text-primary)" }}>
                       Build this tool as…
                     </h4>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                       <button
                         onClick={() => buildTool("standalone")}
                         disabled={buildStep !== null}
-                        className="premium-card p-3 rounded-2xl text-left transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="premium-card group rounded-3xl p-4 text-left transition-all hover:-translate-y-0.5 hover:border-[var(--brand)] hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
                       >
+                        <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl border border-[var(--border)] bg-white text-[var(--brand)] shadow-sm transition-all group-hover:bg-[var(--brand-soft)]">
+                          <Download className="h-5 w-5" />
+                        </div>
                         <p className="text-sm font-semibold mb-1" style={{ color: "var(--text-primary)" }}>
                           Standalone Page
                         </p>
@@ -1390,8 +1384,11 @@ ${format}`;
                       <button
                         onClick={() => buildTool("embed")}
                         disabled={buildStep !== null}
-                        className="premium-card p-3 rounded-2xl text-left transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="premium-card group rounded-3xl p-4 text-left transition-all hover:-translate-y-0.5 hover:border-[var(--brand)] hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
                       >
+                        <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl border border-[var(--border)] bg-white text-[var(--brand)] shadow-sm transition-all group-hover:bg-[var(--brand-soft)]">
+                          <Code2 className="h-5 w-5" />
+                        </div>
                         <p className="text-sm font-semibold mb-1" style={{ color: "var(--text-primary)" }}>
                           Embeddable Widget
                         </p>
@@ -1508,23 +1505,18 @@ ${format}`;
                 <>
                   {/* Configure Variations Card */}
                   <div 
-                    className="rounded-lg"
-                    style={{ 
-                      background: "#F9FAFB",
-                      border: "1px solid #E5E7EB",
-                      padding: "16px"
-                    }}
+                    className="premium-card rounded-3xl p-5"
                   >
                     <h3 
                       className="text-xs font-semibold uppercase tracking-wide"
-                      style={{ color: "#6B7280", marginBottom: "12px" }}
+                      style={{ color: "var(--text-muted)", marginBottom: "16px" }}
                     >
                       CONFIGURE VARIATIONS
                     </h3>
 
-                    <div className="grid grid-cols-2" style={{ gap: "20px" }}>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       {/* Variation A */}
-                      <div>
+                      <div className="rounded-2xl border border-[var(--border)] bg-white/70 p-4">
                         <div className="flex items-center gap-1.5" style={{ marginBottom: "12px" }}>
                           <span 
                             className="rounded flex items-center justify-center text-xs font-bold text-white"
@@ -1554,12 +1546,9 @@ ${format}`;
                           <select
                             value={audienceA}
                             onChange={(e) => setAudienceA(e.target.value)}
-                            className="w-full text-sm rounded border focus:outline-none focus:ring-1 focus:ring-purple-400"
+                            className="input-premium w-full text-sm"
                             style={{ 
-                              borderColor: "#D1D5DB",
                               color: "#111827",
-                              background: "white",
-                              padding: "6px 10px",
                               fontSize: "13px"
                             }}
                           >
@@ -1587,12 +1576,9 @@ ${format}`;
                           <select
                             value={monetizationA}
                             onChange={(e) => setMonetizationA(e.target.value)}
-                            className="w-full text-sm rounded border focus:outline-none focus:ring-1 focus:ring-purple-400"
+                            className="input-premium w-full text-sm"
                             style={{ 
-                              borderColor: "#D1D5DB",
                               color: "#111827",
-                              background: "white",
-                              padding: "6px 10px",
                               fontSize: "13px"
                             }}
                           >
@@ -1608,7 +1594,7 @@ ${format}`;
                       </div>
 
                       {/* Variation B */}
-                      <div>
+                      <div className="rounded-2xl border border-[var(--border)] bg-white/70 p-4">
                         <div className="flex items-center gap-1.5" style={{ marginBottom: "12px" }}>
                           <span 
                             className="rounded flex items-center justify-center text-xs font-bold text-white"
@@ -1638,12 +1624,9 @@ ${format}`;
                           <select
                             value={audienceB}
                             onChange={(e) => setAudienceB(e.target.value)}
-                            className="w-full text-sm rounded border focus:outline-none focus:ring-1 focus:ring-purple-400"
+                            className="input-premium w-full text-sm"
                             style={{ 
-                              borderColor: "#D1D5DB",
                               color: "#111827",
-                              background: "white",
-                              padding: "6px 10px",
                               fontSize: "13px"
                             }}
                           >
@@ -1671,12 +1654,9 @@ ${format}`;
                           <select
                             value={monetizationB}
                             onChange={(e) => setMonetizationB(e.target.value)}
-                            className="w-full text-sm rounded border focus:outline-none focus:ring-1 focus:ring-purple-400"
+                            className="input-premium w-full text-sm"
                             style={{ 
-                              borderColor: "#D1D5DB",
                               color: "#111827",
-                              background: "white",
-                              padding: "6px 10px",
                               fontSize: "13px"
                             }}
                           >
@@ -1696,13 +1676,7 @@ ${format}`;
                     <button
                       onClick={generateVariations}
                       disabled={generatingVariations}
-                      className="w-full rounded-lg font-semibold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110 flex items-center justify-center gap-2"
-                      style={{
-                        background: "#F97316",
-                        marginTop: "16px",
-                        padding: "10px 16px",
-                        fontSize: "14px"
-                      }}
+                      className="btn-primary mt-4 flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {generatingVariations ? (
                         <>
@@ -1935,9 +1909,12 @@ ${format}`;
 
               {panelTab === "landing" && (
                 <>
-                  <div className="space-y-6">
+                  <div className="premium-card space-y-6 rounded-3xl p-5">
                     {/* Header */}
-                    <div>
+                    <div className="rounded-2xl border border-[var(--border)] bg-white/70 p-4">
+                      <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl border border-[var(--border)] bg-white text-[var(--brand)] shadow-sm">
+                        <FileText className="h-5 w-5" />
+                      </div>
                       <h3 className="text-lg font-bold mb-2" style={{ color: "var(--text-primary)" }}>
                         Landing Page Generator
                       </h3>

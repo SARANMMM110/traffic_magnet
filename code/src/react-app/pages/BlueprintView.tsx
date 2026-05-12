@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router";
 import DashboardLayout from "@/react-app/components/DashboardLayout";
-import { ArrowLeft, Loader2, Check, Download } from "lucide-react";
+import { ArrowLeft, Loader2, Check, Download, Code2 } from "lucide-react";
 import { useToast } from "@/react-app/components/Toast";
 
 interface Tool {
@@ -630,7 +630,7 @@ export default function BlueprintView() {
                 </h4>
                 
                 {!buildResult ? (
-                  <div className="grid grid-cols-2 gap-3 mb-4">
+                  <div className="grid grid-cols-1 gap-3 mb-4 sm:grid-cols-2">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -638,13 +638,12 @@ export default function BlueprintView() {
                         buildTool("standalone");
                       }}
                       disabled={buildStep !== null}
-                      className="p-3 rounded-lg text-left transition-all hover:brightness-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                      style={{ background: "var(--bg-overlay)", border: "2px solid var(--border)" }}
+                      className="premium-card group rounded-3xl p-4 text-left transition-all hover:-translate-y-0.5 hover:border-[var(--brand)] hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      <div className="flex items-center gap-2 mb-2">
-                        <svg className="w-5 h-5" style={{ color: "#F97316" }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-                        </svg>
+                      <div className="flex items-center gap-3 mb-3">
+                        <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[var(--border)] bg-white text-[var(--brand)] shadow-sm transition-all group-hover:bg-[var(--brand-soft)]">
+                          <Download className="h-5 w-5" />
+                        </span>
                         <p className="font-semibold text-sm" style={{ color: "var(--text-primary)" }}>Standalone Page</p>
                       </div>
                       <p className="text-xs" style={{ color: "var(--text-muted)" }}>
@@ -658,13 +657,12 @@ export default function BlueprintView() {
                         buildTool("embed");
                       }}
                       disabled={buildStep !== null}
-                      className="p-3 rounded-lg text-left transition-all hover:brightness-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                      style={{ background: "var(--bg-overlay)", border: "2px solid var(--border)" }}
+                      className="premium-card group rounded-3xl p-4 text-left transition-all hover:-translate-y-0.5 hover:border-[var(--brand)] hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      <div className="flex items-center gap-2 mb-2">
-                        <svg className="w-5 h-5" style={{ color: "#F97316" }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                        </svg>
+                      <div className="flex items-center gap-3 mb-3">
+                        <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[var(--border)] bg-white text-[var(--brand)] shadow-sm transition-all group-hover:bg-[var(--brand-soft)]">
+                          <Code2 className="h-5 w-5" />
+                        </span>
                         <p className="font-semibold text-sm" style={{ color: "var(--text-primary)" }}>Embeddable Widget</p>
                       </div>
                       <p className="text-xs" style={{ color: "var(--text-muted)" }}>
