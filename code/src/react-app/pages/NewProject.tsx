@@ -86,6 +86,20 @@ const NICHE_ICONS = [
 
 const getNicheIcon = (index: number) => NICHE_ICONS[index % NICHE_ICONS.length];
 
+const SUBTOPIC_ICONS = [Search, Link2, Sparkles, Building2, ShoppingBag, TrendingUp];
+
+const SUBTOPIC_DESCRIPTIONS: Record<string, string> = {
+  "Technical SEO": "Site speed, crawl budget and Core Web Vitals tools.",
+  "Link Building": "Backlink value, anchor text and outreach calculators.",
+  "Content SEO": "Content gap analysis and keyword difficulty helpers.",
+  "Local SEO": "Local rankings, citation score and map visibility tools.",
+  "E-Commerce SEO": "Product schema, silo structure and category SEO tools.",
+};
+
+const getSubTopicDescription = (subTopic: string, nicheTitle: string) => {
+  return SUBTOPIC_DESCRIPTIONS[subTopic] || `${subTopic} calculators, checkers and lead magnets for ${nicheTitle}.`;
+};
+
 export default function NewProject() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -259,6 +273,10 @@ export default function NewProject() {
   };
 
   const isAtLimit = usage.projects >= usage.limit;
+  const expandedTemplate = NICHE_TEMPLATES.find((template) => template.id === expandedNiche);
+  const expandedTemplateIndex = expandedTemplate
+    ? NICHE_TEMPLATES.findIndex((template) => template.id === expandedTemplate.id)
+    : -1;
 
   return (
     <DashboardLayout>
@@ -331,11 +349,17 @@ export default function NewProject() {
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 {NICHE_TEMPLATES.map((template, index) => {
                   const NicheIcon = getNicheIcon(index);
+                  const isSelected = expandedNiche === template.id;
                   return (
-                  <div key={template.id} className="space-y-2">
                     <button
+                      key={template.id}
                       onClick={() => handleNicheClick(template.id)}
-                      className="premium-card flex h-full min-h-[172px] w-full flex-col p-4 text-left"
+                      className="flex min-h-[174px] w-full flex-col rounded-3xl border bg-white p-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-sm"
+                      style={{
+                        borderColor: isSelected ? getNicheColor(index) : "var(--border)",
+                        boxShadow: isSelected ? `0 0 0 3px ${getNicheColor(index)}18` : "var(--shadow-xs)",
+                        background: isSelected ? `${getNicheColor(index)}0D` : "rgba(255,255,255,0.9)",
+                      }}
                     >
                       <div
                         className="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl border bg-white shadow-sm"
@@ -352,32 +376,51 @@ export default function NewProject() {
                       <p className="text-xs mb-2" style={{ color: "var(--text-muted)" }}>
                         {template.description}
                       </p>
-                      <p className="mt-auto text-xs font-semibold" style={{ color: getNicheColor(index) }}>
+                      <p className="mt-auto flex items-center gap-1 text-xs font-semibold" style={{ color: getNicheColor(index) }}>
+                        {isSelected ? <ChevronUp className="h-3 w-3" /> : null}
                         {template.subTopics.length} sub-topics
                       </p>
                     </button>
-
-                    {expandedNiche === template.id && (
-                      <div className="space-y-1 animate-fade-in-up">
-                        {template.subTopics.map((subTopic, subIndex) => (
-                          <button
-                            key={subIndex}
-                            onClick={() => handleSubTopicClick(subTopic, template)}
-                            className="w-full rounded-xl px-3 py-2 text-left text-sm font-medium transition-all hover:brightness-105"
-                            style={{
-                              background: `${getNicheColor(index)}20`,
-                              color: getNicheColor(index),
-                            }}
-                          >
-                            {subTopic}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
                   );
                 })}
               </div>
+
+              {expandedTemplate && (
+                <div className="animate-fade-in-up rounded-[28px] border border-dashed border-[var(--border-strong)] bg-white/70 p-4">
+                  <div className="mb-3 flex items-center gap-2 text-sm font-semibold" style={{ color: "var(--text-muted)" }}>
+                    <span className="h-5 w-px bg-[var(--border-strong)]" />
+                    Pick a sub-topic for {expandedTemplate.title}
+                  </div>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    {expandedTemplate.subTopics.map((subTopic, subIndex) => {
+                      const SubTopicIcon = SUBTOPIC_ICONS[subIndex % SUBTOPIC_ICONS.length];
+                      const accent = getNicheColor(expandedTemplateIndex);
+
+                      return (
+                        <button
+                          key={subTopic}
+                          onClick={() => handleSubTopicClick(subTopic, expandedTemplate)}
+                          className="min-h-[122px] rounded-2xl border bg-white p-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-sm"
+                          style={{
+                            borderColor: `${accent}35`,
+                            background: `${accent}0A`,
+                          }}
+                        >
+                          <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-sm" style={{ color: accent }}>
+                            <SubTopicIcon className="h-4 w-4" />
+                          </div>
+                          <h4 className="mb-1 text-sm font-bold" style={{ color: accent }}>
+                            {subTopic}
+                          </h4>
+                          <p className="line-clamp-2 text-xs leading-5" style={{ color: "var(--text-secondary)" }}>
+                            {getSubTopicDescription(subTopic, expandedTemplate.title)}
+                          </p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               <p className="text-center text-sm italic" style={{ color: "var(--text-muted)" }}>
                 Click a niche to expand sub-topics, or write your own below.

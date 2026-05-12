@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
+import DashboardLayout from "@/react-app/components/DashboardLayout";
 import { BadgeDollarSign, BriefcaseBusiness, Check, Copy, Dumbbell, Eye, EyeOff, ExternalLink, Key, Search, ShoppingBag, Sparkles, Target, Bolt, TrendingUp } from "lucide-react";
 
 type Step = 1 | 2 | 3 | 4 | 5 | 6;
@@ -180,10 +181,10 @@ export default function Onboarding() {
   };
 
   return (
-    <div className="min-h-screen" style={{ background: "var(--bg-base)" }}>
+    <DashboardLayout>
+      <div className="page-shell max-w-4xl">
       {/* Progress Bar */}
-      <div className="border-b" style={{ borderColor: "var(--border)" }}>
-        <div className="max-w-4xl mx-auto px-8 py-6">
+      <div className="premium-card mb-8 p-6">
           <p className="text-sm mb-4" style={{ color: "var(--text-secondary)" }}>
             Step {currentStep} of 6
           </p>
@@ -225,11 +226,10 @@ export default function Onboarding() {
               </div>
             ))}
           </div>
-        </div>
       </div>
 
       {/* Content */}
-      <div className="max-w-[620px] mx-auto px-4 py-12">
+      <div className="mx-auto max-w-[620px]">
         {/* Step 1: Add API Key */}
         {currentStep === 1 && (
           <div className="space-y-8 animate-fade-in-up">
@@ -733,7 +733,7 @@ export default function Onboarding() {
                   boxShadow: "0 0 20px var(--brand-glow)",
                 }}
               >
-                🔨 Build This Tool
+                Build This Tool
               </button>
             )}
 
@@ -851,6 +851,7 @@ export default function Onboarding() {
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }

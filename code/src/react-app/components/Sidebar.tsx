@@ -28,17 +28,20 @@ function SidebarLink({ to, icon, label }: SidebarLinkProps) {
   return (
     <Link
       to={to}
-      className={`group flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold transition-all duration-200 ${
+      className={`group relative flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold transition-all duration-200 ${
         isActive
-          ? "bg-[var(--brand-soft)] text-[var(--brand)] shadow-sm"
-          : "text-[var(--text-secondary)] hover:bg-white hover:text-[var(--text-primary)] hover:shadow-sm"
+          ? "bg-slate-950 text-white shadow-sm"
+          : "text-[var(--text-secondary)] hover:bg-slate-100 hover:text-[var(--text-primary)]"
       }`}
     >
+      {isActive && (
+        <span className="absolute left-1 top-1/2 h-6 w-1 -translate-y-1/2 rounded-full bg-white/80" />
+      )}
       <span
-        className={`flex h-9 w-9 items-center justify-center rounded-xl border transition-all ${
+        className={`flex h-8 w-8 items-center justify-center rounded-xl transition-all ${
           isActive
-            ? "border-white bg-white text-[var(--brand)] shadow-sm"
-            : "border-transparent bg-[var(--bg-overlay)] text-[var(--text-muted)] group-hover:border-[var(--border)] group-hover:bg-white group-hover:text-[var(--brand)]"
+            ? "bg-white/12 text-white"
+            : "bg-white text-[var(--text-muted)] ring-1 ring-[var(--border)] group-hover:text-[var(--brand)]"
         }`}
       >
         {icon}
@@ -87,12 +90,11 @@ export default function Sidebar() {
           ${isMobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
         `}
         style={{
-          width: "276px",
-          background: "rgba(255, 255, 255, 0.76)",
-          border: "1px solid var(--glass-border)",
-          borderRadius: "28px",
-          boxShadow: "var(--shadow-md)",
-          backdropFilter: "blur(18px)",
+          width: "248px",
+          background: "#FFFFFF",
+          border: "1px solid var(--border)",
+          borderRadius: "24px",
+          boxShadow: "0 16px 45px rgba(15, 23, 42, 0.07)",
         }}
       >
         {/* Mobile Close Button */}
@@ -105,11 +107,11 @@ export default function Sidebar() {
         </button>
 
         {/* Logo */}
-        <div className="p-5 pb-4">
+        <div className="p-4 pb-3">
           <Link to="/dashboard" className="flex items-center gap-3" onClick={closeMobile}>
             <div
-              className="w-11 h-11 rounded-2xl flex items-center justify-center shadow-lg"
-              style={{ background: "linear-gradient(135deg, #111827, #635BFF)" }}
+              className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-sm"
+              style={{ background: "linear-gradient(135deg, #1E1B4B, #4338CA)" }}
             >
               <Sparkles className="w-5 h-5 text-white" />
             </div>
@@ -123,7 +125,7 @@ export default function Sidebar() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-4 space-y-1.5" onClick={closeMobile}>
+        <nav className="flex-1 px-3 space-y-1" onClick={closeMobile}>
           <SidebarLink to="/start" icon={<WandSparkles className="w-4 h-4" />} label="Start Here" />
           <SidebarLink
             to="/dashboard"
@@ -142,9 +144,9 @@ export default function Sidebar() {
         </nav>
 
         {/* User Footer */}
-        <div className="p-4">
+        <div className="p-3">
           {user && (
-            <div className="flex items-center gap-3 mb-3 rounded-2xl border border-[var(--border)] bg-white/70 p-3">
+            <div className="flex items-center gap-3 mb-2 rounded-2xl border border-[var(--border)] bg-slate-50 p-3">
               <div
                 className="w-10 h-10 rounded-2xl flex items-center justify-center font-semibold text-white shadow-sm"
                 style={{ background: "linear-gradient(135deg, var(--brand), var(--accent-cyan))" }}
