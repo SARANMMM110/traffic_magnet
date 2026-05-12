@@ -1,5 +1,92 @@
 import { Link } from "react-router";
-import { ArrowRight, Bolt, CheckCircle, Sparkles, Target, TrendingUp } from "lucide-react";
+import {
+  ArrowRight,
+  BarChart3,
+  Bolt,
+  BrainCircuit,
+  CheckCircle,
+  Code2,
+  FileText,
+  Gauge,
+  Globe2,
+  Layers3,
+  MousePointerClick,
+  Search,
+  ShieldCheck,
+  Sparkles,
+  Target,
+  TrendingUp,
+  WandSparkles,
+} from "lucide-react";
+
+const proofPoints = [
+  "Find niche tool ideas in minutes",
+  "Generate blueprints and pages with AI",
+  "Export HTML, embeds, and content packages",
+];
+
+const metrics = [
+  { value: "50+", label: "tool ideas per niche" },
+  { value: "60s", label: "to generate a working asset" },
+  { value: "3x", label: "more publishing formats" },
+];
+
+const workflow = [
+  {
+    title: "Choose a niche",
+    text: "Start with a market, audience, or keyword cluster. Traffic Magnet turns broad ideas into focused search opportunities.",
+    icon: Target,
+  },
+  {
+    title: "Generate the asset",
+    text: "Create a calculator, checker, landing page, and content wrapper with a guided AI workflow built for SEO.",
+    icon: WandSparkles,
+  },
+  {
+    title: "Publish and compound",
+    text: "Export clean HTML or embed code, publish fast, and build a library of small tools that can rank over time.",
+    icon: TrendingUp,
+  },
+];
+
+const featureCards = [
+  {
+    title: "Opportunity discovery",
+    text: "Uncover useful tool ideas your customers are already searching for, then prioritize them by traffic potential.",
+    icon: Search,
+  },
+  {
+    title: "Blueprint intelligence",
+    text: "Turn a raw idea into a structured product brief with inputs, logic, conversion angles, and monetization options.",
+    icon: BrainCircuit,
+  },
+  {
+    title: "No-code tool builder",
+    text: "Generate working HTML tools and widgets without wrestling with code, plugins, or a developer backlog.",
+    icon: Code2,
+  },
+  {
+    title: "Content wrapper",
+    text: "Package every tool with SEO titles, intros, benefits, how-it-works sections, and publish-ready page content.",
+    icon: FileText,
+  },
+  {
+    title: "Landing page generator",
+    text: "Create polished standalone pages around each tool so every traffic magnet has a clear conversion path.",
+    icon: Globe2,
+  },
+  {
+    title: "Repeatable growth system",
+    text: "Build one useful asset, then repeat the same workflow across dozens of long-tail search opportunities.",
+    icon: Layers3,
+  },
+];
+
+const customerOutcomes = [
+  "Launch useful calculators, checkers, and lead magnets without starting from a blank page.",
+  "Create assets that educate visitors before asking them to book, buy, subscribe, or share.",
+  "Build a compounding library of SEO pages instead of relying only on ads or social posts.",
+];
 
 export default function Landing() {
   const scrollToFeatures = () => {
@@ -7,139 +94,330 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden" style={{ background: "var(--bg-base)" }}>
-      {/* Subtle gradient background */}
-      <div
-        className="fixed inset-0 z-0"
-        style={{
-          background: `
-            radial-gradient(ellipse at 20% 50%, rgba(124, 92, 252, 0.05) 0%, transparent 60%),
-            radial-gradient(ellipse at 80% 20%, rgba(59, 130, 246, 0.05) 0%, transparent 60%),
-            var(--bg-base)
-          `,
-        }}
-      >
-        {/* Floating particles */}
-        {Array.from({ length: 20 }).map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-1 h-1 rounded-full opacity-10"
-            style={{
-              background: "var(--brand)",
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animation: `float ${6 + Math.random() * 4}s ease-in-out infinite`,
-              animationDelay: `${Math.random() * 2}s`,
-            }}
-          />
-        ))}
+    <div className="relative min-h-screen overflow-hidden" style={{ background: "var(--bg-base)" }}>
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute left-[-10%] top-[-14%] h-[32rem] w-[32rem] rounded-full bg-[rgba(99,91,255,0.12)] blur-3xl" />
+        <div className="absolute right-[-8%] top-[12%] h-[28rem] w-[28rem] rounded-full bg-[rgba(8,145,178,0.11)] blur-3xl" />
+        <div className="absolute bottom-[6%] left-[18%] h-[20rem] w-[20rem] rounded-full bg-[rgba(16,185,129,0.08)] blur-3xl" />
       </div>
 
-      {/* Content */}
       <div className="relative z-10">
-        {/* Hero Section */}
-        <div className="flex min-h-screen flex-col items-center justify-center px-4 py-24 text-center">
-          <div className="max-w-[760px] space-y-8 animate-fade-in-up">
-            {/* Eyebrow tag */}
-            <div className="inline-block">
-              <div
-                className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold tracking-wider"
-                style={{
-                  border: "1px solid rgba(99, 91, 255, 0.22)",
-                  background: "var(--brand-soft)",
-                  color: "var(--brand)",
-                  letterSpacing: "0.1em",
-                }}
-              >
+        <header className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
+          <Link to="/" className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-950 text-white shadow-sm">
+              <Sparkles className="h-5 w-5" />
+            </span>
+            <span>
+              <span className="block text-sm font-extrabold tracking-tight">Traffic Magnet</span>
+              <span className="block text-xs" style={{ color: "var(--text-muted)" }}>
+                AI tool factory
+              </span>
+            </span>
+          </Link>
+
+          <nav className="hidden items-center gap-7 text-sm font-semibold md:flex" style={{ color: "var(--text-secondary)" }}>
+            <button onClick={scrollToFeatures} className="transition-colors hover:text-[var(--text-primary)]">
+              Features
+            </button>
+            <a href="#workflow" className="transition-colors hover:text-[var(--text-primary)]">
+              Workflow
+            </a>
+            <a href="#outcomes" className="transition-colors hover:text-[var(--text-primary)]">
+              Results
+            </a>
+          </nav>
+
+          <div className="flex items-center gap-3">
+            <Link to="/login" className="hidden text-sm font-semibold sm:block" style={{ color: "var(--text-secondary)" }}>
+              Sign in
+            </Link>
+            <Link to="/signup">
+              <button className="btn-primary inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold">
+                Start free
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            </Link>
+          </div>
+        </header>
+
+        <main>
+          <section className="mx-auto grid max-w-7xl items-center gap-12 px-6 pb-20 pt-12 lg:grid-cols-[1.02fr_0.98fr] lg:pb-28 lg:pt-20">
+            <div className="animate-fade-in-up">
+              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[rgba(99,91,255,0.22)] bg-white/75 px-4 py-2 text-xs font-extrabold uppercase tracking-[0.14em]" style={{ color: "var(--brand)" }}>
                 <Sparkles className="h-3.5 w-3.5" />
-                AI-POWERED SEO TOOL FACTORY
+                AI-powered SEO asset engine
+              </div>
+
+              <h1 className="max-w-3xl text-5xl font-extrabold leading-[1.02] tracking-[-0.055em] md:text-6xl lg:text-7xl">
+                Build useful AI tools that attract customers while you sleep.
+              </h1>
+
+              <p className="mt-6 max-w-2xl text-base leading-8 md:text-lg" style={{ color: "var(--text-secondary)" }}>
+                Traffic Magnet helps founders, agencies, and creators turn niche ideas into calculators, checkers, landing pages, and SEO content packages that people actually want to use and share.
+              </p>
+
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <Link to="/signup">
+                  <button className="btn-primary inline-flex w-full items-center justify-center gap-2 rounded-2xl px-6 py-3.5 font-bold sm:w-auto">
+                    Create your first magnet
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
+                </Link>
+                <button
+                  onClick={scrollToFeatures}
+                  className="btn-secondary inline-flex items-center justify-center gap-2 rounded-2xl px-6 py-3.5 font-bold"
+                >
+                  <MousePointerClick className="h-4 w-4" />
+                  See the system
+                </button>
+              </div>
+
+              <div className="mt-7 flex flex-wrap gap-3">
+                {proofPoints.map((item) => (
+                  <span key={item} className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-white/75 px-3.5 py-2 text-sm font-semibold" style={{ color: "var(--text-secondary)" }}>
+                    <CheckCircle className="h-4 w-4 text-emerald-500" />
+                    {item}
+                  </span>
+                ))}
               </div>
             </div>
 
-            {/* Headline */}
-            <h1 className="text-5xl font-extrabold leading-tight md:text-7xl">
-              <div>Build AI tools that rank,</div>
-              <div className="text-gradient">convert, and compound.</div>
-            </h1>
+            <div className="relative">
+              <div className="absolute -inset-6 rounded-[2rem] bg-gradient-to-br from-indigo-200/60 via-cyan-100/50 to-emerald-100/50 blur-2xl" />
+              <div className="premium-card relative overflow-hidden rounded-[28px] bg-white/[0.92] p-4 shadow-[0_30px_90px_rgba(15,23,42,0.12)]">
+                <div className="mb-4 flex items-center justify-between rounded-2xl border border-[var(--border)] bg-slate-50 px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <span className="h-3 w-3 rounded-full bg-red-400" />
+                    <span className="h-3 w-3 rounded-full bg-amber-400" />
+                    <span className="h-3 w-3 rounded-full bg-emerald-400" />
+                  </div>
+                  <span className="text-xs font-bold uppercase tracking-[0.16em]" style={{ color: "var(--text-muted)" }}>
+                    Builder Preview
+                  </span>
+                </div>
 
-            {/* Subtext */}
-            <p
-              className="mx-auto max-w-[620px] text-base leading-8 md:text-lg"
-              style={{ color: "var(--text-secondary)" }}
-            >
-              Generate free online calculators and tools your niche needs — built
-              by AI, deployed in minutes, ranked on Google forever.
-            </p>
+                <div className="grid gap-4">
+                  <div className="rounded-3xl border border-[var(--border)] bg-gradient-to-br from-slate-950 to-slate-800 p-5 text-white">
+                    <div className="mb-8 flex items-start justify-between">
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/[0.55]">Generated tool</p>
+                        <h3 className="mt-2 text-2xl font-extrabold">Local SEO ROI Calculator</h3>
+                      </div>
+                      <div className="rounded-2xl bg-white/10 p-3">
+                        <Gauge className="h-6 w-6" />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3">
+                      {metrics.map((metric) => (
+                        <div key={metric.label} className="rounded-2xl border border-white/10 bg-white/[0.08] p-3">
+                          <div className="text-xl font-extrabold">{metric.value}</div>
+                          <div className="mt-1 text-[0.72rem] leading-4 text-white/60">{metric.label}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
 
-            {/* CTA buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-              <Link to="/signup">
-                <button
-                  className="btn-primary inline-flex items-center gap-2 rounded-2xl px-6 py-3 font-semibold"
-                >
-                  Start Building Free
-                  <ArrowRight className="h-4 w-4" />
-                </button>
-              </Link>
-              <button
-                onClick={scrollToFeatures}
-                className="btn-secondary rounded-2xl px-6 py-3 font-semibold"
-              >
-                See how it works
-              </button>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="rounded-3xl border border-[var(--border)] bg-white p-4">
+                      <div className="mb-4 flex items-center gap-3">
+                        <span className="icon-tile h-9 w-9 rounded-xl">
+                          <BarChart3 className="h-4 w-4" />
+                        </span>
+                        <div>
+                          <p className="text-sm font-bold">Traffic score</p>
+                          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                            High intent search
+                          </p>
+                        </div>
+                      </div>
+                      <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                        <div className="h-full w-[88%] rounded-full bg-[var(--brand)]" />
+                      </div>
+                      <p className="mt-3 text-xs" style={{ color: "var(--text-secondary)" }}>
+                        Prioritized for quick publishing and customer education.
+                      </p>
+                    </div>
+
+                    <div className="rounded-3xl border border-[var(--border)] bg-white p-4">
+                      <div className="mb-4 flex items-center gap-3">
+                        <span className="icon-tile h-9 w-9 rounded-xl text-[var(--accent-green)]">
+                          <ShieldCheck className="h-4 w-4" />
+                        </span>
+                        <div>
+                          <p className="text-sm font-bold">Publish kit</p>
+                          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                            Ready assets
+                          </p>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        {["HTML tool", "Landing page", "SEO wrapper"].map((item) => (
+                          <div key={item} className="flex items-center gap-2 text-xs font-semibold" style={{ color: "var(--text-secondary)" }}>
+                            <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
+                            {item}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
+          </section>
 
-            <div className="flex flex-wrap justify-center gap-4 text-sm" style={{ color: "var(--text-secondary)" }}>
-              {["No-code workflow", "SEO-ready exports", "AI content wrapper"].map((item) => (
-                <span key={item} className="inline-flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 text-emerald-500" />
-                  {item}
-                </span>
+          <section className="mx-auto max-w-7xl px-6 pb-20">
+            <div className="grid gap-4 md:grid-cols-3">
+              {metrics.map((metric) => (
+                <div key={metric.label} className="premium-card p-6 text-center">
+                  <div className="text-3xl font-extrabold tracking-tight" style={{ color: "var(--brand)" }}>
+                    {metric.value}
+                  </div>
+                  <p className="mt-2 text-sm font-semibold" style={{ color: "var(--text-secondary)" }}>
+                    {metric.label}
+                  </p>
+                </div>
               ))}
             </div>
-          </div>
-        </div>
+          </section>
 
-        {/* Feature Cards */}
-        <div id="features" className="px-4 pb-24">
-          <div className="max-w-5xl mx-auto">
-            <div className="grid md:grid-cols-3 gap-6">
-              {/* Card 1 */}
-              <div className="premium-card space-y-4 p-8" style={{ animationDelay: "0ms" }}>
-                <div className="icon-tile h-14 w-14">
-                  <Target className="w-8 h-8" style={{ color: "var(--brand)" }} />
-                </div>
-                <h3 className="text-xl font-bold">Pick Your Niche</h3>
-                <p style={{ color: "var(--text-secondary)" }}>
-                  AI finds the highest-potential tool opportunities in your market
+          <section id="workflow" className="mx-auto max-w-7xl px-6 pb-20">
+            <div className="surface-panel p-6 md:p-8">
+              <div className="mb-8 max-w-2xl">
+                <div className="section-eyebrow mb-3">Simple Workflow</div>
+                <h2 className="text-3xl font-extrabold tracking-tight md:text-4xl">
+                  From niche idea to customer-ready asset in one guided system.
+                </h2>
+                <p className="mt-4 text-sm leading-7" style={{ color: "var(--text-secondary)" }}>
+                  Instead of writing another generic blog post, build interactive assets that give visitors a reason to click, calculate, save, and share.
                 </p>
               </div>
 
-              {/* Card 2 */}
-              <div className="premium-card space-y-4 p-8" style={{ animationDelay: "60ms" }}>
-                <div className="icon-tile h-14 w-14 text-[var(--accent-amber)]">
-                  <Bolt className="w-8 h-8" style={{ color: "var(--accent-amber)" }} />
-                </div>
-                <h3 className="text-xl font-bold">AI Builds the Tool</h3>
-                <p style={{ color: "var(--text-secondary)" }}>
-                  A working HTML calculator or checker, ready to embed in 60 seconds
-                </p>
-              </div>
-
-              {/* Card 3 */}
-              <div className="premium-card space-y-4 p-8" style={{ animationDelay: "120ms" }}>
-                <div className="icon-tile h-14 w-14 text-[var(--accent-green)]">
-                  <TrendingUp className="w-8 h-8" style={{ color: "var(--accent-green)" }} />
-                </div>
-                <h3 className="text-xl font-bold">Traffic Compounds</h3>
-                <p style={{ color: "var(--text-secondary)" }}>
-                  Tools rank on Google and earn backlinks every month — forever
-                </p>
+              <div className="grid gap-4 lg:grid-cols-3">
+                {workflow.map((step, index) => {
+                  const Icon = step.icon;
+                  return (
+                    <div key={step.title} className="rounded-3xl border border-[var(--border)] bg-white/80 p-5">
+                      <div className="mb-5 flex items-center justify-between">
+                        <span className="icon-tile">
+                          <Icon className="h-5 w-5" />
+                        </span>
+                        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold" style={{ color: "var(--text-muted)" }}>
+                          0{index + 1}
+                        </span>
+                      </div>
+                      <h3 className="text-lg font-bold">{step.title}</h3>
+                      <p className="mt-3 text-sm leading-7" style={{ color: "var(--text-secondary)" }}>
+                        {step.text}
+                      </p>
+                    </div>
+                  );
+                })}
               </div>
             </div>
-          </div>
-        </div>
+          </section>
 
+          <section id="features" className="mx-auto max-w-7xl px-6 pb-20">
+            <div className="mb-9 flex flex-col justify-between gap-5 md:flex-row md:items-end">
+              <div className="max-w-2xl">
+                <div className="section-eyebrow mb-3">What Customers Notice</div>
+                <h2 className="text-3xl font-extrabold tracking-tight md:text-4xl">
+                  Every page feels useful before it asks for anything.
+                </h2>
+              </div>
+              <p className="max-w-md text-sm leading-7" style={{ color: "var(--text-secondary)" }}>
+                Traffic Magnet is built to help you ship practical tools that make visitors trust your brand faster.
+              </p>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {featureCards.map((feature) => {
+                const Icon = feature.icon;
+                return (
+                  <div key={feature.title} className="premium-card group p-6">
+                    <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl border border-[var(--border)] bg-white text-[var(--brand)] shadow-sm transition-all group-hover:bg-[var(--brand-soft)]">
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <h3 className="text-lg font-bold">{feature.title}</h3>
+                    <p className="mt-3 text-sm leading-7" style={{ color: "var(--text-secondary)" }}>
+                      {feature.text}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
+          <section id="outcomes" className="mx-auto max-w-7xl px-6 pb-24">
+            <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+              <div className="premium-card p-7">
+                <div className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-950 text-white">
+                  <Bolt className="h-6 w-6" />
+                </div>
+                <h2 className="text-3xl font-extrabold tracking-tight">
+                  Designed to impress visitors, not just search engines.
+                </h2>
+                <p className="mt-4 text-sm leading-7" style={{ color: "var(--text-secondary)" }}>
+                  Interactive tools help customers understand their problem, see the value of your solution, and take the next step with more confidence.
+                </p>
+                <Link to="/signup">
+                  <button className="btn-primary mt-7 inline-flex items-center gap-2 rounded-2xl px-5 py-3 font-bold">
+                    Start building now
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
+                </Link>
+              </div>
+
+              <div className="grid gap-4">
+                {customerOutcomes.map((outcome, index) => (
+                  <div key={outcome} className="premium-card flex items-start gap-4 p-5">
+                    <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-2xl bg-[var(--brand-soft)] text-sm font-extrabold" style={{ color: "var(--brand)" }}>
+                      {index + 1}
+                    </div>
+                    <div>
+                      <h3 className="font-bold">
+                        {index === 0 ? "Ship faster" : index === 1 ? "Convert better" : "Grow steadily"}
+                      </h3>
+                      <p className="mt-2 text-sm leading-7" style={{ color: "var(--text-secondary)" }}>
+                        {outcome}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          <section className="mx-auto max-w-7xl px-6 pb-16">
+            <div className="relative overflow-hidden rounded-[30px] border border-[var(--border)] bg-slate-950 p-8 text-center text-white md:p-12">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(99,91,255,0.38),transparent_34%),radial-gradient(circle_at_82%_20%,rgba(8,145,178,0.28),transparent_30%)]" />
+              <div className="relative mx-auto max-w-3xl">
+                <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-xs font-extrabold uppercase tracking-[0.14em] text-white/80">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Build your first traffic magnet
+                </div>
+                <h2 className="text-3xl font-extrabold tracking-tight md:text-5xl">
+                  Turn one niche into a library of useful tools.
+                </h2>
+                <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-white/70 md:text-base">
+                  Start with one calculator, checker, or widget. Then repeat the workflow until your site becomes the most useful resource in your market.
+                </p>
+                <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+                  <Link to="/signup">
+                    <button className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-6 py-3.5 font-bold text-slate-950 transition-all hover:-translate-y-0.5 hover:shadow-xl sm:w-auto">
+                      Get started free
+                      <ArrowRight className="h-4 w-4" />
+                    </button>
+                  </Link>
+                  <Link to="/login">
+                    <button className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-white/[0.15] bg-white/10 px-6 py-3.5 font-bold text-white transition-all hover:bg-white/[0.15] sm:w-auto">
+                      Sign in
+                    </button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </section>
+        </main>
       </div>
     </div>
   );
