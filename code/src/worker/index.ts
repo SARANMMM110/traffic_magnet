@@ -802,7 +802,12 @@ app.post("/api/tools/:id/blueprint/regenerate", authMiddleware, async (c) => {
 app.post("/api/tools/:id/html", authMiddleware, async (c) => {
   const user = c.get("user")!;
   const toolId = c.req.param("id");
-  const body = await c.req.json();
+  let body: { action?: string; use_platform_engine?: boolean } = {};
+  try {
+    body = (await c.req.json()) as typeof body;
+  } catch {
+    /* optional or empty body */
+  }
   const action = body.action || "standalone"; // "standalone" or "embed"
 
   const tool = await c.env.DB.prepare(
@@ -817,6 +822,10 @@ app.post("/api/tools/:id/html", authMiddleware, async (c) => {
     return c.json({ error: "Blueprint must be generated first" }, 400);
   }
 
+  const envPlatformHtml = String((c.env as { USE_PLATFORM_HTML?: string }).USE_PLATFORM_HTML ?? "") === "1";
+  const reqPlatformHtml = body.use_platform_engine === true;
+  const usePlatformHtmlOnly = reqPlatformHtml || envPlatformHtml;
+
   // Get API key - try Anthropic first, then OpenAI
   const apiKeyRecord = await c.env.DB.prepare(
     "SELECT anthropic_key, openai_key FROM api_keys WHERE user_id = ? LIMIT 1"
@@ -825,7 +834,7 @@ app.post("/api/tools/:id/html", authMiddleware, async (c) => {
   const anthropicKey = apiKeyRecord?.anthropic_key as string | null || c.env.ANTHROPIC_API_KEY;
   const openaiKey = apiKeyRecord?.openai_key as string | null || c.env.OPENAI_API_KEY;
 
-  if (!anthropicKey && !openaiKey) {
+  if (!usePlatformHtmlOnly && !anthropicKey && !openaiKey) {
     return c.json({ error: "API key not configured. Please add your OpenAI or Anthropic API key in Settings." }, 400);
   }
 
@@ -857,7 +866,11 @@ app.post("/api/tools/:id/html", authMiddleware, async (c) => {
       blueprint,
       action as "standalone" | "embed",
       anthropicKey,
-      openaiKey
+      openaiKey,
+      {
+        usePlatformEngine: reqPlatformHtml,
+        envUsePlatformHtml: envPlatformHtml,
+      }
     );
 
     await c.env.DB.prepare(
@@ -1029,6 +1042,16 @@ app.post("/api/tools/:id/landing-page", authMiddleware, async (c) => {
     return c.json({ error: "Blueprint must be generated first" }, 400);
   }
 
+  const envPlatformLanding = String((c.env as { USE_PLATFORM_HTML?: string }).USE_PLATFORM_HTML ?? "") === "1";
+  let reqPlatformLanding = false;
+  try {
+    const post = (await c.req.json()) as { use_platform_engine?: boolean };
+    if (post?.use_platform_engine === true) reqPlatformLanding = true;
+  } catch {
+    /* optional JSON body */
+  }
+  const usePlatformLandingOnly = reqPlatformLanding || envPlatformLanding;
+
   // Get API keys
   const apiKeyRecord = await c.env.DB.prepare(
     "SELECT anthropic_key, openai_key FROM api_keys WHERE user_id = ? LIMIT 1"
@@ -1037,12 +1060,11 @@ app.post("/api/tools/:id/landing-page", authMiddleware, async (c) => {
   const anthropicKey = apiKeyRecord?.anthropic_key as string | null || c.env.ANTHROPIC_API_KEY;
   const openaiKey = apiKeyRecord?.openai_key as string | null || c.env.OPENAI_API_KEY;
 
-  if (!anthropicKey && !openaiKey) {
+  if (!usePlatformLandingOnly && !anthropicKey && !openaiKey) {
     return c.json({ error: "API key not configured. Please add your OpenAI or Anthropic API key in Settings." }, 400);
   }
 
   try {
-    console.log("[Landing Page Endpoint] Starting generation for tool:", toolId);
 
     let blueprint;
     try {
@@ -1086,7 +1108,11 @@ app.post("/api/tools/:id/landing-page", authMiddleware, async (c) => {
     const landingPageHtml = await generateLandingPage(
       blueprint,
       anthropicKey,
-      openaiKey
+      openaiKey,
+      {
+        usePlatformEngine: reqPlatformLanding,
+        envUsePlatformHtml: envPlatformLanding,
+      }
     );
 
     console.log("[Landing Page Endpoint] Generated successfully, length:", landingPageHtml.length);
@@ -1214,6 +1240,10 @@ app.post("/api/content-wrapper/generate", authMiddleware, async (c) => {
     return c.json({ error: "Blueprint, target keyword, and niche topic are required" }, 400);
   }
 
+  const envPlatformCw = String((c.env as { USE_PLATFORM_HTML?: string }).USE_PLATFORM_HTML ?? "") === "1";
+  const reqPlatformCw = body.use_platform_engine === true;
+  const usePlatformCwOnly = reqPlatformCw || envPlatformCw;
+
   // Get API key
   const apiKeyRecord = await c.env.DB.prepare(
     "SELECT openai_key FROM api_keys WHERE user_id = ? LIMIT 1"
@@ -1222,7 +1252,7 @@ app.post("/api/content-wrapper/generate", authMiddleware, async (c) => {
   const userApiKey = apiKeyRecord?.openai_key as string | null;
   const apiKey = userApiKey || c.env.OPENAI_API_KEY;
 
-  if (!apiKey) {
+  if (!usePlatformCwOnly && !apiKey) {
     return c.json({ error: "OpenAI API key not configured" }, 400);
   }
 
@@ -1235,7 +1265,11 @@ app.post("/api/content-wrapper/generate", authMiddleware, async (c) => {
       cta_type || null,
       cta_text || null,
       cta_url || null,
-      apiKey
+      apiKey ?? null,
+      {
+        usePlatformEngine: reqPlatformCw,
+        envUsePlatformHtml: envPlatformCw,
+      }
     );
 
     return c.json(contentPackage);

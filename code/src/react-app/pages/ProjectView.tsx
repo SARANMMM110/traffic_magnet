@@ -25,6 +25,7 @@ import {
   Zap,
 } from "lucide-react";
 import { VISUAL_THEMES, normalizeVisualThemeId } from "@/react-app/lib/visualThemes";
+import { useBlobHtmlPreview } from "@/react-app/lib/useBlobHtmlPreview";
 
 interface Project {
   id: number;
@@ -89,7 +90,8 @@ export default function ProjectView() {
   // Landing page state
   const [generatingLanding, setGeneratingLanding] = useState(false);
   const [landingPageHtml, setLandingPageHtml] = useState<string | null>(null);
-  
+  const landingPreviewUrl = useBlobHtmlPreview(landingPageHtml);
+
   // Build mode state
   const [buildMode, setBuildMode] = useState<"standalone" | "embed" | null>(null);
   const [panelToolTheme, setPanelToolTheme] = useState("modern");
@@ -231,7 +233,10 @@ export default function ProjectView() {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action }),
+        body: JSON.stringify({
+          action,
+          use_platform_engine: import.meta.env.VITE_USE_PLATFORM_RENDER === "true",
+        }),
       });
 
       if (response.ok) {
@@ -480,6 +485,10 @@ export default function ProjectView() {
       const response = await fetch(`/api/tools/${selectedTool.id}/landing-page`, {
         method: "POST",
         credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          use_platform_engine: import.meta.env.VITE_USE_PLATFORM_RENDER === "true",
+        }),
       });
       
       if (!response.ok) {
@@ -1253,73 +1262,6 @@ ${format}`;
             <div className="p-6 space-y-6">
               {panelTab === "blueprint" && selectedTool.blueprint && (
                 <>
-                  <div className="space-y-4 rounded-2xl border border-[var(--border)] bg-[var(--bg-overlay)] p-4">
-                    <div className="flex items-center gap-2">
-                      <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-                        Visual theme
-                      </h4>
-                      {savingPanelTheme && (
-                        <Loader2 className="h-4 w-4 animate-spin" style={{ color: "var(--brand)" }} aria-hidden />
-                      )}
-                    </div>
-                    <p className="text-xs leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-                      <strong style={{ color: "var(--text-primary)" }}>
-                        {VISUAL_THEMES.find((t) => t.id === panelToolTheme)?.name ?? "Modern"}
-                      </strong>
-                      <span style={{ color: "var(--text-muted)" }}>
-                        {" "}
-                        — drives colors in generated standalone HTML and embed widget. Saves to your blueprint.
-                      </span>
-                    </p>
-                    <div>
-                      <h4 className="mb-3 text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-                        Theme — professional styles
-                      </h4>
-                      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
-                        {VISUAL_THEMES.map((theme) => (
-                          <div
-                            key={theme.id}
-                            role="button"
-                            tabIndex={0}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter" || e.key === " ") {
-                                e.preventDefault();
-                                setPanelToolTheme(theme.id);
-                                void persistPanelToolTheme(theme.id);
-                              }
-                            }}
-                            onClick={() => {
-                              setPanelToolTheme(theme.id);
-                              void persistPanelToolTheme(theme.id);
-                            }}
-                            className={`relative cursor-pointer rounded-xl border-2 p-2.5 transition-all ${
-                              panelToolTheme === theme.id
-                                ? "border-[var(--brand)] shadow-sm"
-                                : "border-transparent hover:border-[var(--border)]"
-                            }`}
-                            style={{ background: "var(--surface)" }}
-                          >
-                            {panelToolTheme === theme.id && (
-                              <div
-                                className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full text-white shadow-sm"
-                                style={{ background: "var(--brand)" }}
-                              >
-                                <Check className="h-3 w-3" aria-hidden />
-                              </div>
-                            )}
-                            <div className="mb-2 h-10 w-full rounded-lg" style={{ background: theme.swatch }} />
-                            <p className="mb-0.5 text-xs font-semibold" style={{ color: "var(--text-primary)" }}>
-                              {theme.name}
-                            </p>
-                            <p className="text-[10px] leading-snug" style={{ color: "var(--text-muted)" }}>
-                              {theme.desc}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
                   {(() => {
                     let blueprint: any = {};
                     
@@ -1594,6 +1536,73 @@ ${format}`;
                       </>
                     );
                   })()}
+
+                  <div className="space-y-4 rounded-2xl border border-[var(--border)] bg-[var(--bg-overlay)] p-4">
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+                        Visual theme
+                      </h4>
+                      {savingPanelTheme && (
+                        <Loader2 className="h-4 w-4 animate-spin" style={{ color: "var(--brand)" }} aria-hidden />
+                      )}
+                    </div>
+                    <p className="text-xs leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                      <strong style={{ color: "var(--text-primary)" }}>
+                        {VISUAL_THEMES.find((t) => t.id === panelToolTheme)?.name ?? "Modern"}
+                      </strong>
+                      <span style={{ color: "var(--text-muted)" }}>
+                        {" "}
+                        — drives colors in generated standalone HTML and embed widget. Saves to your blueprint.
+                      </span>
+                    </p>
+                    <div>
+                      <h4 className="mb-3 text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+                        Theme — professional styles
+                      </h4>
+                      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+                        {VISUAL_THEMES.map((theme) => (
+                          <div
+                            key={theme.id}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                setPanelToolTheme(theme.id);
+                                void persistPanelToolTheme(theme.id);
+                              }
+                            }}
+                            onClick={() => {
+                              setPanelToolTheme(theme.id);
+                              void persistPanelToolTheme(theme.id);
+                            }}
+                            className={`relative cursor-pointer rounded-xl border-2 p-2.5 transition-all ${
+                              panelToolTheme === theme.id
+                                ? "border-[var(--brand)] shadow-sm"
+                                : "border-transparent hover:border-[var(--border)]"
+                            }`}
+                            style={{ background: "var(--surface)" }}
+                          >
+                            {panelToolTheme === theme.id && (
+                              <div
+                                className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full text-white shadow-sm"
+                                style={{ background: "var(--brand)" }}
+                              >
+                                <Check className="h-3 w-3" aria-hidden />
+                              </div>
+                            )}
+                            <div className="mb-2 h-10 w-full rounded-lg" style={{ background: theme.swatch }} />
+                            <p className="mb-0.5 text-xs font-semibold" style={{ color: "var(--text-primary)" }}>
+                              {theme.name}
+                            </p>
+                            <p className="text-[10px] leading-snug" style={{ color: "var(--text-muted)" }}>
+                              {theme.desc}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
 
                   {/* Build Options - Always Visible */}
                   <div className="pt-6" style={{ borderTop: "1px solid var(--border)" }}>
@@ -2044,6 +2053,31 @@ ${format}`;
                         {/* Success Message */}
                         <div className="px-4 py-3 rounded-2xl text-center font-medium" style={{ background: "#DCFCE7", border: "1px solid #86EFAC", color: "#15803D" }}>
                           Landing page built successfully!
+                        </div>
+
+                        <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-white shadow-sm">
+                          <div className="border-b border-[var(--border)] bg-[var(--bg-overlay)] px-4 py-2.5">
+                            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>
+                              Live preview
+                            </p>
+                            <p className="text-[11px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                              Same document as download — blob URL preview for export parity.
+                            </p>
+                          </div>
+                          <div className="h-[70vh] max-h-[640px] min-h-[420px] bg-white">
+                            {landingPreviewUrl ? (
+                              <iframe
+                                src={landingPreviewUrl}
+                                title="Landing page preview"
+                                sandbox="allow-scripts"
+                                className="h-full w-full border-0"
+                              />
+                            ) : (
+                              <div className="flex h-full items-center justify-center text-sm" style={{ color: "var(--text-muted)" }}>
+                                Preparing preview…
+                              </div>
+                            )}
+                          </div>
                         </div>
 
                         {/* Action Buttons */}

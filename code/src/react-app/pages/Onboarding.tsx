@@ -157,6 +157,11 @@ export default function Onboarding() {
       const htmlResponse = await fetch(`/api/tools/${ideas[0].id}/html`, {
         method: "POST",
         credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "standalone",
+          use_platform_engine: import.meta.env.VITE_USE_PLATFORM_RENDER === "true",
+        }),
       });
 
       if (htmlResponse.ok) {

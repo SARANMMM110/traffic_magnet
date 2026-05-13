@@ -12,43 +12,51 @@ interface FAQItem {
 const FAQ_DATA: FAQItem[] = [
   {
     category: "Getting Started",
-    question: "What does the Traffic Asset Score (0–100) mean?",
-    answer: "It's a weighted score based on three factors: <strong style='color: var(--brand)'>Traffic Potential</strong>, <strong style='color: var(--brand)'>Link quality score</strong>, and <strong style='color: var(--brand)'>Monetization Potential</strong>. A higher score means the tool idea is more likely to attract organic search traffic, earn backlinks, AND has strong monetization potential. Use it to decide which tools to build first.",
+    question: "What does the Traffic Asset Score (0–100) represent?",
+    answer:
+      "The score is a combined metric that evaluates three things: how much search traffic the asset could capture, the strength of backlink opportunities, and how profitable the idea might be. A higher number indicates a stronger overall opportunity. It’s meant to help you prioritize which tools to build first.",
   },
   {
     category: "Getting Started",
-    question: "How does the Primary Goal setting affect my results?",
-    answer: "Choosing <strong style='color: var(--brand)'>Drive Backlinks</strong>, <strong style='color: var(--brand)'>Generate Leads</strong>, <strong style='color: var(--brand)'>Increase Traffic</strong>, or <strong style='color: var(--brand)'>Improve Engagement</strong> changes how the AI writes your blueprint — specifically the monetization strategy, call-to-action angle, and internal linking suggestions. It doesn't lock the tool type, but it points the strategy in the right direction for what you want to achieve.",
+    question: "How does the Primary Goal option influence the blueprint?",
+    answer:
+      "Your selected goal — whether it’s boosting backlinks, generating leads, driving traffic, or improving engagement — guides how the AI shapes the strategy. It adjusts the monetization angle, recommended calls to action, and linking approach. It doesn’t restrict what type of tool you build, but it does tailor the plan toward your desired outcome.",
   },
   {
     category: "Pricing & Plans",
-    question: "If my assets get a lot of traffic, will I be charged more?",
-    answer: "No. Ai Auto Traffic has no usage-based pricing. Your subscription covers asset generation. The assets themselves are plain static HTML — once built, they cost nothing extra to run no matter how much traffic they receive. The only variable cost is your own API key (OpenAI/Anthropic), billed directly by those providers, and only used during the build stage — not when visitors use your assets.",
+    question: "Will I pay more if my assets get lots of visitors?",
+    answer:
+      "No. Ai Auto Traffic doesn’t charge based on usage or traffic. Your subscription covers tool creation, and the generated assets are simple static HTML files that don’t incur extra costs no matter how much traffic they get. The only variable expense is your API key (OpenAI/Anthropic), which is only used while generating the asset — not when people use it.",
   },
   {
     category: "Building Assets",
-    question: "Can I have a free public version of an asset and a paid/gated version at the same time?",
-    answer: "Yes — and it's a great strategy. Build the asset once, then:<br/><ul style='margin: 8px 0; padding-left: 20px;'><li style='margin: 4px 0;'>Embed the free version on a public page to attract traffic and backlinks</li><li style='margin: 4px 0;'>Embed a second version on a members-only or gated page with custom branding</li></ul>The embed code is fully customisable HTML so you have complete control over both versions.",
+    question: "Can I publish both a free version and a paid/gated version of the same asset?",
+    answer:
+      "Yes — and it’s a smart approach. You can build an asset once, then:<br/><ul style='margin: 8px 0; padding-left: 20px;'><li style='margin: 4px 0;'>Embed an open-access version on a public page to attract search traffic</li><li style='margin: 4px 0;'>Embed another version on a protected or members-only page with premium features or branding</li></ul>Since the embed code is fully editable HTML, you have full flexibility over both setups.",
   },
   {
     category: "API Keys",
-    question: "The API key requirement feels too technical. Is there an easier way?",
-    answer: "We hear you and we're working on simplifying this. The key thing to know: the API key is only needed when generating tools and blueprints. Once a tool is built, no API key is needed — it's a simple HTML file that runs itself. You set it up once and it works forever.",
+    question: "Using an API key feels too technical. Is there a simpler option?",
+    answer:
+      "We understand. The key is only needed during the actual generation of tools and blueprints. After the tool is created, it becomes a self-contained HTML file and no longer depends on any API. You configure the key once, and your assets continue running indefinitely.",
   },
   {
     category: "Traffic & SEO",
-    question: "How long does it take for traffic tool pages to rank on Google?",
-    answer: "It varies by niche and domain authority, but typically you can expect to see movement in 4–12 weeks for lower-competition keywords. Tools pages tend to rank faster than traditional blog posts because they offer genuine utility — Google rewards pages that keep visitors engaged. Promoting your tool page to get initial backlinks will accelerate this significantly.",
+    question: "How long until tool pages start ranking on Google?",
+    answer:
+      "Ranking time depends on your niche and domain strength, but many users see early results within 4–12 weeks for low-competition keywords. Tool-based pages often rank faster than regular articles because they offer real utility and keep visitors engaged — something Google rewards. Getting a few initial backlinks can speed up the process even more.",
   },
   {
     category: "Domains & Embedding",
-    question: "Can I use my own domain for tool pages? Does it affect search rankings?",
-    answer: "Yes on both. You can host your tool pages on your own domain — just upload the HTML file via FTP or your hosting panel. Using your own domain does help with rankings over time. Pages on a custom domain build domain authority, which search engines reward. It also looks more professional and trustworthy to visitors.",
+    question: "Can I host my tools on my own domain? Does it help SEO?",
+    answer:
+      "Yes. You can upload the generated HTML to your own domain through FTP or your hosting panel. Hosting on your domain is beneficial — it supports long-term SEO, builds domain authority, and establishes more trust with users. It also gives your brand a more polished appearance.",
   },
   {
     category: "Use Cases",
-    question: "Can Ai Auto Traffic be used to build a toolkit page for local or small business owners?",
-    answer: "Absolutely — local business is one of the strongest niches for this strategy. Strong asset ideas include:<br/><ul style='margin: 8px 0; padding-left: 20px;'><li style='margin: 4px 0;'>Local SEO growth engine</li><li style='margin: 4px 0;'>Client conversion scorecard</li><li style='margin: 4px 0;'>Booking optimization audit</li><li style='margin: 4px 0;'>Reputation opportunity dashboard</li><li style='margin: 4px 0;'>Ad spend optimization system</li><li style='margin: 4px 0;'>Service revenue estimator</li></ul>Bundle several on one page targeting searches like \"growth tools for small business owners\" and you create a page that local marketing agencies, business blogs, and chambers of commerce will naturally link to. Set Primary Goal to Drive Backlinks or Generate Leads depending on your objective.",
+    question: "Is Ai Auto Traffic suitable for creating toolkits for local or small business audiences?",
+    answer:
+      "Definitely. Local business niches work extremely well with this model. Useful asset ideas include:<br/><ul style='margin: 8px 0; padding-left: 20px;'><li style='margin: 4px 0;'>Local SEO performance checker</li><li style='margin: 4px 0;'>Lead conversion evaluator</li><li style='margin: 4px 0;'>Appointment/booking optimization analyzer</li><li style='margin: 4px 0;'>Reputation and review opportunity finder</li><li style='margin: 4px 0;'>Ad spend efficiency calculator</li><li style='margin: 4px 0;'>Service revenue projection tool</li></ul>Combining several on a single “business growth tools” page makes it attractive for local marketing blogs, business groups, and community organizations to link to. Choose Drive Backlinks or Generate Leads depending on your goal.",
   },
 ];
 
@@ -254,7 +262,7 @@ export default function HelpFAQ() {
                           <div
                             className="overflow-hidden transition-all duration-200"
                             style={{
-                              maxHeight: isOpen ? "1000px" : "0px",
+                              maxHeight: isOpen ? "2000px" : "0px",
                             }}
                           >
                             <div className="px-6 pb-4">

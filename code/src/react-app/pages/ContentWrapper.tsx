@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import DashboardLayout from "@/react-app/components/DashboardLayout";
 import { useToast } from "@/react-app/components/Toast";
+import { useBlobHtmlPreview } from "@/react-app/lib/useBlobHtmlPreview";
 import {
   FileText,
   Loader2,
@@ -95,6 +96,10 @@ export default function ContentWrapper() {
   const [isBuildingPage, setIsBuildingPage] = useState(false);
   const [buildStep, setBuildStep] = useState("");
   
+  const fullPagePreviewUrl = useBlobHtmlPreview(
+    fullPageGenerated && generatedHtml ? generatedHtml : null
+  );
+
   // CTA input fields
   const [ctaGoal, setCtaGoal] = useState("");
   const [ctaUrl, setCtaUrl] = useState("");
@@ -226,6 +231,7 @@ export default function ContentWrapper() {
           cta_type: includeCta ? ctaType : null,
           cta_text: includeCta ? ctaGoal : null,
           cta_url: includeCta ? ctaUrl : null,
+          use_platform_engine: import.meta.env.VITE_USE_PLATFORM_RENDER === "true",
         }),
       });
 
@@ -513,14 +519,18 @@ export default function ContentWrapper() {
       display: inline-block;
     }
     
-    .hero .subheadline {
-      font-size: clamp(18px, 2.5vw, 22px);
-      color: #64748b;
-      max-width: 720px;
+    .hero .subheadline.hero-intro {
+      max-width: 820px;
       margin: 0 auto 48px;
-      line-height: 1.7;
-      font-weight: 400;
+      text-align: left;
     }
+    .hero-intro p {
+      margin: 0 0 16px;
+      font-size: clamp(17px, 2.2vw, 20px);
+      color: #475569;
+      line-height: 1.75;
+    }
+    .hero-intro p:last-of-type { margin-bottom: 0; }
     
     .hero-cta {
       display: flex;
@@ -589,6 +599,57 @@ export default function ContentWrapper() {
       color: #7C5CFC;
       font-weight: bold;
       font-size: 16px;
+    }
+    
+    .cw-editorial-band {
+      max-width: 900px;
+      margin: 48px auto 0;
+      text-align: left;
+      padding: 28px 28px 24px;
+      border-radius: 24px;
+      border: 1px solid #e5e7eb;
+      background: linear-gradient(165deg, rgba(255,255,255,0.95), rgba(248,250,252,0.98));
+      box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
+    }
+    .cw-snapshot-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+    .cw-snap {
+      padding: 14px 12px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.9);
+      border: 1px solid #eef2ff;
+    }
+    .cw-snap-lbl { display: block; font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: #64748b; margin-bottom: 6px; }
+    .cw-snap-val { display: block; font-size: 20px; font-weight: 800; color: #111827; letter-spacing: -0.02em; }
+    .cw-snap-val.cw-mono { font-size: 13px; font-family: ui-monospace, Menlo, monospace; word-break: break-all; }
+    .cw-snap-hint { display: block; margin-top: 6px; font-size: 11px; color: #94a3b8; line-height: 1.4; }
+    .cw-chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .cw-chip {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(124, 92, 252, 0.1);
+      color: #5b21b6;
+      border: 1px solid rgba(124, 92, 252, 0.2);
+    }
+    .cw-leverage {
+      margin: 0;
+      font-size: 15px;
+      color: #334155;
+      line-height: 1.65;
+    }
+    @media (max-width: 900px) {
+      .cw-snapshot-grid { grid-template-columns: 1fr 1fr; }
     }
     
     /* Tool Section */
@@ -1219,7 +1280,7 @@ export default function ContentWrapper() {
     <!-- Hero Section -->
     <section class="hero">
       <h1>${contentPackage.page_h1.replace(/\b(\w+)\s*$/, '<span class="gradient-text">$1</span>')}</h1>
-      <p class="subheadline">${contentPackage.introduction}</p>
+      <div class="subheadline hero-intro">${contentPackage.introduction}</div>
       <div class="hero-cta">
         <a href="#tool" class="btn-primary">Start Using the Tool</a>
         <a href="#how-it-works" class="btn-secondary">Learn More</a>
@@ -1900,12 +1961,18 @@ export default function ContentWrapper() {
                             
                             {/* Preview Container */}
                             <div className="w-full h-[700px] bg-white overflow-hidden">
-                              <iframe
-                                srcDoc={generatedHtml}
-                                title="Live Preview"
-                                sandbox="allow-scripts allow-same-origin"
-                                className="w-full h-full border-none block bg-white"
-                              />
+                              {fullPagePreviewUrl ? (
+                                <iframe
+                                  src={fullPagePreviewUrl}
+                                  title="Live Preview"
+                                  sandbox="allow-scripts"
+                                  className="w-full h-full border-none block bg-white"
+                                />
+                              ) : (
+                                <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                                  Preparing preview…
+                                </div>
+                              )}
                             </div>
                           </div>
                         ) : (

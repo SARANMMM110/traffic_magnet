@@ -4,6 +4,7 @@ import DashboardLayout from "@/react-app/components/DashboardLayout";
 import { ArrowLeft, Loader2, Check, Download, Code2 } from "lucide-react";
 import { useToast } from "@/react-app/components/Toast";
 import { VISUAL_THEMES, normalizeVisualThemeId } from "@/react-app/lib/visualThemes";
+import { useBlobHtmlPreview } from "@/react-app/lib/useBlobHtmlPreview";
 
 interface Tool {
   id: number;
@@ -45,6 +46,7 @@ export default function BlueprintView() {
   const [copied, setCopied] = useState(false);
   const [generatingLanding, setGeneratingLanding] = useState(false);
   const [landingPageHtml, setLandingPageHtml] = useState<string | null>(null);
+  const landingPreviewUrl = useBlobHtmlPreview(landingPageHtml);
   const [savingTheme, setSavingTheme] = useState(false);
 
   useEffect(() => {
@@ -126,7 +128,10 @@ export default function BlueprintView() {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action }),
+        body: JSON.stringify({
+          action,
+          use_platform_engine: import.meta.env.VITE_USE_PLATFORM_RENDER === "true",
+        }),
       });
 
       if (response.ok) {
@@ -211,6 +216,10 @@ export default function BlueprintView() {
       const response = await fetch(`/api/tools/${tool.id}/landing-page`, {
         method: "POST",
         credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          use_platform_engine: import.meta.env.VITE_USE_PLATFORM_RENDER === "true",
+        }),
       });
       
       if (!response.ok) {
@@ -1093,6 +1102,31 @@ export default function BlueprintView() {
                 <>
                   <div className="px-4 py-3 rounded-lg text-center font-medium" style={{ background: "#DCFCE7", border: "1px solid #86EFAC", color: "#15803D" }}>
                     Landing page generated successfully!
+                  </div>
+
+                  <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-white shadow-sm">
+                    <div className="border-b border-[var(--border)] bg-[var(--bg-overlay)] px-4 py-2.5">
+                      <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>
+                        Live preview
+                      </p>
+                      <p className="text-[11px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                        Same HTML as download — blob URL for faithful rendering.
+                      </p>
+                    </div>
+                    <div className="h-[70vh] max-h-[640px] min-h-[420px] bg-white">
+                      {landingPreviewUrl ? (
+                        <iframe
+                          src={landingPreviewUrl}
+                          title="Landing page preview"
+                          sandbox="allow-scripts"
+                          className="h-full w-full border-0"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-sm" style={{ color: "var(--text-muted)" }}>
+                          Preparing preview…
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="space-y-3">

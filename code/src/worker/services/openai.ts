@@ -1,4 +1,9 @@
 import OpenAI from "openai";
+import {
+  buildPlatformContentWrapperPackage,
+  renderPlatformLandingPage,
+  shouldUsePlatformRender,
+} from "../render/platformEngine";
 
 interface ToolIdea {
   name: string;
@@ -485,9 +490,31 @@ export async function generateToolHTML(
   blueprint: any,
   action: "standalone" | "embed",
   anthropicKey: string | null,
-  openaiKey: string | null
+  openaiKey: string | null,
+  options?: { usePlatformEngine?: boolean; envUsePlatformHtml?: boolean }
 ): Promise<string> {
   console.log("[HTML] Generating tool HTML for action:", action);
+
+  const bp = blueprint as Record<string, unknown>;
+  if (
+    shouldUsePlatformRender(bp, {
+      requestFlag: options?.usePlatformEngine === true,
+      envFlag: options?.envUsePlatformHtml === true,
+    })
+  ) {
+    try {
+      let html = renderPlatformBusinessAsset(bp, action);
+      html = normalizeGeneratedHtml(html);
+      if (action === "embed") {
+        html = ensureEmbedSemanticForm(html);
+      }
+      assertPremiumHtmlQuality(html, action === "embed" ? "embed" : "standalone");
+      console.log("[HTML] Platform render engine OK, length:", html.length);
+      return html;
+    } catch (err) {
+      console.error("[HTML] Platform render engine failed; falling back to LLM:", err);
+    }
+  }
 
   const prompt = generateHTMLPrompt(blueprint, action);
 
@@ -526,9 +553,28 @@ function blueprintJsonForLandingPrompt(blueprint: unknown, maxChars: number): st
 export async function generateLandingPage(
   blueprint: any,
   anthropicKey: string | null,
-  openaiKey: string | null
+  openaiKey: string | null,
+  options?: { usePlatformEngine?: boolean; envUsePlatformHtml?: boolean }
 ): Promise<string> {
   console.log("[Landing Page] Generating clean minimalist landing page");
+
+  const bp = blueprint as Record<string, unknown>;
+  if (
+    shouldUsePlatformRender(bp, {
+      requestFlag: options?.usePlatformEngine === true,
+      envFlag: options?.envUsePlatformHtml === true,
+    })
+  ) {
+    try {
+      let html = renderPlatformLandingPage(bp);
+      html = normalizeGeneratedHtml(html);
+      assertPremiumHtmlQuality(html, "landing");
+      console.log("[Landing Page] Platform render engine OK, length:", html.length);
+      return html;
+    } catch (err) {
+      console.error("[Landing Page] Platform engine failed; falling back to LLM:", err);
+    }
+  }
 
   const prompt = generateLandingPagePrompt(blueprint);
   console.log("[Landing Page] Prompt length (chars):", prompt.length);
@@ -2523,9 +2569,40 @@ export async function generateContentWrapper(
   ctaType: string | null,
   ctaText: string | null,
   ctaUrl: string | null,
-  apiKey: string
+  apiKey: string | null,
+  options?: { usePlatformEngine?: boolean; envUsePlatformHtml?: boolean }
 ): Promise<any> {
   console.log("[Content Wrapper] Generating with keyword:", keyword, "niche:", niche);
+
+  let bp: Record<string, unknown> = {};
+  try {
+    bp = JSON.parse(blueprint) as Record<string, unknown>;
+  } catch {
+    bp = {};
+  }
+
+  if (
+    shouldUsePlatformRender(bp, {
+      requestFlag: options?.usePlatformEngine === true,
+      envFlag: options?.envUsePlatformHtml === true,
+    })
+  ) {
+    try {
+      const pkg = buildPlatformContentWrapperPackage(
+        keyword,
+        niche,
+        bp,
+        includeCta,
+        ctaType,
+        ctaText,
+        ctaUrl
+      );
+      console.log("[Content Wrapper] Platform JSON package OK");
+      return pkg;
+    } catch (err) {
+      console.error("[Content Wrapper] Platform engine failed; falling back to LLM:", err);
+    }
+  }
 
   const userPrompt = `Generate a premium semantic SEO content package for an AI business opportunity asset landing page.
 
@@ -2576,6 +2653,10 @@ Return ONLY valid JSON in this exact format:
   "meta_description": "string",
   "cta_block": "string (HTML) or null"
 }`;
+
+  if (!apiKey) {
+    throw new Error("OpenAI API key not configured");
+  }
 
   try {
     console.log("[Content Wrapper] Making API call to OpenAI");

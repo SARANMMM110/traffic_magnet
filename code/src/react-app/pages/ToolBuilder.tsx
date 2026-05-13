@@ -1,9 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router";
 import DashboardLayout from "@/react-app/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/react-app/components/ui/card";
 import { Button } from "@/react-app/components/ui/button";
 import { Loader2, FileCode, Download, Eye, Sparkles, FileText } from "lucide-react";
+import { useBlobHtmlPreview } from "@/react-app/lib/useBlobHtmlPreview";
+import { buildSeoWrappedHtmlFromTool } from "@/react-app/lib/seoWrappedPage";
 
 interface SEOContent {
   intro_text: string;
@@ -38,6 +40,17 @@ export default function ToolBuilder() {
   const [generatingSEO, setGeneratingSEO] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [showWrappedPreview, setShowWrappedPreview] = useState(false);
+
+  const toolHtmlPreviewUrl = useBlobHtmlPreview(tool?.html_content ?? null);
+  const wrappedHtmlDocument = useMemo(() => {
+    if (!tool?.html_content || !tool?.seo_content) return null;
+    return buildSeoWrappedHtmlFromTool({
+      name: tool.name,
+      html_content: tool.html_content,
+      seo_content: tool.seo_content,
+    });
+  }, [tool?.html_content, tool?.seo_content, tool?.name]);
+  const wrappedPreviewUrl = useBlobHtmlPreview(wrappedHtmlDocument);
 
   useEffect(() => {
     loadTool();
@@ -91,6 +104,11 @@ export default function ToolBuilder() {
       const response = await fetch(`/api/tools/${id}/html`, {
         method: "POST",
         credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "standalone",
+          use_platform_engine: import.meta.env.VITE_USE_PLATFORM_RENDER === "true",
+        }),
       });
 
       if (response.ok) {
@@ -159,120 +177,11 @@ export default function ToolBuilder() {
 
   const downloadWrappedHTML = () => {
     if (!tool?.html_content || !tool?.seo_content) return;
-
-    const h2Sections = JSON.parse(tool.seo_content.h2_sections);
-    const faqs = JSON.parse(tool.seo_content.faqs);
-
-    const wrappedHTML = `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${tool.seo_content.meta_title}</title>
-    <meta name="description" content="${tool.seo_content.meta_description}">
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            background: #f9fafb;
-        }
-        .seo-content {
-            background: white;
-            padding: 40px;
-            border-radius: 8px;
-            margin-bottom: 30px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        h1 {
-            color: #1a1a2e;
-            font-size: 2.5em;
-            margin-bottom: 20px;
-        }
-        h2 {
-            color: #7c3aed;
-            font-size: 1.8em;
-            margin-top: 40px;
-            margin-bottom: 15px;
-        }
-        h3 {
-            color: #1a1a2e;
-            font-size: 1.3em;
-            margin-top: 25px;
-            margin-bottom: 10px;
-        }
-        p {
-            margin-bottom: 15px;
-            font-size: 1.05em;
-        }
-        .tool-container {
-            background: white;
-            padding: 40px;
-            border-radius: 8px;
-            margin: 30px 0;
-            box-shadow: 0 2px 8px rgba(124, 58, 237, 0.1);
-            border: 2px solid #7c3aed;
-        }
-        .faq-item {
-            margin-bottom: 25px;
-            padding: 20px;
-            background: #f9fafb;
-            border-radius: 6px;
-        }
-        .faq-question {
-            font-weight: 600;
-            color: #1a1a2e;
-            font-size: 1.1em;
-            margin-bottom: 10px;
-        }
-        .faq-answer {
-            color: #555;
-        }
-        .cta {
-            background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
-            color: white;
-            padding: 30px;
-            border-radius: 8px;
-            text-align: center;
-            margin: 40px 0;
-            font-size: 1.1em;
-        }
-    </style>
-</head>
-<body>
-    <div class="seo-content">
-        <h1>${tool.name}</h1>
-        <p>${tool.seo_content.intro_text}</p>
-    </div>
-
-    <div class="tool-container">
-        ${tool.html_content}
-    </div>
-
-    <div class="seo-content">
-        ${h2Sections.map((section: { heading: string; content: string }) => `
-            <h2>${section.heading}</h2>
-            <p>${section.content}</p>
-        `).join('')}
-
-        <h2>Frequently Asked Questions</h2>
-        ${faqs.map((faq: { question: string; answer: string }) => `
-            <div class="faq-item">
-                <div class="faq-question">${faq.question}</div>
-                <div class="faq-answer">${faq.answer}</div>
-            </div>
-        `).join('')}
-
-        <div class="cta">
-            ${tool.seo_content.cta_text}
-        </div>
-    </div>
-</body>
-</html>`;
-
+    const wrappedHTML = buildSeoWrappedHtmlFromTool({
+      name: tool.name,
+      html_content: tool.html_content,
+      seo_content: tool.seo_content,
+    });
     const blob = new Blob([wrappedHTML], { type: "text/html" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -441,12 +350,18 @@ export default function ToolBuilder() {
 
                 {showPreview && (
                   <div className="mt-4 border rounded-lg overflow-hidden">
-                    <iframe
-                      srcDoc={tool.html_content}
-                      className="w-full h-[600px] bg-white"
-                      title="Tool Preview"
-                      sandbox="allow-scripts"
-                    />
+                    {toolHtmlPreviewUrl ? (
+                      <iframe
+                        src={toolHtmlPreviewUrl}
+                        className="w-full h-[600px] bg-white"
+                        title="Tool Preview"
+                        sandbox="allow-scripts"
+                      />
+                    ) : (
+                      <div className="w-full h-[120px] flex items-center justify-center text-sm text-[#6B7280]">
+                        Preparing preview…
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -560,47 +475,18 @@ export default function ToolBuilder() {
 
                   {showWrappedPreview && (
                     <div className="mt-4 border rounded-lg overflow-hidden">
-                      <iframe
-                        srcDoc={(() => {
-                          const h2Sections = JSON.parse(tool.seo_content.h2_sections);
-                          const faqs = JSON.parse(tool.seo_content.faqs);
-                          return `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${tool.seo_content.meta_title}</title>
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 1200px; margin: 0 auto; padding: 20px; background: #f9fafb; }
-        .seo-content { background: white; padding: 40px; border-radius: 8px; margin-bottom: 30px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        h1 { color: #1a1a2e; font-size: 2.5em; margin-bottom: 20px; }
-        h2 { color: #7c3aed; font-size: 1.8em; margin-top: 40px; margin-bottom: 15px; }
-        p { margin-bottom: 15px; font-size: 1.05em; }
-        .tool-container { background: white; padding: 40px; border-radius: 8px; margin: 30px 0; box-shadow: 0 2px 8px rgba(124, 58, 237, 0.1); border: 2px solid #7c3aed; }
-        .faq-item { margin-bottom: 25px; padding: 20px; background: #f9fafb; border-radius: 6px; }
-        .faq-question { font-weight: 600; color: #1a1a2e; font-size: 1.1em; margin-bottom: 10px; }
-        .cta { background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); color: white; padding: 30px; border-radius: 8px; text-align: center; margin: 40px 0; font-size: 1.1em; }
-    </style>
-</head>
-<body>
-    <div class="seo-content">
-        <h1>${tool.name}</h1>
-        <p>${tool.seo_content.intro_text}</p>
-    </div>
-    <div class="tool-container">${tool.html_content}</div>
-    <div class="seo-content">
-        ${h2Sections.map((s: any) => `<h2>${s.heading}</h2><p>${s.content}</p>`).join('')}
-        <h2>Frequently Asked Questions</h2>
-        ${faqs.map((f: any) => `<div class="faq-item"><div class="faq-question">${f.question}</div><div>${f.answer}</div></div>`).join('')}
-        <div class="cta">${tool.seo_content.cta_text}</div>
-    </div>
-</body>
-</html>`;
-                        })()}
-                        className="w-full h-[600px] bg-white"
-                        title="SEO Wrapped Preview"
-                        sandbox="allow-scripts"
-                      />
+                      {wrappedPreviewUrl ? (
+                        <iframe
+                          src={wrappedPreviewUrl}
+                          className="w-full h-[600px] bg-white"
+                          title="SEO Wrapped Preview"
+                          sandbox="allow-scripts"
+                        />
+                      ) : (
+                        <div className="w-full h-[120px] flex items-center justify-center text-sm text-[#6B7280]">
+                          Preparing preview…
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
