@@ -4,7 +4,6 @@ import DashboardLayout from "@/react-app/components/DashboardLayout";
 import { ArrowLeft, Loader2, Check, Download, Code2 } from "lucide-react";
 import { useToast } from "@/react-app/components/Toast";
 import { VISUAL_THEMES, normalizeVisualThemeId } from "@/react-app/lib/visualThemes";
-import { useBlobHtmlPreview } from "@/react-app/lib/useBlobHtmlPreview";
 
 interface Tool {
   id: number;
@@ -46,7 +45,6 @@ export default function BlueprintView() {
   const [copied, setCopied] = useState(false);
   const [generatingLanding, setGeneratingLanding] = useState(false);
   const [landingPageHtml, setLandingPageHtml] = useState<string | null>(null);
-  const landingPreviewUrl = useBlobHtmlPreview(landingPageHtml);
   const [savingTheme, setSavingTheme] = useState(false);
 
   useEffect(() => {
@@ -276,9 +274,12 @@ export default function BlueprintView() {
     });
   };
 
-  const regenerateLandingPage = async () => {
-    setLandingPageHtml(null);
-    await generateLandingPageHandler();
+  const goBackFromLanding = () => {
+    if (tool?.project_id != null) {
+      navigate(`/projects/${tool.project_id}`);
+    } else {
+      navigate("/magnets");
+    }
   };
 
   const persistVisualTheme = async (themeId: string) => {
@@ -1104,101 +1105,36 @@ export default function BlueprintView() {
                     Landing page generated successfully!
                   </div>
 
-                  <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-white shadow-sm">
-                    <div className="border-b border-[var(--border)] bg-[var(--bg-overlay)] px-4 py-2.5">
-                      <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>
-                        Live preview
-                      </p>
-                      <p className="text-[11px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
-                        Same HTML as download — blob URL for faithful rendering.
-                      </p>
-                    </div>
-                    <div className="h-[70vh] max-h-[640px] min-h-[420px] bg-white">
-                      {landingPreviewUrl ? (
-                        <iframe
-                          src={landingPreviewUrl}
-                          title="Landing page preview"
-                          sandbox="allow-scripts"
-                          className="h-full w-full border-0"
-                        />
-                      ) : (
-                        <div className="flex h-full items-center justify-center text-sm" style={{ color: "var(--text-muted)" }}>
-                          Preparing preview…
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-                      Your landing page includes:
-                    </p>
-                    <div className="grid grid-cols-2 gap-2 text-xs" style={{ color: "var(--text-secondary)" }}>
-                      <div>Hero Section</div>
-                      <div>Interactive Business Asset</div>
-                      <div>Benefits Section</div>
-                      <div>How It Works</div>
-                      <div>Results/Value Prop</div>
-                      <div>Testimonials</div>
-                      <div>FAQ Section</div>
-                      <div>Final CTA</div>
-                    </div>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="flex flex-col gap-3">
                     <button
+                      type="button"
                       onClick={downloadLandingPage}
-                      className="px-4 py-2.5 rounded-lg font-medium border transition-all hover:brightness-95 flex items-center justify-center gap-2"
-                      style={{
-                        borderColor: "var(--border)",
-                        color: "var(--text-primary)",
-                        background: "var(--bg-overlay)",
-                      }}
+                      className="btn-primary flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 font-semibold"
                     >
                       <Download className="w-4 h-4" />
-                      Download
+                      Download HTML file
                     </button>
                     <button
+                      type="button"
                       onClick={copyLandingPageHTML}
-                      className="px-4 py-2.5 rounded-lg font-medium border transition-all hover:brightness-95 flex items-center justify-center gap-2"
+                      className="btn-secondary flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 font-semibold"
+                    >
+                      <Code2 className="w-4 h-4" />
+                      Copy code
+                    </button>
+                    <button
+                      type="button"
+                      onClick={goBackFromLanding}
+                      className="flex w-full items-center justify-center gap-2 rounded-2xl border px-4 py-3 text-sm font-semibold transition-all hover:brightness-95"
                       style={{
                         borderColor: "var(--border)",
                         color: "var(--text-primary)",
                         background: "var(--bg-overlay)",
                       }}
                     >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
-                      Copy HTML
+                      <ArrowLeft className="w-4 h-4" />
+                      Back
                     </button>
-                    <button
-                      onClick={regenerateLandingPage}
-                      className="px-4 py-2.5 rounded-lg font-medium transition-all hover:brightness-110 flex items-center justify-center gap-2"
-                      style={{
-                        background: "var(--brand)",
-                        color: "white",
-                      }}
-                    >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                      </svg>
-                      Regenerate
-                    </button>
-                  </div>
-
-                  {/* Preview Info */}
-                  <div className="p-4 rounded-lg" style={{ background: "var(--bg-overlay)", border: "1px solid var(--border)" }}>
-                    <p className="text-xs font-semibold mb-2" style={{ color: "var(--text-primary)" }}>
-                      Next Steps
-                    </p>
-                    <ul className="text-xs space-y-1" style={{ color: "var(--text-muted)" }}>
-                      <li>1. Download the HTML file</li>
-                      <li>2. Upload to your website via FTP or hosting panel</li>
-                      <li>3. Customize colors, fonts, and content as needed</li>
-                      <li>4. Update testimonials and FAQ with real content</li>
-                    </ul>
                   </div>
                 </>
               )}
