@@ -1091,10 +1091,26 @@ app.post("/api/tools/:id/landing-page", authMiddleware, async (c) => {
 
     console.log("[Landing Page Endpoint] Generated successfully, length:", landingPageHtml.length);
 
-    // Store in landing_page_html column (we may need to add this column)
-    await c.env.DB.prepare(
-      "UPDATE tools SET landing_page_html = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?"
-    ).bind(landingPageHtml, toolId).run();
+    const persistLanding = c.env.DB
+      .prepare("UPDATE tools SET landing_page_html = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
+      .bind(landingPageHtml, toolId)
+      .run();
+
+    const execCtx = (c as unknown as { executionCtx?: { waitUntil: (p: Promise<unknown>) => void } })
+      .executionCtx;
+    if (execCtx?.waitUntil) {
+      execCtx.waitUntil(
+        persistLanding.catch((err: unknown) =>
+          console.error("[Landing Page Endpoint] Async DB persist failed:", err)
+        )
+      );
+    } else {
+      try {
+        await persistLanding;
+      } catch (dbErr) {
+        console.error("[Landing Page Endpoint] DB persist failed:", dbErr);
+      }
+    }
 
     return c.json({ html: landingPageHtml });
   } catch (error) {

@@ -512,6 +512,17 @@ export async function generateToolHTML(
 // LANDING PAGE GENERATION (MINIMALIST DESIGN)
 // ════════════════════════════════════════════════════════════════════════════
 
+/** Keeps landing prompts bounded (avoids huge DB blobs blowing prompt size / memory). */
+function blueprintJsonForLandingPrompt(blueprint: unknown, maxChars: number): string {
+  try {
+    const text = JSON.stringify(blueprint, null, 2);
+    if (text.length <= maxChars) return text;
+    return `${text.slice(0, maxChars)}\n\n/* blueprint JSON truncated (${text.length} chars total) — infer remaining fields from title/description/inputs above */\n`;
+  } catch {
+    return "{}";
+  }
+}
+
 export async function generateLandingPage(
   blueprint: any,
   anthropicKey: string | null,
@@ -520,6 +531,7 @@ export async function generateLandingPage(
   console.log("[Landing Page] Generating clean minimalist landing page");
 
   const prompt = generateLandingPagePrompt(blueprint);
+  console.log("[Landing Page] Prompt length (chars):", prompt.length);
 
   if (anthropicKey) {
     try {
@@ -1040,7 +1052,7 @@ RESPONSIVE DESIGN
 ═══════════════════════════════════════════════════════════
 BLUEPRINT DATA TO IMPLEMENT
 ═══════════════════════════════════════════════════════════
-${JSON.stringify(blueprint, null, 2)}
+${blueprintJsonForLandingPrompt(blueprint, 22000)}
 
 ═══════════════════════════════════════════════════════════
 FINAL CHECKLIST
@@ -1362,7 +1374,7 @@ async function generateLandingPageWithAnthropic(prompt: string, apiKey: string):
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
-        max_tokens: 16000,
+        max_tokens: 20000,
         temperature: 0.4,
         messages: [{ role: "user", content: prompt }],
       }),
@@ -1420,7 +1432,7 @@ async function generateLandingPageWithOpenAI(prompt: string, apiKey: string): Pr
           { role: "user", content: prompt },
         ],
         temperature: 0.4,
-        max_tokens: 16000,
+        max_tokens: 20000,
       }),
     });
 
