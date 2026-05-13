@@ -5,6 +5,7 @@ import { useToast } from "@/react-app/components/Toast";
 import {
   ArrowLeft,
   Calculator,
+  Check,
   CheckCircle,
   Code2,
   Search,
@@ -18,11 +19,12 @@ import {
   Link2,
   Plus,
   SearchCheck,
-  Sparkles,
   Target,
   TrendingUp,
   Users,
+  Zap,
 } from "lucide-react";
+import { VISUAL_THEMES, normalizeVisualThemeId } from "@/react-app/lib/visualThemes";
 
 interface Project {
   id: number;
@@ -90,6 +92,8 @@ export default function ProjectView() {
   
   // Build mode state
   const [buildMode, setBuildMode] = useState<"standalone" | "embed" | null>(null);
+  const [panelToolTheme, setPanelToolTheme] = useState("modern");
+  const [savingPanelTheme, setSavingPanelTheme] = useState(false);
 
   useEffect(() => {
     loadProject();
@@ -114,6 +118,16 @@ export default function ProjectView() {
       }
     }
   }, [tools]);
+
+  useEffect(() => {
+    if (!selectedTool?.blueprint) return;
+    try {
+      const bp = JSON.parse(selectedTool.blueprint);
+      setPanelToolTheme(normalizeVisualThemeId(bp.visual_theme ?? bp.theme));
+    } catch {
+      setPanelToolTheme("modern");
+    }
+  }, [selectedTool?.id, selectedTool?.blueprint]);
 
   const loadProject = async () => {
     try {
@@ -265,6 +279,36 @@ export default function ProjectView() {
     }
   };
 
+  const persistPanelToolTheme = async (themeId: string) => {
+    if (!selectedTool?.blueprint) return;
+    setSavingPanelTheme(true);
+    try {
+      let bp: Record<string, unknown>;
+      try {
+        bp = JSON.parse(selectedTool.blueprint);
+      } catch {
+        showToast({ title: "Could not read blueprint to save theme", type: "error" });
+        return;
+      }
+      bp.visual_theme = themeId;
+      const next = JSON.stringify(bp);
+      const res = await fetch(`/api/tools/${selectedTool.id}/blueprint/apply`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ blueprint: next }),
+      });
+      if (!res.ok) {
+        showToast({ title: "Failed to save theme", type: "error" });
+        return;
+      }
+      const toolId = selectedTool.id;
+      setSelectedTool((prev) => (prev ? { ...prev, blueprint: next } : null));
+      setTools((prev) => prev.map((t) => (t.id === toolId ? { ...t, blueprint: next } : t)));
+    } finally {
+      setSavingPanelTheme(false);
+    }
+  };
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return "#10B981";
@@ -637,40 +681,10 @@ ${format}`;
     "Direct Product / Service Upsell",
   ];
 
-  const getAudiencePreview = (audience: string) => {
-    if (audience.includes("Small Business")) return "Local operators ready for practical growth audits and booked consultations.";
-    if (audience.includes("Freelancers")) return "Solo experts who need authority assets, packaged offers, and recurring clients.";
-    if (audience.includes("Enterprise")) return "B2B decision teams looking for proof, risk reduction, and revenue clarity.";
-    if (audience.includes("Students")) return "Beginners who need simple steps, confidence, and starter monetization paths.";
-    if (audience.includes("E-commerce")) return "Store owners focused on conversion lift, margin protection, and repeat buyers.";
-    if (audience.includes("Marketing")) return "Growth teams seeking SEO leverage, campaign proof, and better lead quality.";
-    if (audience.includes("Real Estate")) return "Investors evaluating opportunity, cash flow, and market timing.";
-    return "Broad audiences who need fast clarity, strong education, and simple next steps.";
-  };
-
-  const getMonetizationPreview = (monetization: string) => {
-    if (monetization.includes("Lead Generation")) return "Capture qualified leads with a value-first report and follow-up offer.";
-    if (monetization.includes("Affiliate")) return "Route buyer intent toward comparison content and high-fit partner offers.";
-    if (monetization.includes("SaaS")) return "Turn recurring usage into subscription trials and product-qualified leads.";
-    if (monetization.includes("Consulting")) return "Convert diagnostic insight into strategy calls and agency retainers.";
-    if (monetization.includes("Digital Product")) return "Position the result as a bridge into templates, courses, or playbooks.";
-    if (monetization.includes("Display Ads")) return "Scale informational traffic with authority content and ad-ready engagement.";
-    return "Use the outcome to introduce a direct offer, service, or premium next step.";
-  };
-
-  const getTrafficPreview = (monetization: string) => {
-    if (monetization.includes("Affiliate")) return "Buyer-intent SEO + comparison funnels";
-    if (monetization.includes("SaaS")) return "Product-led SEO + activation loops";
-    if (monetization.includes("Consulting")) return "Authority content + audit funnel";
-    if (monetization.includes("Display")) return "Topical clusters + long-tail traffic";
-    return "Lead magnet SEO + conversion retargeting";
-  };
-
   const variationSetups = [
     {
       id: "A",
       title: "Variation A",
-      subtitle: "Conversion-first opportunity path",
       audience: audienceA,
       monetization: monetizationA,
       setAudience: setAudienceA,
@@ -682,14 +696,13 @@ ${format}`;
     {
       id: "B",
       title: "Variation B",
-      subtitle: "Revenue-focused monetization path",
       audience: audienceB,
       monetization: monetizationB,
       setAudience: setAudienceB,
       setMonetization: setMonetizationB,
-      accent: "#2563EB",
-      soft: "rgba(37, 99, 235, 0.1)",
-      ring: "rgba(37, 99, 235, 0.25)",
+      accent: "#38BDF8",
+      soft: "rgba(56, 189, 248, 0.12)",
+      ring: "rgba(56, 189, 248, 0.28)",
     },
   ];
 
@@ -856,7 +869,7 @@ ${format}`;
                   <Loader2 className="w-10 h-10 animate-spin" style={{ color: "var(--brand)" }} />
                 </div>
                 <h3 className="text-2xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>
-                  Generating your traffic magnets...
+                  Generating your Ai Auto Traffic assets...
                 </h3>
                 <p className="mb-6" style={{ color: "var(--text-secondary)" }}>
                   AI is discovering 12 premium business asset ideas for this opportunity category
@@ -938,7 +951,7 @@ ${format}`;
                                     style={{ background: getScoreColor(tool.backlink_score) }}
                                   />
                                   <span style={{ color: "var(--text-secondary)" }}>
-                                    Link Magnet: <strong>{getRatingLabel(tool.backlink_score)}</strong>
+                                    Link score: <strong>{getRatingLabel(tool.backlink_score)}</strong>
                                   </span>
                                 </div>
                               </div>
@@ -1240,6 +1253,73 @@ ${format}`;
             <div className="p-6 space-y-6">
               {panelTab === "blueprint" && selectedTool.blueprint && (
                 <>
+                  <div className="space-y-4 rounded-2xl border border-[var(--border)] bg-[var(--bg-overlay)] p-4">
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+                        Visual theme
+                      </h4>
+                      {savingPanelTheme && (
+                        <Loader2 className="h-4 w-4 animate-spin" style={{ color: "var(--brand)" }} aria-hidden />
+                      )}
+                    </div>
+                    <p className="text-xs leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                      <strong style={{ color: "var(--text-primary)" }}>
+                        {VISUAL_THEMES.find((t) => t.id === panelToolTheme)?.name ?? "Modern"}
+                      </strong>
+                      <span style={{ color: "var(--text-muted)" }}>
+                        {" "}
+                        — drives colors in generated standalone HTML and embed widget. Saves to your blueprint.
+                      </span>
+                    </p>
+                    <div>
+                      <h4 className="mb-3 text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+                        Theme — professional styles
+                      </h4>
+                      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+                        {VISUAL_THEMES.map((theme) => (
+                          <div
+                            key={theme.id}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                setPanelToolTheme(theme.id);
+                                void persistPanelToolTheme(theme.id);
+                              }
+                            }}
+                            onClick={() => {
+                              setPanelToolTheme(theme.id);
+                              void persistPanelToolTheme(theme.id);
+                            }}
+                            className={`relative cursor-pointer rounded-xl border-2 p-2.5 transition-all ${
+                              panelToolTheme === theme.id
+                                ? "border-[var(--brand)] shadow-sm"
+                                : "border-transparent hover:border-[var(--border)]"
+                            }`}
+                            style={{ background: "var(--surface)" }}
+                          >
+                            {panelToolTheme === theme.id && (
+                              <div
+                                className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full text-white shadow-sm"
+                                style={{ background: "var(--brand)" }}
+                              >
+                                <Check className="h-3 w-3" aria-hidden />
+                              </div>
+                            )}
+                            <div className="mb-2 h-10 w-full rounded-lg" style={{ background: theme.swatch }} />
+                            <p className="mb-0.5 text-xs font-semibold" style={{ color: "var(--text-primary)" }}>
+                              {theme.name}
+                            </p>
+                            <p className="text-[10px] leading-snug" style={{ color: "var(--text-muted)" }}>
+                              {theme.desc}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
                   {(() => {
                     let blueprint: any = {};
                     
@@ -1584,7 +1664,8 @@ ${format}`;
                       {buildStep !== "done" && <Loader2 className="w-5 h-5 animate-spin" />}
                       {buildStep === "analyzing" && "Regenerating blueprint..."}
                       {buildStep === "logic" && "Building business logic..."}
-                      {buildStep === "styling" && "Applying theme..."}
+                      {buildStep === "styling" &&
+                        `Applying ${VISUAL_THEMES.find((t) => t.id === panelToolTheme)?.name ?? "Modern"} theme...`}
                       {buildStep === "embed" && "Preparing embed code..."}
                       {buildStep === "done" && (buildMode === "standalone" ? "Standalone page ready!" : "Embeddable widget ready!")}
                     </div>
@@ -1658,184 +1739,115 @@ ${format}`;
 
               {panelTab === "variations" && (
                 <div className="space-y-5">
-                  <div className="premium-card overflow-hidden rounded-[28px] border border-white/70 p-0">
-                    <div
-                      className="relative overflow-hidden p-5"
-                      style={{
-                        background:
-                          "radial-gradient(circle at 18% 0%, rgba(109, 93, 251, 0.14), transparent 34%), radial-gradient(circle at 92% 12%, rgba(37, 99, 235, 0.1), transparent 32%), rgba(255, 255, 255, 0.86)",
-                      }}
+                  <div
+                    className="rounded-[22px] border border-[var(--border)] p-5 shadow-[0_12px_40px_rgba(15,23,42,0.06)] sm:p-6"
+                    style={{ background: "var(--bg-soft, #f3f4f6)" }}
+                  >
+                    <p
+                      className="mb-5 text-[11px] font-bold uppercase tracking-[0.18em]"
+                      style={{ color: "var(--text-muted)" }}
                     >
-                      <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                        <div className="flex gap-3">
-                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/80 bg-white text-[var(--brand)] shadow-sm">
-                            <Sparkles className="h-5 w-5" />
-                          </div>
-                          <div>
-                            <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/80 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--brand)] shadow-sm">
-                              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                              AI strategy lab
-                            </div>
-                            <h3 className="text-lg font-bold tracking-[-0.02em]" style={{ color: "var(--text-primary)" }}>
-                              Configure Monetization Variations
-                            </h3>
-                            <p className="mt-1 max-w-xl text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>
-                              Build two distinct business angles with audience, revenue model, traffic path, and conversion strategy previews before generating.
-                            </p>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-3 gap-2 rounded-2xl border border-white/80 bg-white/70 p-2 text-center shadow-sm">
-                          {[
-                            ["2x", "Strategies"],
-                            ["SEO", "Traffic"],
-                            ["AI", "Blueprints"],
-                          ].map(([value, label]) => (
-                            <div key={label} className="rounded-xl px-3 py-2">
-                              <div className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>{value}</div>
-                              <div className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>{label}</div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
+                      Configure variations
+                    </p>
 
-                      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-                        {variationSetups.map((variation) => (
-                          <div
-                            key={variation.id}
-                            className="group relative overflow-hidden rounded-[26px] border bg-white/80 p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:bg-white"
-                            style={{
-                              borderColor: variation.ring,
-                              boxShadow: `0 18px 42px ${variation.soft}`,
-                            }}
-                          >
+                    <div className="grid grid-cols-1 gap-8 md:grid-cols-2 md:gap-10">
+                      {variationSetups.map((variation) => (
+                        <div key={variation.id} className="min-w-0 space-y-5">
+                          <div className="flex items-center gap-3">
                             <div
-                              className="absolute -right-10 -top-10 h-28 w-28 rounded-full blur-2xl transition-opacity group-hover:opacity-100"
-                              style={{ background: variation.soft, opacity: 0.72 }}
-                            />
+                              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white shadow-sm"
+                              style={{ backgroundColor: variation.accent }}
+                              aria-hidden
+                            >
+                              {variation.id}
+                            </div>
+                            <h4 className="text-[15px] font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>
+                              {variation.title}
+                            </h4>
+                          </div>
 
-                            <div className="relative mb-4 flex items-start justify-between gap-3">
-                              <div className="flex items-center gap-3">
-                                <div
-                                  className="flex h-10 w-10 items-center justify-center rounded-2xl text-sm font-black text-white shadow-sm"
-                                  style={{ background: `linear-gradient(135deg, ${variation.accent}, #111827)` }}
-                                >
-                                  {variation.id}
-                                </div>
-                                <div>
-                                  <h4 className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>
-                                    {variation.title}
-                                  </h4>
-                                  <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                                    {variation.subtitle}
-                                  </p>
-                                </div>
-                              </div>
-                              <span
-                                className="rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide"
-                                style={{ background: variation.soft, color: variation.accent }}
+                          <div className="space-y-4">
+                            <div>
+                              <div
+                                className="mb-2 flex items-center gap-1.5 text-xs font-medium"
+                                style={{ color: "var(--text-muted)" }}
                               >
-                                Strategy
-                              </span>
+                                <Users className="h-3.5 w-3.5 shrink-0 opacity-80" aria-hidden />
+                                Audience
+                              </div>
+                              <div className="relative">
+                                <select
+                                  value={variation.audience}
+                                  onChange={(e) => variation.setAudience(e.target.value)}
+                                  className="w-full appearance-none rounded-xl border border-[var(--border)] bg-white px-3.5 py-2.5 pr-9 text-sm font-medium outline-none transition-shadow focus:ring-2 focus:ring-[var(--brand)]/25"
+                                  style={{ color: "var(--text-primary)" }}
+                                >
+                                  {audienceOptions.map((option) => (
+                                    <option key={option} value={option}>
+                                      {option}
+                                    </option>
+                                  ))}
+                                </select>
+                                <ChevronDown
+                                  className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 opacity-50"
+                                  style={{ color: "var(--text-muted)" }}
+                                  aria-hidden
+                                />
+                              </div>
                             </div>
 
-                            <div className="relative space-y-3">
-                              <label className="block rounded-2xl border border-[var(--border)] bg-white/80 p-3 shadow-sm transition-all focus-within:border-[var(--brand)] focus-within:shadow-md">
-                                <span className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>
-                                  <span className="flex h-7 w-7 items-center justify-center rounded-xl" style={{ background: variation.soft, color: variation.accent }}>
-                                    <Users className="h-3.5 w-3.5" />
-                                  </span>
-                                  Audience focus
-                                </span>
-                                <div className="relative">
-                                  <select
-                                    value={variation.audience}
-                                    onChange={(e) => variation.setAudience(e.target.value)}
-                                    className="w-full appearance-none rounded-2xl border border-transparent bg-[var(--bg-soft)] px-4 py-3 pr-10 text-sm font-semibold outline-none transition-all focus:bg-white"
-                                    style={{ color: "var(--text-primary)" }}
-                                  >
-                                    {audienceOptions.map((option) => (
-                                      <option key={option} value={option}>{option}</option>
-                                    ))}
-                                  </select>
-                                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: "var(--text-muted)" }} />
-                                </div>
-                              </label>
-
-                              <label className="block rounded-2xl border border-[var(--border)] bg-white/80 p-3 shadow-sm transition-all focus-within:border-[var(--brand)] focus-within:shadow-md">
-                                <span className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>
-                                  <span className="flex h-7 w-7 items-center justify-center rounded-xl" style={{ background: variation.soft, color: variation.accent }}>
-                                    <DollarSign className="h-3.5 w-3.5" />
-                                  </span>
-                                  Monetization model
-                                </span>
-                                <div className="relative">
-                                  <select
-                                    value={variation.monetization}
-                                    onChange={(e) => variation.setMonetization(e.target.value)}
-                                    className="w-full appearance-none rounded-2xl border border-transparent bg-[var(--bg-soft)] px-4 py-3 pr-10 text-sm font-semibold outline-none transition-all focus:bg-white"
-                                    style={{ color: "var(--text-primary)" }}
-                                  >
-                                    {monetizationOptions.map((option) => (
-                                      <option key={option} value={option}>{option}</option>
-                                    ))}
-                                  </select>
-                                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: "var(--text-muted)" }} />
-                                </div>
-                              </label>
-
-                              <div className="rounded-2xl border border-dashed border-[var(--border)] bg-white/70 p-4">
-                                <div className="mb-3 flex items-center gap-2">
-                                  <Target className="h-4 w-4" style={{ color: variation.accent }} />
-                                  <p className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--text-primary)" }}>
-                                    AI strategy preview
-                                  </p>
-                                </div>
-                                <div className="space-y-3">
-                                  <div>
-                                    <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Best for</p>
-                                    <p className="mt-1 text-sm leading-relaxed" style={{ color: "var(--text-primary)" }}>
-                                      {getAudiencePreview(variation.audience)}
-                                    </p>
-                                  </div>
-                                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                                    <div className="rounded-xl bg-[var(--bg-soft)] p-3">
-                                      <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Traffic approach</p>
-                                      <p className="mt-1 text-xs font-semibold" style={{ color: "var(--text-primary)" }}>{getTrafficPreview(variation.monetization)}</p>
-                                    </div>
-                                    <div className="rounded-xl bg-[var(--bg-soft)] p-3">
-                                      <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Expected lift</p>
-                                      <p className="mt-1 text-xs font-semibold" style={{ color: "var(--text-primary)" }}>Sharper intent and stronger lead capture</p>
-                                    </div>
-                                  </div>
-                                  <p className="rounded-xl px-3 py-2 text-xs leading-relaxed" style={{ background: variation.soft, color: "var(--text-secondary)" }}>
-                                    {getMonetizationPreview(variation.monetization)}
-                                  </p>
-                                </div>
+                            <div>
+                              <div
+                                className="mb-2 flex items-center gap-1.5 text-xs font-medium"
+                                style={{ color: "var(--text-muted)" }}
+                              >
+                                <DollarSign className="h-3.5 w-3.5 shrink-0 opacity-80" aria-hidden />
+                                Monetization
+                              </div>
+                              <div className="relative">
+                                <select
+                                  value={variation.monetization}
+                                  onChange={(e) => variation.setMonetization(e.target.value)}
+                                  className="w-full appearance-none rounded-xl border border-[var(--border)] bg-white px-3.5 py-2.5 pr-9 text-sm font-medium outline-none transition-shadow focus:ring-2 focus:ring-[var(--brand)]/25"
+                                  style={{ color: "var(--text-primary)" }}
+                                >
+                                  {monetizationOptions.map((option) => (
+                                    <option key={option} value={option}>
+                                      {option}
+                                    </option>
+                                  ))}
+                                </select>
+                                <ChevronDown
+                                  className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 opacity-50"
+                                  style={{ color: "var(--text-muted)" }}
+                                  aria-hidden
+                                />
                               </div>
                             </div>
                           </div>
-                        ))}
-                      </div>
-
-                      <button
-                        onClick={generateVariations}
-                        disabled={generatingVariations}
-                        className="btn-primary group mt-5 flex w-full items-center justify-center gap-2 rounded-2xl px-5 py-4 text-sm font-bold shadow-lg transition-all hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        {generatingVariations ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Building AI strategy variations...
-                          </>
-                        ) : (
-                          <>
-                            <Sparkles className="h-4 w-4 transition-transform group-hover:rotate-12" />
-                            Generate AI Strategy Variations
-                            <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                          </>
-                        )}
-                      </button>
+                        </div>
+                      ))}
                     </div>
+
+                    <button
+                      type="button"
+                      onClick={generateVariations}
+                      disabled={generatingVariations}
+                      className="mt-8 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-bold text-white shadow-md transition-opacity hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-55"
+                      style={{ backgroundColor: "#ff6b21" }}
+                    >
+                      {generatingVariations ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+                          Generating variations…
+                        </>
+                      ) : (
+                        <>
+                          <Zap className="h-4 w-4 shrink-0 fill-white" strokeWidth={2.25} />
+                          Generate 2 Blueprint Variations
+                        </>
+                      )}
+                    </button>
                   </div>
 
                   {variations && variations.length > 0 && (

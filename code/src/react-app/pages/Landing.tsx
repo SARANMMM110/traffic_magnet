@@ -34,7 +34,7 @@ const metrics = [
 const workflow = [
   {
     title: "Choose a niche",
-    text: "Start with a monetization niche, audience, or traffic category. Traffic Magnet turns broad markets into focused online business opportunities.",
+    text: "Start with a monetization niche, audience, or traffic category. Ai Auto Traffic turns broad markets into focused online business opportunities.",
     icon: Target,
   },
   {
@@ -108,7 +108,7 @@ export default function Landing() {
               <Sparkles className="h-5 w-5" />
             </span>
             <span>
-              <span className="block text-sm font-extrabold tracking-tight">Traffic Magnet</span>
+              <span className="block text-sm font-extrabold tracking-tight">Ai Auto Traffic</span>
               <span className="block text-xs" style={{ color: "var(--text-muted)" }}>
                 AI opportunity engine
               </span>
@@ -153,7 +153,7 @@ export default function Landing() {
               </h1>
 
               <p className="mt-6 max-w-2xl text-base leading-8 md:text-lg" style={{ color: "var(--text-secondary)" }}>
-                Traffic Magnet helps founders, agencies, creators, and publishers turn niche opportunities into traffic systems, lead magnets, revenue engines, landing pages, and authority content people want to use and share.
+                Ai Auto Traffic helps founders, agencies, creators, and publishers turn niche opportunities into traffic systems, lead magnets, revenue engines, landing pages, and authority content people want to use and share.
               </p>
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -325,7 +325,7 @@ export default function Landing() {
                 </h2>
               </div>
               <p className="max-w-md text-sm leading-7" style={{ color: "var(--text-secondary)" }}>
-                Traffic Magnet is built to help you ship practical business assets that make visitors trust your brand faster.
+                Ai Auto Traffic is built to help you ship practical business assets that make visitors trust your brand faster.
               </p>
             </div>
 

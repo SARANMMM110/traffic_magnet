@@ -192,7 +192,7 @@ export default function Onboarding() {
             Start Here
           </h1>
           <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-            Build your first traffic magnet with a simple guided flow.
+            Build your first Ai Auto Traffic project with a simple guided flow.
           </p>
         </div>
       </div>
@@ -267,7 +267,7 @@ export default function Onboarding() {
                 Power up your account
               </h1>
               <p className="text-base max-w-md mx-auto" style={{ color: "var(--text-secondary)" }}>
-                Magnet Lab uses AI to generate business asset ideas and build working HTML assets. You need your
+                Ai Auto Traffic uses AI to generate business asset ideas and build working HTML assets. You need your
                 own OpenAI or Anthropic API key — it takes 2 minutes and costs almost nothing to
                 generate an asset.
               </p>

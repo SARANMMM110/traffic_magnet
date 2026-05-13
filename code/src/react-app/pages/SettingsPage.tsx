@@ -305,7 +305,7 @@ export default function SettingsPage() {
                   <Check className="w-3 h-3 text-white" />
                 </div>
                 <span className="text-sm" style={{ color: "var(--text-primary)" }}>
-                  {usage.limit} lifetime Traffic Magnets
+                  {usage.limit} lifetime Ai Auto Traffic projects
                 </span>
               </div>
               <div className="flex items-center gap-2">
@@ -535,7 +535,7 @@ export default function SettingsPage() {
           >
             <Info className="w-5 h-5 flex-shrink-0" style={{ color: "#2563EB" }} />
             <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-              Usage costs are billed directly to your API account — Magnet Lab does not
+              Usage costs are billed directly to your API account — Ai Auto Traffic does not
               charge for AI usage. Make sure you have credits available.
             </p>
           </div>

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router";
 import DashboardLayout from "@/react-app/components/DashboardLayout";
 import { ArrowLeft, Loader2, Check, Download, Code2 } from "lucide-react";
 import { useToast } from "@/react-app/components/Toast";
+import { VISUAL_THEMES, normalizeVisualThemeId } from "@/react-app/lib/visualThemes";
 
 interface Tool {
   id: number;
@@ -46,20 +47,6 @@ export default function BlueprintView() {
   const [landingPageHtml, setLandingPageHtml] = useState<string | null>(null);
   const [savingTheme, setSavingTheme] = useState(false);
 
-  const themes = [
-    { id: "modern", name: "Modern", desc: "Clean, minimalist with bold accents", color: "#1F2937" },
-    { id: "ocean", name: "Ocean", desc: "Cool blues with professional feel", color: "#0EA5E9" },
-    { id: "forest", name: "Forest", desc: "Natural greens, earthy and trusted", color: "#10B981" },
-    { id: "sunset", name: "Sunset", desc: "Warm, energetic with vibrant gradient", color: "#F97316" },
-    { id: "purple", name: "Purple", desc: "Premium, creative, sophisticated", color: "#A855F7" },
-    { id: "slate", name: "Slate", desc: "Professional grayscale with neutral accent", color: "#475569" },
-  ] as const;
-
-  const normalizeThemeId = (raw: unknown): string => {
-    const v = String(raw ?? "modern").trim().toLowerCase();
-    return themes.some((t) => t.id === v) ? v : "modern";
-  };
-
   useEffect(() => {
     loadTool();
   }, [id]);
@@ -68,7 +55,7 @@ export default function BlueprintView() {
     if (!tool?.blueprint) return;
     try {
       const bp = JSON.parse(tool.blueprint);
-      setSelectedTheme(normalizeThemeId(bp.visual_theme ?? bp.theme));
+      setSelectedTheme(normalizeVisualThemeId(bp.visual_theme ?? bp.theme));
     } catch {
       /* ignore */
     }
@@ -417,7 +404,7 @@ export default function BlueprintView() {
             style={{ color: "var(--text-muted)" }}
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to My Magnets
+            Back to my projects
           </button>
 
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
@@ -492,6 +479,212 @@ export default function BlueprintView() {
         <div className="premium-card p-8">
           {panelTab === "blueprint" && tool.blueprint && (
             <div className="space-y-6">
+              <div className="space-y-6 rounded-2xl border border-[var(--border)] bg-[var(--bg-overlay)] p-5">
+                {/* Visual theme (stored on blueprint) */}
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <svg className="w-4 h-4" style={{ color: "var(--text-muted)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                    </svg>
+                    <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+                      VISUAL THEME
+                    </h4>
+                    {savingTheme && <Loader2 className="h-4 w-4 animate-spin" style={{ color: "var(--brand)" }} aria-hidden />}
+                  </div>
+                  <p className="text-sm leading-relaxed" style={{ color: "var(--text-primary)" }}>
+                    <strong>
+                      {VISUAL_THEMES.find((t) => t.id === normalizeVisualThemeId(blueprint.visual_theme ?? blueprint.theme))?.name ??
+                        "Modern"}
+                    </strong>
+                    <span style={{ color: "var(--text-muted)" }}>
+                      {" "}
+                      — used when you build a standalone page or embed widget. Change it below; it saves to your blueprint
+                      automatically.
+                    </span>
+                  </p>
+                </div>
+
+                {/* Theme Selector */}
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: "var(--text-muted)" }}>
+                    THEME — PROFESSIONAL STYLES
+                  </h4>
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                    {VISUAL_THEMES.map((theme) => (
+                      <div
+                        key={theme.id}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            setSelectedTheme(theme.id);
+                            void persistVisualTheme(theme.id);
+                          }
+                        }}
+                        onClick={() => {
+                          setSelectedTheme(theme.id);
+                          void persistVisualTheme(theme.id);
+                        }}
+                        className={`relative rounded-xl p-3 cursor-pointer transition-all border-2 ${
+                          selectedTheme === theme.id ? "border-[var(--brand)] shadow-sm" : "border-transparent hover:border-[var(--border)]"
+                        }`}
+                        style={{ background: "var(--surface)" }}
+                      >
+                        {selectedTheme === theme.id && (
+                          <div
+                            className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full text-white shadow-sm"
+                            style={{ background: "var(--brand)" }}
+                          >
+                            <Check className="h-4 w-4" aria-hidden />
+                          </div>
+                        )}
+                        <div className="mb-2 h-12 w-full rounded-lg" style={{ background: theme.swatch }} />
+                        <p className="mb-0.5 text-xs font-semibold" style={{ color: "var(--text-primary)" }}>
+                          {theme.name}
+                        </p>
+                        <p className="text-[10px] leading-snug" style={{ color: "var(--text-muted)" }}>
+                          {theme.desc}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Build Options */}
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: "var(--text-muted)" }}>
+                    BUILD THIS TOOL AS...
+                  </h4>
+
+                  {!buildResult ? (
+                    <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          buildTool("standalone");
+                        }}
+                        disabled={buildStep !== null}
+                        className="premium-card group rounded-3xl p-4 text-left transition-all hover:-translate-y-0.5 hover:border-[var(--brand)] hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <div className="mb-3 flex items-center gap-3">
+                          <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[var(--border)] bg-white text-[var(--brand)] shadow-sm transition-all group-hover:bg-[var(--brand-soft)]">
+                            <Download className="h-5 w-5" />
+                          </span>
+                          <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+                            Standalone Page
+                          </p>
+                        </div>
+                        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                          Single .html file — upload via FTP to your website as its own page
+                        </p>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          buildTool("embed");
+                        }}
+                        disabled={buildStep !== null}
+                        className="premium-card group rounded-3xl p-4 text-left transition-all hover:-translate-y-0.5 hover:border-[var(--brand)] hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <div className="mb-3 flex items-center gap-3">
+                          <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[var(--border)] bg-white text-[var(--brand)] shadow-sm transition-all group-hover:bg-[var(--brand-soft)]">
+                            <Code2 className="h-5 w-5" />
+                          </span>
+                          <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+                            Embeddable Widget
+                          </p>
+                        </div>
+                        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                          Paste into WordPress posts, articles, or any existing page
+                        </p>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div
+                        className="rounded-lg px-4 py-3 text-center"
+                        style={{ background: "#DCFCE7", border: "1px solid #86EFAC", color: "#15803D" }}
+                      >
+                        {buildResult.action === "standalone" ? "Standalone page ready!" : "Embeddable widget ready!"}
+                      </div>
+
+                      {buildResult.action === "standalone" ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const blob = new Blob([buildResult.html], { type: "text/html" });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement("a");
+                            a.href = url;
+                            a.download = `${tool.name.toLowerCase().replace(/\s+/g, "-")}.html`;
+                            a.click();
+                            URL.revokeObjectURL(url);
+                            showToast({ title: "Downloaded!", type: "success" });
+                          }}
+                          className="btn-primary w-full rounded-2xl py-3 font-semibold"
+                        >
+                          Download .html File
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard
+                              .writeText(buildResult.html)
+                              .then(() => {
+                                setCopied(true);
+                                showToast({ title: "Copied to clipboard!", type: "success" });
+                                setTimeout(() => setCopied(false), 2000);
+                              })
+                              .catch(() => {
+                                showToast({ title: "Failed to copy", type: "error" });
+                              });
+                          }}
+                          className="btn-primary w-full rounded-2xl py-3 font-semibold"
+                        >
+                          {copied ? "Copied!" : "</> Copy Embed Code"}
+                        </button>
+                      )}
+
+                      <p className="text-center text-xs" style={{ color: "var(--text-muted)" }}>
+                        {buildResult.action === "standalone"
+                          ? "Upload via FTP — works as a standalone page on any web host"
+                          : 'Paste this into a WordPress "Custom HTML" block or any page editor'}
+                      </p>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const bundle = `# ${tool.name}\n\n\`\`\`html\n${buildResult.html}\n\`\`\`\n\n\`\`\`json\n${tool.blueprint}\n\`\`\``;
+                          navigator.clipboard.writeText(bundle).then(() => {
+                              showToast({ title: "Content wrapper copied!", type: "success" });
+                            }).catch(() => {
+                              showToast({ title: "Failed to copy", type: "error" });
+                            });
+                        }}
+                        className="btn-secondary w-full rounded-2xl py-3 font-semibold"
+                      >
+                        Copy All for Content Wrapper
+                      </button>
+
+                      <div className="text-center">
+                        <button
+                          type="button"
+                          onClick={() => setBuildResult(null)}
+                          className="text-sm hover:underline"
+                          style={{ color: "var(--text-muted)" }}
+                        >
+                          ← Build a different format
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {/* Purpose */}
               <div>
                 <div className="flex items-center gap-2 mb-2">
@@ -719,193 +912,6 @@ export default function BlueprintView() {
                 </p>
               </div>
 
-              {/* Visual theme (stored on blueprint) */}
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <svg className="w-4 h-4" style={{ color: "var(--text-muted)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-                  </svg>
-                  <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-                    VISUAL THEME
-                  </h4>
-                  {savingTheme && <Loader2 className="h-4 w-4 animate-spin" style={{ color: "var(--brand)" }} aria-hidden />}
-                </div>
-                <p className="text-sm leading-relaxed" style={{ color: "var(--text-primary)" }}>
-                  <strong>
-                    {themes.find((t) => t.id === normalizeThemeId(blueprint.visual_theme ?? blueprint.theme))?.name ??
-                      "Modern"}
-                  </strong>
-                  <span style={{ color: "var(--text-muted)" }}>
-                    {" "}
-                    — used when you build a standalone page or embed widget. Change it below; it saves to your blueprint
-                    automatically.
-                  </span>
-                </p>
-              </div>
-
-              {/* Theme Selector */}
-              <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: "var(--text-muted)" }}>
-                  THEME — PROFESSIONAL STYLES
-                </h4>
-                <div className="grid grid-cols-3 gap-3">
-                  {themes.map((theme) => (
-                    <div
-                      key={theme.id}
-                      onClick={() => {
-                        setSelectedTheme(theme.id);
-                        void persistVisualTheme(theme.id);
-                      }}
-                      className={`relative p-3 rounded-lg cursor-pointer transition-all border-2 ${
-                        selectedTheme === theme.id ? "border-orange-500" : "border-transparent"
-                      }`}
-                      style={{ background: "var(--bg-overlay)" }}
-                    >
-                      {selectedTheme === theme.id && (
-                        <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center">
-                          <Check className="w-4 h-4 text-white" />
-                        </div>
-                      )}
-                      <div
-                        className="w-full h-12 rounded mb-2"
-                        style={{ background: theme.color }}
-                      />
-                      <p className="font-semibold text-xs mb-0.5" style={{ color: "var(--text-primary)" }}>
-                        {theme.name}
-                      </p>
-                      <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
-                        {theme.desc}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Build Options */}
-              <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: "var(--text-muted)" }}>
-                  BUILD THIS TOOL AS...
-                </h4>
-                
-                {!buildResult ? (
-                  <div className="grid grid-cols-1 gap-3 mb-4 sm:grid-cols-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        console.log("🔵 Standalone button clicked", { buildStep, tool: !!tool });
-                        buildTool("standalone");
-                      }}
-                      disabled={buildStep !== null}
-                      className="premium-card group rounded-3xl p-4 text-left transition-all hover:-translate-y-0.5 hover:border-[var(--brand)] hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      <div className="flex items-center gap-3 mb-3">
-                        <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[var(--border)] bg-white text-[var(--brand)] shadow-sm transition-all group-hover:bg-[var(--brand-soft)]">
-                          <Download className="h-5 w-5" />
-                        </span>
-                        <p className="font-semibold text-sm" style={{ color: "var(--text-primary)" }}>Standalone Page</p>
-                      </div>
-                      <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                        Single .html file — upload via FTP to your website as its own page
-                      </p>
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        console.log("🟢 Embed button clicked", { buildStep, tool: !!tool });
-                        buildTool("embed");
-                      }}
-                      disabled={buildStep !== null}
-                      className="premium-card group rounded-3xl p-4 text-left transition-all hover:-translate-y-0.5 hover:border-[var(--brand)] hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      <div className="flex items-center gap-3 mb-3">
-                        <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[var(--border)] bg-white text-[var(--brand)] shadow-sm transition-all group-hover:bg-[var(--brand-soft)]">
-                          <Code2 className="h-5 w-5" />
-                        </span>
-                        <p className="font-semibold text-sm" style={{ color: "var(--text-primary)" }}>Embeddable Widget</p>
-                      </div>
-                      <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                        Paste into WordPress posts, articles, or any existing page
-                      </p>
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {/* Success Banner */}
-                    <div className="text-center py-3 px-4 rounded-lg" style={{ background: "#DCFCE7", border: "1px solid #86EFAC", color: "#15803D" }}>
-                      {buildResult.action === "standalone" ? "Standalone page ready!" : "Embeddable widget ready!"}
-                    </div>
-
-                    {/* Primary Action Button */}
-                    {buildResult.action === "standalone" ? (
-                      <button
-                        onClick={() => {
-                          const blob = new Blob([buildResult.html], { type: "text/html" });
-                          const url = URL.createObjectURL(blob);
-                          const a = document.createElement("a");
-                          a.href = url;
-                          a.download = `${tool.name.toLowerCase().replace(/\s+/g, "-")}.html`;
-                          a.click();
-                          URL.revokeObjectURL(url);
-                          showToast({ title: "Downloaded!", type: "success" });
-                        }}
-                        className="btn-primary w-full rounded-2xl py-3 font-semibold"
-                      >
-                        Download .html File
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => {
-                          navigator.clipboard.writeText(buildResult.html).then(() => {
-                            setCopied(true);
-                            showToast({ title: "Copied to clipboard!", type: "success" });
-                            setTimeout(() => setCopied(false), 2000);
-                          }).catch(() => {
-                            showToast({ title: "Failed to copy", type: "error" });
-                          });
-                        }}
-                        className="btn-primary w-full rounded-2xl py-3 font-semibold"
-                      >
-                        {copied ? "Copied!" : "</> Copy Embed Code"}
-                      </button>
-                    )}
-
-                    {/* Helper Text */}
-                    <p className="text-xs text-center" style={{ color: "var(--text-muted)" }}>
-                      {buildResult.action === "standalone" 
-                        ? "Upload via FTP — works as a standalone page on any web host"
-                        : 'Paste this into a WordPress "Custom HTML" block or any page editor'
-                      }
-                    </p>
-
-                    {/* Secondary Purple Button */}
-                    <button
-                      onClick={() => {
-                        const bundle = `# ${tool.name}\n\n\`\`\`html\n${buildResult.html}\n\`\`\`\n\n\`\`\`json\n${tool.blueprint}\n\`\`\``;
-                        navigator.clipboard.writeText(bundle).then(() => {
-                          showToast({ title: "Content wrapper copied!", type: "success" });
-                        }).catch(() => {
-                          showToast({ title: "Failed to copy", type: "error" });
-                        });
-                      }}
-                      className="btn-secondary w-full rounded-2xl py-3 font-semibold"
-                    >
-                      Copy All for Content Wrapper
-                    </button>
-
-                    {/* Back Link */}
-                    <div className="text-center">
-                      <button
-                        onClick={() => setBuildResult(null)}
-                        className="text-sm hover:underline"
-                        style={{ color: "var(--text-muted)" }}
-                      >
-                        ← Build a different format
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
               {/* Action Buttons */}
               <div className="flex gap-3">
                 <button
@@ -952,7 +958,7 @@ export default function BlueprintView() {
                   {buildStep === "styling" && (
                     <span className="flex items-center justify-center gap-2">
                       <Loader2 className="w-5 h-5 animate-spin" />
-                      Applying {themes.find((t) => t.id === selectedTheme)?.name} theme...
+                      Applying {VISUAL_THEMES.find((t) => t.id === selectedTheme)?.name} theme...
                     </span>
                   )}
                   {buildStep === "embed" && (

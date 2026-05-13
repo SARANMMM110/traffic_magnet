@@ -115,7 +115,7 @@ export default function UpgradePage() {
             <div className="flex-1 space-y-3 mb-6">
               <div className="flex items-start gap-2">
                 <Check className="w-5 h-5 flex-shrink-0" style={{ color: "#6B7280" }} />
-                <span className="text-sm text-white">3 lifetime Traffic Magnets</span>
+                <span className="text-sm text-white">3 lifetime Ai Auto Traffic projects</span>
               </div>
               <div className="flex items-start gap-2">
                 <Check className="w-5 h-5 flex-shrink-0" style={{ color: "#6B7280" }} />
@@ -176,7 +176,7 @@ export default function UpgradePage() {
             <div className="flex-1 space-y-3 mb-6">
               <div className="flex items-start gap-2">
                 <Check className="w-5 h-5 flex-shrink-0" style={{ color: "#10B981" }} />
-                <span className="text-sm text-white">25 Traffic Magnets / month</span>
+                <span className="text-sm text-white">25 Ai Auto Traffic projects / month</span>
               </div>
               <div className="flex items-start gap-2">
                 <Check className="w-5 h-5 flex-shrink-0" style={{ color: "#10B981" }} />
@@ -246,7 +246,7 @@ export default function UpgradePage() {
             <div className="flex-1 space-y-3 mb-6">
               <div className="flex items-start gap-2">
                 <Check className="w-5 h-5 flex-shrink-0" style={{ color: "#7C5CFC" }} />
-                <span className="text-sm text-white">Unlimited Traffic Magnets</span>
+                <span className="text-sm text-white">Unlimited Ai Auto Traffic projects</span>
               </div>
               <div className="flex items-start gap-2">
                 <Check className="w-5 h-5 flex-shrink-0" style={{ color: "#7C5CFC" }} />

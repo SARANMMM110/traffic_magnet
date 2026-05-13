@@ -44,7 +44,7 @@ export default function Signup() {
             <Zap className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>
-            Magnet Lab
+            Ai Auto Traffic
           </h1>
         </div>
 
@@ -54,7 +54,7 @@ export default function Signup() {
             Create your account
           </h2>
           <p style={{ color: "var(--text-secondary)" }}>
-            Start building traffic magnets free
+            Start building with Ai Auto Traffic free
           </p>
         </div>
 

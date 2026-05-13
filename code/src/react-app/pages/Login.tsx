@@ -44,7 +44,7 @@ export default function Login() {
             <Zap className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>
-            Magnet Lab
+            Ai Auto Traffic
           </h1>
         </div>
 

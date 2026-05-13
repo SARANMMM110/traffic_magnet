@@ -13,7 +13,7 @@ const FAQ_DATA: FAQItem[] = [
   {
     category: "Getting Started",
     question: "What does the Traffic Asset Score (0–100) mean?",
-    answer: "It's a weighted score based on three factors: <strong style='color: var(--brand)'>Traffic Potential</strong>, <strong style='color: var(--brand)'>Link Magnet Score</strong>, and <strong style='color: var(--brand)'>Monetization Potential</strong>. A higher score means the tool idea is more likely to attract organic search traffic, earn backlinks, AND has strong monetization potential. Use it to decide which tools to build first.",
+    answer: "It's a weighted score based on three factors: <strong style='color: var(--brand)'>Traffic Potential</strong>, <strong style='color: var(--brand)'>Link quality score</strong>, and <strong style='color: var(--brand)'>Monetization Potential</strong>. A higher score means the tool idea is more likely to attract organic search traffic, earn backlinks, AND has strong monetization potential. Use it to decide which tools to build first.",
   },
   {
     category: "Getting Started",
@@ -23,7 +23,7 @@ const FAQ_DATA: FAQItem[] = [
   {
     category: "Pricing & Plans",
     question: "If my assets get a lot of traffic, will I be charged more?",
-    answer: "No. Magnet Lab has no usage-based pricing. Your subscription covers asset generation. The assets themselves are plain static HTML — once built, they cost nothing extra to run no matter how much traffic they receive. The only variable cost is your own API key (OpenAI/Anthropic), billed directly by those providers, and only used during the build stage — not when visitors use your assets.",
+    answer: "No. Ai Auto Traffic has no usage-based pricing. Your subscription covers asset generation. The assets themselves are plain static HTML — once built, they cost nothing extra to run no matter how much traffic they receive. The only variable cost is your own API key (OpenAI/Anthropic), billed directly by those providers, and only used during the build stage — not when visitors use your assets.",
   },
   {
     category: "Building Assets",
@@ -47,7 +47,7 @@ const FAQ_DATA: FAQItem[] = [
   },
   {
     category: "Use Cases",
-    question: "Can Magnet Lab be used to build a toolkit page for local or small business owners?",
+    question: "Can Ai Auto Traffic be used to build a toolkit page for local or small business owners?",
     answer: "Absolutely — local business is one of the strongest niches for this strategy. Strong asset ideas include:<br/><ul style='margin: 8px 0; padding-left: 20px;'><li style='margin: 4px 0;'>Local SEO growth engine</li><li style='margin: 4px 0;'>Client conversion scorecard</li><li style='margin: 4px 0;'>Booking optimization audit</li><li style='margin: 4px 0;'>Reputation opportunity dashboard</li><li style='margin: 4px 0;'>Ad spend optimization system</li><li style='margin: 4px 0;'>Service revenue estimator</li></ul>Bundle several on one page targeting searches like \"growth tools for small business owners\" and you create a page that local marketing agencies, business blogs, and chambers of commerce will naturally link to. Set Primary Goal to Drive Backlinks or Generate Leads depending on your objective.",
   },
 ];
@@ -118,7 +118,7 @@ export default function HelpFAQ() {
         <div className="surface-panel mb-8 p-8 text-center">
           <h1 className="text-4xl font-bold mb-3" style={{ color: "var(--text-primary)" }}>Help & FAQ</h1>
           <p className="text-lg mb-2" style={{ color: "var(--text-muted)" }}>
-            Answers to the most common questions about Magnet Lab
+            Answers to the most common questions about Ai Auto Traffic
           </p>
           <p className="text-sm font-medium" style={{ color: "var(--brand)" }}>
             {FAQ_DATA.length} answers and growing
@@ -318,7 +318,7 @@ export default function HelpFAQ() {
         <div className="mt-12 pt-8" style={{ borderTop: "1px solid var(--border)" }}>
           <div className="text-center">
             <p className="mb-6" style={{ color: "var(--text-muted)" }}>
-              Can't find your answer? Email support@magnetlab.com or post in the
+              Can't find your answer? Email support@aiautotraffic.com or post in the
               community group.
             </p>
             <div className="flex gap-3 justify-center">

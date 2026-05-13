@@ -2,7 +2,7 @@
 
 This archive contains the code and production data exported for your Mocha app.
 
-- App name: Magnet Lab — AI-Powered SEO Tool Factory
+- App name: Ai Auto Traffic — AI-Powered SEO Tool Factory
 - App id: 019dbfa1-bf4f-7ba1-9193-3a692e4e7e7c
 - Subdomain: trafficmagnet
 - Deployed URL: https://trafficmagnet.mocha.app

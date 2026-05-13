@@ -217,7 +217,7 @@ export default function NewProject() {
         showToast({
           type: "success",
           title: "Project created!",
-          message: "AI is now discovering traffic magnet ideas...",
+          message: "AI is now discovering tool ideas for your Ai Auto Traffic project...",
         });
         
         // Trigger AI discovery and wait for completion
@@ -288,7 +288,7 @@ export default function NewProject() {
         <div className="surface-panel mb-8 p-8">
           <div className="section-eyebrow mb-3">Project Brief</div>
           <h1 className="text-4xl font-bold leading-tight" style={{ color: "var(--text-primary)" }}>
-            Create a Traffic Magnet Project
+            Create an Ai Auto Traffic project
           </h1>
           <p className="mt-3 max-w-2xl text-base leading-7" style={{ color: "var(--text-secondary)" }}>
             Define your market, audience, and growth goal. The AI will turn the brief into high-value online business opportunities.
@@ -548,7 +548,7 @@ export default function NewProject() {
               <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
-                  You have used all your Traffic Magnets. Upgrade your plan to create more
+                  You have used all your Ai Auto Traffic project slots. Upgrade your plan to create more
                   projects.
                 </p>
                 <Link

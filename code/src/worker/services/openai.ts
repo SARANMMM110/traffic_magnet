@@ -187,12 +187,12 @@ export function resolveVisualThemeKey(blueprint: any): string {
 /** Detailed instructions so standalone/embed/landing outputs match the UI theme picker. */
 function visualThemeGenerationContract(themeKey: string): string {
   const specs: Record<string, string> = {
-    modern: `Theme "modern" (default): charcoal / near-black primary #111827 or #1F2937, white #FFFFFF surfaces, borders #E5E7EB, ONE restrained accent (deep indigo #4F46E5 or cool gray-blue) for primary buttons and focus only. No rainbow gradients; backgrounds stay white/off-white.`,
-    ocean: `Theme "ocean": cool blues — primary #0EA5E9, hover #0284C7, backgrounds #F8FAFC / #F0F9FF, borders #BAE6FD / #E0F2FE, ink #0C4A6E. Trustworthy, corporate SaaS water palette throughout :root.`,
-    forest: `Theme "forest": greens #059669 / #10B981 / #047857, soft cream or warm white #FAFAF9 backgrounds, borders #D1FAE5, deep green ink #14532D. Earthy but crisp UI, not neon.`,
-    sunset: `Theme "sunset": warm accents only on CTAs/highlights — #EA580C to #FB923C gradients OK on buttons; page backgrounds stay #FFFBEB or white; text #1C1917; avoid painting entire sections orange.`,
-    purple: `Theme "purple": premium violet — #7C3AED / #6D28D9 primary, soft lavender surfaces #FAF5FF, borders #EDE9FE, ink #1E1B4B. Creative SaaS, not harsh neon.`,
-    slate: `Theme "slate": professional grayscale — #334155 / #475569 accents, white surfaces, borders #E2E8F0, body #1E293B. Single accent hue for CTAs only; calm enterprise look.`,
+    modern: `Theme "modern" (default): charcoal / near-black ink #111827–#1F2937, white #FFFFFF surfaces, borders #E5E7EB–#E2E8F0, ONE restrained accent for CTAs (deep indigo #4F46E5 or steel blue #2563EB) — not violet. final-cta .dark-box: deep slate/ink gradient with a hint of the same accent, not purple. Prefer 12–16px radii and crisp cards.`,
+    ocean: `Theme "ocean": cool blues — primary #0EA5E9, hover #0284C7, soft bg #F8FAFC / #F0F9FF, borders #BAE6FD / #E0F2FE, ink #0C4A6E / #0F172A. final-cta: navy #0B1220 → deep blue with cyan/teal glow orbs tied to --brand-primary.`,
+    forest: `Theme "forest": greens #059669 / #10B981 / #047857, warm white #FAFAF9 surfaces, borders #D1FAE5, ink #14532D / #1C1917. final-cta: deep forest #052e16 → #134e2a with subtle emerald highlight — never violet.`,
+    sunset: `Theme "sunset": warm CTA gradient #EA580C → #FB923C allowed on buttons; pages stay white or #FFFBEB; ink #1C1917. Use pill-shaped primary buttons (999px) where it fits. final-cta: warm dark #431407 → #7c2d12 with soft amber rim glow.`,
+    purple: `Theme "purple": premium violet — #7C3AED / #6D28D9 primary, soft lavender #FAF5FF surfaces, borders #EDE9FE, ink #1E1B4B. final-cta may use deep violet/indigo consistent with this palette.`,
+    slate: `Theme "slate": blue-gray accents #334155 / #475569, white surfaces, borders #E2E8F0, body #1E293B. final-cta: charcoal #0f172a → #1e293b with subtle slate-blue accent — no saturated purple.`,
   };
   return specs[themeKey] || specs.modern;
 }
@@ -592,46 +592,41 @@ OUTPUT RULES
 - Target file size: 40-80KB (substantial but not bloated)
 
 ═══════════════════════════════════════════════════════════
-DESIGN SYSTEM (use these tokens)
+VISUAL THEME LOCK (blueprint.visual_theme — REQUIRED; read first)
 ═══════════════════════════════════════════════════════════
-:root {
-  /* Brand */
-  --brand-primary: #6E57E0;
-  --brand-primary-hover: #5B48D0;
-  --brand-primary-soft: #F4F1FE;
-  --brand-secondary: #4F46E5;
-  --brand-accent: #A78BFA;
-  
-  /* Surfaces */
-  --surface: #FFFFFF;
-  --surface-soft: #FAFBFC;
-  --surface-strong: #F5F6F8;
-  --surface-dark: #0F0F12;
-  
-  /* Ink */
-  --ink: #0A0A0A;
-  --ink-soft: #1F2937;
-  --muted: #6B7280;
-  --muted-light: #9CA3AF;
-  
-  /* Lines */
-  --line: #E5E7EB;
-  --line-soft: #F3F4F6;
-  --line-dark: rgba(255,255,255,0.1);
-  
-  /* Effects */
-  --shadow-sm: 0 1px 2px rgba(15,23,42,0.04);
-  --shadow-md: 0 4px 6px -1px rgba(15,23,42,0.06), 0 2px 4px -2px rgba(15,23,42,0.04);
-  --shadow-lg: 0 10px 15px -3px rgba(15,23,42,0.08), 0 4px 6px -4px rgba(15,23,42,0.05);
-  --shadow-xl: 0 20px 25px -5px rgba(15,23,42,0.1), 0 8px 10px -6px rgba(15,23,42,0.06);
-  
-  /* Radius */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
-  --radius-2xl: 24px;
-}
+Theme key: ${resolveVisualThemeKey(blueprint)}
+${visualThemeGenerationContract(resolveVisualThemeKey(blueprint))}
+
+PER-ASSET VARIETY (mandatory — different apps must NOT look like clones):
+- Derive the full palette only from the theme above + this blueprint's title/category/tone. Forbidden unless visual_theme is "purple": recycling the old default violet family (#6E57E0, #5B48D0, #A78BFA, #F4F1FE) or the legacy final-cta purple triple (#1A0B3E / #2D1B69 / #3D2D9E) as a stock template.
+- Vary "chrome personality" intentionally: (A) pill CTAs + soft hero radial, OR (B) 12–16px radii + tight borders + minimal glow, OR (C) outline secondary + bold metric strip — pick from blueprint vibe, not a single house style.
+- Trust bar, preview chips, and insight cards must use tints of THIS page's --brand-primary, not a copied purple.
+
+═══════════════════════════════════════════════════════════
+DESIGN TOKENS (:root — you define all hex values)
+═══════════════════════════════════════════════════════════
+Output a complete :root { ... } using the semantic names below. Map every color to the VISUAL THEME LOCK; tune shadows/radii to match the personality pass above.
+
+Required variable names:
+--brand-primary, --brand-primary-hover, --brand-primary-soft, --brand-secondary, --brand-accent,
+--surface, --surface-soft, --surface-strong, --surface-dark,
+--ink, --ink-soft, --muted, --muted-light,
+--line, --line-soft, --line-dark,
+--shadow-sm, --shadow-md, --shadow-lg, --shadow-xl,
+--radius-sm, --radius-md, --radius-lg, --radius-xl, --radius-2xl
+
+Optional (recommended for VidOptima-class polish): .gradient-text on ONE hero phrase using linear-gradient from --brand-primary to --brand-accent with background-clip:text (theme colors only).
+
+REFERENCE LAYOUT (high-end app landing like VidOptima — keep REQUIRED class names for validation):
+- site-nav: sticky glass bar; brand + nav-links + compact primary CTA (use class cta-button on nav CTA if you use a shared style).
+- hero-grid: two columns — hero-copy (pill badge, H1, lead, cta-group) and hero-composition > ai-product-preview (window dots + status + several signal-card rows with small chips/badges; qualitative copy only).
+- Hero primary CTA must scroll to the tool: use <section class="tool-panel" id="interactive-tool"> and href="#interactive-tool" on the main hero primary button.
+- trust-bar, metrics-section, benefits-grid, timeline-rail, testimonial-grid, faq-section, final-cta > .dark-box, site-footer with footer-grid + newsletter — all full-width section > .container pattern from below.
+
+TOOL PANEL GRID (configurator-card > form#business-asset-form):
+- Desktop: display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20–28px; each blueprint input in its own field-card.
+- Submit: grid-column: 1 / -1; full width; strong branded label from blueprint.cta_text when present.
+- ≤900px: single column grid for the form.
 
 ═══════════════════════════════════════════════════════════
 CRITICAL LAYOUT ARCHITECTURE (most important — must follow exactly)
@@ -796,10 +791,7 @@ Fix:
 
 ISSUE 9: Final CTA dark box doesn't have enough visual interest
 Fix:
-- background: linear-gradient(135deg, #1A0B3E 0%, #2D1B69 50%, #3D2D9E 100%)
-- Add subtle pattern overlay:
-  background-image: radial-gradient(circle at 20% 30%, rgba(167,139,250,0.15) 0%, transparent 50%),
-                    radial-gradient(circle at 80% 70%, rgba(110,87,224,0.15) 0%, transparent 50%)
+- Build background from the page's own brand hue: linear-gradient + radial accents that use rgba() derived from --brand-primary / theme (do NOT paste a generic violet triple unless visual_theme is purple).
 - Border-radius: 32px (slightly larger than other cards for emphasis)
 - Inside box: text-align center, white text
 - H2: clamp(36px, 5vw, 52px), weight 700, white, max-width 800px, margin auto
@@ -821,6 +813,7 @@ RESPONSIVE BEHAVIOR (must be specific)
 @media (max-width: 1024px) {
   .hero-grid { grid-template-columns: 1fr; gap: 64px; }
   .hero-composition { max-width: 540px; margin: 0 auto; }
+  #business-asset-form { grid-template-columns: 1fr; }
   .benefits-grid .container > div { grid-template-columns: repeat(2, 1fr); }
   .metrics-section .container > div { grid-template-columns: repeat(2, 1fr); gap: 48px; }
   .timeline-rail .container > div { grid-template-columns: 1fr; gap: 32px; }
@@ -831,13 +824,13 @@ RESPONSIVE BEHAVIOR (must be specific)
 @media (max-width: 640px) {
   .site-nav .nav-links { display: none; }
   .site-nav .container { justify-content: space-between; }
-  .hero-grid { padding: 64px 20px; }
+  .hero-grid .container { padding-top: 56px; padding-bottom: 72px; }
   .benefits-grid .container > div { grid-template-columns: 1fr; }
   .testimonial-grid .container > div { grid-template-columns: 1fr; }
   .footer-grid { grid-template-columns: 1fr; gap: 32px; }
   .final-cta .dark-box { padding: 48px 28px; border-radius: 24px; }
-  h1 { font-size: clamp(34px, 8vw, 44px) !important; }
-  h2 { font-size: clamp(28px, 6vw, 36px) !important; }
+  .hero-copy h1 { font-size: clamp(34px, 8vw, 44px) !important; }
+  .section-head h2 { font-size: clamp(28px, 6vw, 36px) !important; }
 }
 
 ═══════════════════════════════════════════════════════════
@@ -893,7 +886,6 @@ THINGS THE PREVIOUS OUTPUT GOT RIGHT — KEEP THESE
 ═══════════════════════════════════════════════════════════
 
 - CSS variable system is correct
-- Color palette is correct
 - Inter font usage is correct
 - Component class names are correct
 - Border-radius values are correct
@@ -928,13 +920,6 @@ After the fix, the page will follow the SAME pattern used by Stripe, Linear,
 Vercel, Notion, Anthropic, and every other premium SaaS site: full-width
 backgrounds, centered content, consistent section headers, proper visual
 rhythm between sections.
-
-═══════════════════════════════════════════════════════════
-VISUAL THEME LOCK (from blueprint.visual_theme — REQUIRED)
-═══════════════════════════════════════════════════════════
-Theme key: ${resolveVisualThemeKey(blueprint)}
-${visualThemeGenerationContract(resolveVisualThemeKey(blueprint))}
-Map theme hues onto the semantic tokens above (--brand-primary, --brand-primary-hover, accents, surfaces, lines). Honor the user's selection from the app.
 
 ═══════════════════════════════════════════════════════════
 TYPOGRAPHY (refined, professional)
@@ -979,11 +964,10 @@ All class names below MUST appear in the HTML for validation.
     <div class="hero-copy">
       - Pill badge at top: small icon dot + label like "New: AI-powered insights"
         Style: brand-soft bg, brand-primary text, 12px 14px, 999px radius, 13px
-      - H1 with one phrase in brand-primary color (NOT gradient text, just colored span)
-        Example: "Generate a <span style="color:var(--brand-primary)">winning strategy</span> in seconds"
+      - H1: either one phrase in brand-primary via <span style="color:var(--brand-primary)"> OR a single .gradient-text span (background-clip:text) using only --brand-primary → --brand-accent hues — never rainbow unrelated colors
       - Subheadline: 19px lead text, max-width 540px, ink-soft
       - Two CTAs in cta-group:
-        Primary: brand-primary bg, white, 14px 28px, 12px radius, weight 600, shadow-md
+        Primary: brand-primary bg, white, 14px 28px, 12px radius (or pill 999px if theme personality calls for it), weight 600, shadow-md — href="#interactive-tool"
         Secondary: transparent, 1px border, ink, hover bg surface-soft
       - 3 trust indicators below buttons: small checkmark icon (CSS) + text
         Style: muted color, 14px, horizontal row with gaps
@@ -997,7 +981,7 @@ All class names below MUST appear in the HTML for validation.
         - Top bar: 3 small colored dots (window controls style) + "AI Strategy Engine" label
         - Below: tabs or status bar — "Analyzing..." with small animated dot
         - Main area: 3 signal-card rows, each showing:
-          - Small colored circle icon (different colors: green, purple, orange)
+          - Small colored circle icon (use theme-derived accent hues: e.g. brand-primary, brand-secondary, a warm or cool contrast — not a fixed purple/green/orange trio every time)
           - Strong title text
           - Smaller muted description
           - Right side: small badge or metric chip
@@ -1031,6 +1015,7 @@ All class names below MUST appear in the HTML for validation.
        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
   <section class="tool-panel">
     - Full width; inner <div class="container"> max-width 920px (narrower than 1200), padding clamp(80px,10vw,120px) 24px
+    - The section tag MUST include id="interactive-tool" for in-page CTA deep links
     
     <div class="section-head">
       - Use standardized structure: <span class="eyebrow">...</span>, <h2>...</h2>, <p class="lead">...</p>
@@ -1089,7 +1074,7 @@ All class names below MUST appear in the HTML for validation.
           </div>
           
           <div class="monetization-card">
-            - Background brand-soft (subtle purple tint)
+            - Background using brand-soft (subtle tint from THIS theme's primary)
             - 1px border brand-primary at 20% opacity
             - Same internal structure
             - Title: "Revenue Path"
@@ -1272,7 +1257,7 @@ DEPTH (use these subtly for premium feel):
 COLOR USAGE:
 - Brand-primary used on: CTAs, key icons, eyebrow text, focus rings, brand mark dot
 - Most surfaces stay white or near-white
-- One section (final-cta) is dark for visual rhythm
+- One section (final-cta) is dark for visual rhythm; its gradient must match the active theme (see VISUAL THEME LOCK)
 - Subtle brand tints in: monetization-card background, hero radial glow, badge
 
 WHITESPACE:
@@ -1287,11 +1272,12 @@ MOTION:
 - Respect prefers-reduced-motion media query
 
 DO NOT:
-✗ Use gradient text effects (-webkit-background-clip)
+✗ Reuse the same default violet palette on every asset (see FORBIDDEN list in VISUAL THEME LOCK)
+✗ Use more than ONE gradient-text span in the hero H1
 ✗ Use glassmorphism (backdrop-filter blur over 12px)
 ✗ Use multiple dark sections (only final-cta is dark)
 ✗ Use floating gradient orbs as primary visuals
-✗ Use border-radius over 24px on general UI cards (exception: final-cta inner .dark-box may use 32px per ADDITIONAL LAYOUT FIXES)
+✗ Use border-radius over 24px on general UI cards (exception: final-cta inner .dark-box may use 32px per ADDITIONAL LAYOUT FIXES; pill buttons may use 999px)
 ✗ Use shadows with blur over 30px
 ✗ Use Font Awesome, icon libraries, or Tailwind CDN
 ✗ Use Arial or system fonts (Inter only)
@@ -1327,7 +1313,8 @@ Your HTML output MUST include ALL these class names:
 □ site-footer, footer-grid, newsletter
 
 Quality requirements:
-□ Real <form id="business-asset-form"> with <input>/<select> + <button type="submit">
+□ Real <form id="business-asset-form"> with <input>/<select> + <button type="submit"> in a 2-column desktop grid inside configurator-card
+□ <section class="tool-panel" id="interactive-tool"> and hero primary CTA href="#interactive-tool"
 □ <script> block with form interactivity
 □ @media query for responsive
 □ Inter font loaded from Google Fonts
@@ -1365,7 +1352,7 @@ function normalizeGeneratedHtml(html: string): string {
     const responsiveFallback = `
 
 @media (max-width: 900px) {
-  .hero-grid, .tool-panel, .footer-grid, .testimonial-grid, .benefits-grid, .timeline-rail, .tool-form-grid {
+  .hero-grid, .tool-panel, .footer-grid, .testimonial-grid, .benefits-grid, .timeline-rail, .tool-form-grid, #business-asset-form {
     grid-template-columns: 1fr !important;
   }
 
@@ -1684,7 +1671,7 @@ async function generateLandingPageWithOpenAI(prompt: string, apiKey: string): Pr
           {
             role: "system",
             content:
-              "You are a principal SaaS product designer. Output only raw HTML. Create clean, minimalist, professional landing pages with reusable CSS, Inter typography, polished sections, and no flashy effects. Think Linear, Vercel, Stripe — restrained and confident.",
+              "You are a principal SaaS product designer. Output only raw HTML. Each landing page must visually match blueprint.visual_theme with a DISTINCT palette and styling — never default to generic violet unless the theme is purple. Inter typography, polished sections, VidOptima-class structure (split hero, 2-col tool form, trust, metrics, roadmap, FAQ), no markdown.",
           },
           { role: "user", content: prompt },
         ],

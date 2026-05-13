@@ -113,7 +113,7 @@ export default function MyMagnets() {
         {/* Header */}
         <div className="surface-panel mb-8 p-6">
           <div className="section-eyebrow mb-2">Asset Library</div>
-          <h1 className="text-4xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>My Magnets</h1>
+          <h1 className="text-4xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>My Ai Auto Traffic projects</h1>
           <p style={{ color: "var(--text-secondary)" }}>
             All blueprints you've generated across your projects.
           </p>
@@ -123,7 +123,7 @@ export default function MyMagnets() {
         <div className="premium-card p-6 mb-8">
           <div className="flex items-center justify-between mb-3">
             <p className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
-              {usage.used} of {usage.limit} lifetime Traffic Magnets used
+              {usage.used} of {usage.limit} lifetime Ai Auto Traffic projects used
             </p>
             <p className="text-lg font-bold" style={{ color: "var(--text-primary)" }}>
               {usage.used} / {usage.limit}
@@ -148,7 +148,7 @@ export default function MyMagnets() {
           {usagePercentage >= 100 && (
             <div>
               <p className="text-sm font-medium" style={{ color: "#F43F5E" }}>
-                You've used all your Traffic Magnets.
+                You've used all your Ai Auto Traffic project slots.
               </p>
               <Link
                 to="/settings"
@@ -161,7 +161,7 @@ export default function MyMagnets() {
           )}
           {usagePercentage >= 80 && usagePercentage < 100 && (
             <p className="text-sm font-medium" style={{ color: "#F59E0B" }}>
-              Running low — {usage.limit - usage.used} magnets remaining.
+              Running low — {usage.limit - usage.used} project slots remaining.
             </p>
           )}
         </div>
@@ -175,7 +175,7 @@ export default function MyMagnets() {
             >
               <Zap className="w-10 h-10" style={{ color: "var(--brand)" }} />
             </div>
-            <h3 className="text-2xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>No magnets yet</h3>
+            <h3 className="text-2xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>No projects yet</h3>
             <p className="mb-6" style={{ color: "var(--text-secondary)" }}>
               Create a project to start generating business asset ideas
             </p>
@@ -213,7 +213,7 @@ export default function MyMagnets() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search magnets..."
+                  placeholder="Search projects..."
                   className="input-premium w-full pl-10 pr-4 py-3 text-sm"
                 />
               </div>

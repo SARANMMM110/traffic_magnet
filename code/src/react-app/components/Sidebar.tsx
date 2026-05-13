@@ -116,7 +116,7 @@ export default function Sidebar() {
               <Sparkles className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="font-bold leading-tight" style={{ color: "var(--text-primary)" }}>Traffic Magnet</h1>
+              <h1 className="font-bold leading-tight" style={{ color: "var(--text-primary)" }}>Ai Auto Traffic</h1>
               <p className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>
                 AI growth studio
               </p>
@@ -133,7 +133,7 @@ export default function Sidebar() {
             label="Dashboard"
           />
           <SidebarLink to="/projects/new" icon={<Plus className="w-4 h-4" />} label="New Project" />
-          <SidebarLink to="/magnets" icon={<Magnet className="w-4 h-4" />} label="My Magnets" />
+          <SidebarLink to="/magnets" icon={<Magnet className="w-4 h-4" />} label="My tools" />
           <SidebarLink
             to="/content"
             icon={<FileText className="w-4 h-4" />}

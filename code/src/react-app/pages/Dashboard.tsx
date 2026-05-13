@@ -208,7 +208,7 @@ export default function Dashboard() {
                 <span className="text-gradient">{user?.google_user_data.name?.split(" ")[0] || "there"}</span>
               </h1>
               <p className="text-xl leading-relaxed mb-8" style={{ color: "var(--text-secondary)" }}>
-                Create AI-powered SEO tools in minutes. Build traffic magnets, generate landing pages,
+                Create AI-powered SEO tools in minutes. Build Ai Auto Traffic projects, generate landing pages,
                 and wrap content—all from one polished workspace.
               </p>
 
@@ -249,7 +249,7 @@ export default function Dashboard() {
                 </h2>
                 <p className="text-base" style={{ color: "var(--text-secondary)" }}>
                   {projects.length === 0
-                    ? "Here's how to create your first traffic magnet"
+                    ? "Here's how to create your first Ai Auto Traffic project"
                     : "Continue growing your traffic toolkit"}
                 </p>
               </div>
@@ -363,7 +363,7 @@ export default function Dashboard() {
                 {loading ? "..." : stats?.toolCount || 0}
               </p>
               <p className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
-                Traffic magnets generated
+                Ai Auto Traffic projects generated
               </p>
             </div>
 
@@ -463,7 +463,7 @@ export default function Dashboard() {
               </div>
               <h3 className="text-3xl font-bold mb-3" style={{ color: "var(--text-primary)" }}>
                 {projects.length === 0
-                  ? "Ready to build your first traffic magnet?"
+                  ? "Ready to build your first Ai Auto Traffic project?"
                   : "No matching projects"}
               </h3>
               <p className="text-lg mb-8 max-w-md mx-auto" style={{ color: "var(--text-secondary)" }}>
