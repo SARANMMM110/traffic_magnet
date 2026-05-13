@@ -1432,14 +1432,18 @@ async function generateLandingPageWithOpenAI(prompt: string, apiKey: string): Pr
           { role: "user", content: prompt },
         ],
         temperature: 0.4,
-        max_tokens: 20000,
+        // gpt-4o chat completions cap completion tokens at 16384; higher values return HTTP 400.
+        max_tokens: 16384,
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`[Landing Page/OpenAI] API error ${response.status}:`, errorText);
-      throw new Error(`OpenAI API returned ${response.status}`);
+      const detail = errorText.replace(/\s+/g, " ").trim().slice(0, 400);
+      throw new Error(
+        detail ? `OpenAI API ${response.status}: ${detail}` : `OpenAI API returned ${response.status}`
+      );
     }
 
     const data = (await response.json()) as any;
