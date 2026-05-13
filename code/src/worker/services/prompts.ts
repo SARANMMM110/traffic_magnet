@@ -536,13 +536,16 @@ REQUIRED COMPONENTS:
 - wrapper class: taf-widget
 - header: taf-widget-header with taf-ai-badge
 - progress/steps: taf-stepper and taf-progress
-- form: taf-tool-panel with taf-field-card for every input
-- selects: taf-select-wrap around every select
+- interactive area: taf-tool-panel containing a literal <form tag (e.g. <form id="taf-assessment-form" onsubmit="event.preventDefault();">) wrapping all inputs — use step panels inside the form, not a div-only faux form
+- every input: taf-field-card (use taf-select-wrap around every select)
 - CTA: taf-primary-button with premium gradient styling
 - results: taf-insight-dashboard with taf-score-meter, taf-metric-card, taf-strategy-card, taf-cta-block
+- include taf-lead-capture, taf-export-actions, taf-step-card, and taf-progress so premium embed checks pass
+- include <script for step navigation and submit handling (required)
 
 DESIGN RULES:
-- Use Inter/Manrope typography, 20px+ radius, soft borders, glass-light surfaces, layered shadows, premium muted gradients
+- Use Inter, Manrope, or Plus Jakarta Sans from Google Fonts if you link fonts; 20px+ radius, soft borders, glass-light surfaces, layered shadows, premium muted gradients
+- Forms must feel premium: floating or stacked labels, large rounded inputs, soft inner shadows, gradient primary actions, icon chips, rich focus/hover states — never plain browser-default controls
 - Inputs must have custom focus glow and must not look browser-default
 - Results must be an AI opportunity report with traffic, conversion, monetization, and next action cards
 - No footer inside embed mode
@@ -570,6 +573,9 @@ DESIGN DIRECTION:
 - Visual quality should feel close to Linear, Stripe, Framer, Raycast, Arc Browser, Notion AI, and Vercel.
 - Use soft neutral backgrounds, layered gradients, glass-light surfaces, large radius, refined shadows, elegant borders, and precise spacing rhythm.
 - Do not create generic bright gradient heroes, flat white card grids, fake SaaS dashboards, old startup sections, or Bootstrap-style rows.
+- Use a coherent design system with --brand-primary, --brand-secondary, --surface, --surface-strong, --ink, --muted, --line, --shadow-soft, and --radius-xl tokens.
+- Include decorative orbs, gradient borders, glassmorphism panels, layered shadows, hover lift, focus-visible states, and reduced-motion support.
+- Use clamp() typography and spacious section rhythm so the page feels polished on desktop, tablet, and mobile.
 
 REQUIRED COMPONENT CLASSES:
 - experience-shell: main page wrapper with layered visual atmosphere.
@@ -592,11 +598,23 @@ REQUIRED COMPONENT CLASSES:
 
 TOOL EXPERIENCE:
 - Use a literal <form id="business-asset-form"> with all blueprint inputs.
-- Inputs/selects must look custom and premium, with focus states and grouped labels.
+- Every input/select/textarea must be inside a field-card with a bold label, short helpful microcopy, and a small icon-chip or visual label marker.
+- Inputs/selects must look custom and premium: large rounded controls, soft inner shadow, hover lift, focus glow, and clear active state.
+- Select controls must be custom-styled with a premium arrow treatment, not plain operating-system dropdown styling.
 - Submit CTA should say something like "Reveal My Opportunity", "Generate My Strategy", or "Build My Revenue Plan".
+- The submit CTA must feel like a premium AI action button with gradient surface, strong typography, hover elevation, and concise value-driven text.
+- Add small progress/readiness elements in the configurator such as a step indicator, readiness bar, or "AI analysis path" row.
 - Results must be an AI insight workspace with opportunity score, signal cards, strategy cards, monetization cards, and next steps.
 
+STANDALONE REFERENCE BRIEF:
+- Use this quality target and structure: "Create a premium light UI for a digital nomad destination matcher with form inputs, result chips, steps, benefits, FAQ, and CTA — responsive, purple accent, glassmorphism, 12 destinations data, match logic, single HTML."
+- If the blueprint is about digital nomads, destinations, relocation, travel, city matching, remote work, lifestyle matching, or destination discovery, implement the brief directly with 12 destination data objects and real match logic in JavaScript.
+- If the blueprint is not travel/destination-related, adapt the same pattern to the blueprint domain: premium light UI, purple accent, glassmorphism, impressive form inputs, result chips, step cards, benefits, FAQ, CTA, real data/options, real scoring/match logic, and one self-contained HTML file.
+- Always include result chips/badges in the analysis-workspace so the output feels interactive and app-like.
+
 CONTENT RULES:
+- Never output empty placeholder containers such as <div class="ai-product-preview"></div>, <div class="hero-composition"></div>, <div class="tool-panel"></div>, or empty section shells.
+- Every required visual component must contain complete nested HTML with real headings, body copy, visual cards, and meaningful product UI details.
 - Avoid generic phrases like "Powerful Features", "Why Choose Us", "Get Started Today", and "Calculate Now".
 - Do not invent fake vanity metrics such as "Traffic 120k", "Revenue 500k", "$500k", or similar fabricated proof.
 - Copy should focus on revenue growth, traffic intelligence, lead capture, monetization, authority, and conversion momentum.
@@ -605,37 +623,4 @@ BLUEPRINT:
 ${JSON.stringify(blueprint, null, 2)}
 
 Generate the complete premium standalone HTML now:`;
-}
-
-function generateInputFields(inputs: any[]): string {
-  if (!Array.isArray(inputs) || inputs.length === 0) {
-    return `
-      <div style="display:flex;flex-direction:column;gap:8px;">
-        <label style="font-weight:600;font-size:14px;color:#2C3A58;">Input Value</label>
-        <input type="text" required style="padding:12px 16px;border:1.5px solid #E9EDF4;border-radius:12px;font-size:15px;background:#F9FAFE;">
-      </div>`;
-  }
-  
-  return inputs.map((input, idx) => {
-    const fieldName = typeof input === 'string' ? input : (input.name || input.label || `Input ${idx + 1}`);
-    const fieldType = typeof input === 'object' && input.type === 'select' ? 'select' : 'text';
-    
-    if (fieldType === 'select') {
-      return `
-      <div style="display:flex;flex-direction:column;gap:8px;">
-        <label style="font-weight:600;font-size:14px;color:#2C3A58;">${fieldName}</label>
-        <select id="input${idx}" required style="padding:12px 16px;border:1.5px solid #E9EDF4;border-radius:12px;font-size:15px;background:#F9FAFE;">
-          <option value="">Select</option>
-          <option>Option 1</option>
-          <option>Option 2</option>
-        </select>
-      </div>`;
-    }
-    
-    return `
-      <div style="display:flex;flex-direction:column;gap:8px;">
-        <label style="font-weight:600;font-size:14px;color:#2C3A58;">${fieldName}</label>
-        <input type="text" id="input${idx}" placeholder="Enter ${fieldName.toLowerCase()}" required style="padding:12px 16px;border:1.5px solid #E9EDF4;border-radius:12px;font-size:15px;background:#F9FAFE;">
-      </div>`;
-  }).join('\n');
 }

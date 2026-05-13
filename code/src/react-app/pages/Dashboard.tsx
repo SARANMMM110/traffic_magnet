@@ -4,10 +4,8 @@ import { useAuth } from "@getmocha/users-service/react";
 import DashboardLayout from "@/react-app/components/DashboardLayout";
 import { useToast } from "@/react-app/components/Toast";
 import { ConfirmModal } from "@/react-app/components/ConfirmModal";
+import { QuickAction } from "@/react-app/components/QuickAction";
 import {
-  Layers,
-  BarChart,
-  Compass,
   Sparkles,
   Plus,
   Search,
@@ -15,6 +13,13 @@ import {
   Rocket,
   Archive,
   Trash2,
+  Zap,
+  FileText,
+  Wand2,
+  TrendingUp,
+  Target,
+  ArrowRight,
+  Lightbulb,
 } from "lucide-react";
 
 interface DashboardStats {
@@ -41,12 +46,6 @@ interface Project {
   created_at: string;
 }
 
-interface Recommendation {
-  name: string;
-  description: string;
-  score: number;
-}
-
 const GOAL_COLORS: Record<string, string> = {
   backlinks: "#3B82F6",
   leads: "#10B981",
@@ -70,8 +69,6 @@ export default function Dashboard() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [goalFilter, setGoalFilter] = useState("all");
-  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
-  const [loadingRecs, setLoadingRecs] = useState(false);
   const [hoveredProject, setHoveredProject] = useState<number | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
@@ -104,34 +101,9 @@ export default function Dashboard() {
     }
   };
 
-  const handleGetRecommendations = async () => {
-    setLoadingRecs(true);
-    // Simulate AI recommendations
-    setTimeout(() => {
-      setRecommendations([
-        {
-          name: "ROI Opportunity Engine",
-          description: "Help visitors identify revenue upside and next best actions",
-          score: 92,
-        },
-        {
-          name: "Keyword Density Checker",
-          description: "Analyze keyword usage in content",
-          score: 88,
-        },
-        {
-          name: "Meta Tag Generator",
-          description: "Create optimized meta tags for SEO",
-          score: 85,
-        },
-      ]);
-      setLoadingRecs(false);
-    }, 2000);
-  };
-
   const handleArchiveProject = async (e: React.MouseEvent, project: Project) => {
     e.stopPropagation();
-    
+
     try {
       const response = await fetch(`/api/projects/${project.id}/archive`, {
         method: "POST",
@@ -212,335 +184,387 @@ export default function Dashboard() {
     return name.charAt(0).toUpperCase();
   };
 
-  const animateNumber = (target: number) => {
-    return target; // In a real app, you'd use a counter animation library
-  };
-
   return (
     <DashboardLayout>
       <div className="page-shell space-y-8">
-        {/* Welcome Banner */}
-        <div className="surface-panel relative overflow-hidden p-8 md:p-10">
-          <div className="absolute right-8 top-8 hidden h-28 w-28 rounded-full border border-white/70 bg-white/35 md:block" />
-          <div className="relative z-10 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-2xl space-y-4">
-              <div className="section-eyebrow">AI SaaS Dashboard</div>
-              <h1 className="text-4xl font-bold leading-tight md:text-5xl" style={{ color: "var(--text-primary)" }}>
-                Welcome back, {user?.google_user_data.name || "there"}
+        {/* Hero Welcome Section */}
+        <div className="surface-panel relative overflow-hidden">
+          <div
+            className="absolute right-0 top-0 w-96 h-96 opacity-30 blur-3xl"
+            style={{
+              background: "radial-gradient(circle, rgba(99, 91, 255, 0.4), transparent)",
+            }}
+          />
+          <div className="relative z-10 p-8 md:p-12">
+            <div className="max-w-3xl">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/60 border border-[var(--border)] mb-6">
+                <Sparkles className="w-4 h-4 text-[var(--brand)]" />
+                <span className="text-sm font-semibold text-[var(--brand)]">
+                  AI-Powered Growth Studio
+                </span>
+              </div>
+              <h1 className="text-5xl md:text-6xl font-bold leading-tight mb-6">
+                Welcome back,{" "}
+                <span className="text-gradient">{user?.google_user_data.name?.split(" ")[0] || "there"}</span>
               </h1>
-              <p className="text-base leading-7 md:text-lg" style={{ color: "var(--text-secondary)" }}>
-                Plan, generate, publish, and wrap high-traffic AI business assets from one polished workspace.
+              <p className="text-xl leading-relaxed mb-8" style={{ color: "var(--text-secondary)" }}>
+                Create AI-powered SEO tools in minutes. Build traffic magnets, generate landing pages,
+                and wrap content—all from one polished workspace.
               </p>
-            </div>
-            <Link to="/projects/new">
-              <button className="btn-primary inline-flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-semibold">
-                <Plus className="h-4 w-4" />
-                New Project
-              </button>
-            </Link>
-          </div>
-        </div>
 
-        {/* Stats Row */}
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
-          <div className="premium-card p-6">
-            <div className="mb-6 flex items-center justify-between">
-              <div className="icon-tile">
-                <Layers className="w-5 h-5" />
+              {/* Quick Actions */}
+              <div className="flex flex-wrap gap-3">
+                <Link to="/projects/new">
+                  <button className="btn-primary rounded-2xl px-6 py-3.5 text-base font-semibold inline-flex items-center gap-2 shadow-xl">
+                    <Zap className="w-5 h-5" />
+                    Generate New Tool
+                  </button>
+                </Link>
+                <Link to="/content">
+                  <button className="btn-secondary rounded-2xl px-6 py-3.5 text-base font-semibold inline-flex items-center gap-2">
+                    <FileText className="w-5 h-5" />
+                    Content Wrapper
+                  </button>
+                </Link>
               </div>
-              <span className="rounded-full bg-[var(--brand-soft)] px-3 py-1 text-xs font-bold text-[var(--brand)]">
-                Workspace
-              </span>
-            </div>
-            <div>
-              <p className="text-4xl font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>
-                {loading ? "..." : animateNumber(stats?.projectCount || 0)}
-              </p>
-              <p className="mt-1 text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
-                Active projects
-              </p>
-            </div>
-          </div>
-
-          <div className="premium-card p-6">
-            <div className="mb-6 flex items-center justify-between">
-              <div className="icon-tile text-[var(--accent-green)]">
-                <BarChart className="w-5 h-5" />
-              </div>
-              <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-600">
-                Output
-              </span>
-            </div>
-            <div>
-              <p className="text-4xl font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>
-                {loading ? "..." : animateNumber(stats?.toolCount || 0)}
-              </p>
-              <p className="mt-1 text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
-                Assets Generated
-              </p>
-            </div>
-          </div>
-
-          <div className="premium-card p-6">
-            <div className="mb-6 flex items-center justify-between">
-              <div className="icon-tile text-[var(--accent-blue)]">
-                <Compass className="w-5 h-5" />
-              </div>
-              <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-600">
-                Market
-              </span>
-            </div>
-            <div>
-              <p className="text-4xl font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>
-                {loading ? "..." : animateNumber(projects.length > 0 ? new Set(projects.map(p => p.niche)).size : 0)}
-              </p>
-              <p className="mt-1 text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
-                Niches Explored
-              </p>
             </div>
           </div>
         </div>
 
-        {/* AI Recommendations Panel */}
-        <div className="premium-card p-6">
-          <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-            <div className="flex items-center gap-3">
-              <div className="icon-tile text-[var(--accent-amber)]">
-                <Sparkles className="w-5 h-5" />
+        {/* What's Next Section - Contextual Guidance */}
+        {!loading && (
+          <div className="premium-card p-8">
+            <div className="flex items-start gap-4 mb-6">
+              <div
+                className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
+                style={{
+                  background: "linear-gradient(135deg, #F59E0B, #D97706)",
+                }}
+              >
+                <Lightbulb className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h3 className="text-lg font-bold" style={{ color: "var(--text-primary)" }}>AI Recommended Assets</h3>
-                <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-                  Suggestions based on your niches, goals, and current project mix.
+                <h2 className="text-2xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>
+                  {projects.length === 0 ? "Get Started in 3 Steps" : "Recommended Next Steps"}
+                </h2>
+                <p className="text-base" style={{ color: "var(--text-secondary)" }}>
+                  {projects.length === 0
+                    ? "Here's how to create your first traffic magnet"
+                    : "Continue growing your traffic toolkit"}
                 </p>
               </div>
             </div>
-            {recommendations.length === 0 && (
-              <button
-                onClick={handleGetRecommendations}
-                disabled={loadingRecs || projects.length === 0}
-                className="btn-secondary rounded-2xl px-4 py-2.5 text-sm font-semibold disabled:opacity-50"
-              >
-                {loadingRecs ? "Thinking..." : "Get Suggestions"}
-              </button>
-            )}
-          </div>
 
-          {recommendations.length === 0 && !loadingRecs && (
-            <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-              {projects.length === 0
-                ? "Create your first project to get AI-powered asset suggestions tailored to your niche."
-                : "Click 'Get Suggestions' to get AI-powered business asset ideas tailored to your existing projects."}
-            </p>
-          )}
-
-          {loadingRecs && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {[1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                className="premium-card p-4 animate-pulse"
-                >
-                  <div className="h-4 bg-slate-200 rounded mb-2" />
-                  <div className="h-3 bg-slate-100 rounded w-3/4" />
-                </div>
-              ))}
-            </div>
-          )}
-
-          {recommendations.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {recommendations.map((rec, i) => (
-                <div key={i} className="premium-card p-4 space-y-3">
-                  <div className="flex items-start justify-between">
-                    <h4 className="font-semibold" style={{ color: "var(--text-primary)" }}>{rec.name}</h4>
-                    <span
-                      className="px-2 py-1 rounded-full text-xs font-bold"
-                      style={{
-                        background: "rgba(124, 92, 252, 0.15)",
-                        color: "var(--brand)",
-                      }}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {projects.length === 0 ? (
+                <>
+                  <QuickAction
+                    to="/projects/new"
+                    icon={Target}
+                    title="Create Your First Project"
+                    description="Choose a niche and set your traffic goal. We'll discover tool ideas for you."
+                    color="#635BFF"
+                    iconBg="rgba(99, 91, 255, 0.15)"
+                  />
+                  <div className="premium-card p-6 opacity-60">
+                    <div
+                      className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
+                      style={{ background: "rgba(16, 185, 129, 0.15)" }}
                     >
-                      {rec.score}
-                    </span>
+                      <Wand2 className="w-7 h-7" style={{ color: "#10B981" }} />
+                    </div>
+                    <h3 className="text-lg font-bold mb-2" style={{ color: "var(--text-primary)" }}>
+                      Generate Blueprint
+                    </h3>
+                    <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                      AI creates detailed blueprints with keywords, monetization, and CTAs
+                    </p>
                   </div>
-                  <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-                    {rec.description}
-                  </p>
-                  <button
-                    className="btn-primary w-full rounded-xl px-3 py-2 text-sm font-semibold"
-                  >
-                    Build
-                  </button>
-                </div>
-              ))}
+                  <div className="premium-card p-6 opacity-60">
+                    <div
+                      className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
+                      style={{ background: "rgba(37, 99, 235, 0.15)" }}
+                    >
+                      <Rocket className="w-7 h-7" style={{ color: "#2563EB" }} />
+                    </div>
+                    <h3 className="text-lg font-bold mb-2" style={{ color: "var(--text-primary)" }}>
+                      Build & Publish
+                    </h3>
+                    <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                      Generate landing pages and export ready-to-publish HTML
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <QuickAction
+                    to="/projects/new"
+                    icon={Plus}
+                    title="Create Another Project"
+                    description="Expand into new niches and discover more tool opportunities."
+                    color="#635BFF"
+                    iconBg="rgba(99, 91, 255, 0.15)"
+                  />
+                  <QuickAction
+                    to={`/projects/${projects[0].id}`}
+                    icon={TrendingUp}
+                    title="Optimize Existing Tools"
+                    description="Generate variations and landing pages for your current assets."
+                    color="#10B981"
+                    iconBg="rgba(16, 185, 129, 0.15)"
+                  />
+                  <QuickAction
+                    to="/content"
+                    icon={FileText}
+                    title="Wrap with Content"
+                    description="Boost SEO by wrapping tools in AI-generated articles."
+                    color="#2563EB"
+                    iconBg="rgba(37, 99, 235, 0.15)"
+                  />
+                </>
+              )}
             </div>
-          )}
+          </div>
+        )}
+
+        {/* Stats Overview */}
+        <div>
+          <h3 className="section-eyebrow mb-5">YOUR PROGRESS</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="premium-card p-7">
+              <div className="flex items-center justify-between mb-5">
+                <div
+                  className="w-14 h-14 rounded-2xl flex items-center justify-center"
+                  style={{ background: "rgba(99, 91, 255, 0.15)" }}
+                >
+                  <Target className="w-7 h-7" style={{ color: "var(--brand)" }} />
+                </div>
+                <span className="section-eyebrow">Projects</span>
+              </div>
+              <p className="text-5xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>
+                {loading ? "..." : stats?.projectCount || 0}
+              </p>
+              <p className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
+                Active campaigns running
+              </p>
+            </div>
+
+            <div className="premium-card p-7">
+              <div className="flex items-center justify-between mb-5">
+                <div
+                  className="w-14 h-14 rounded-2xl flex items-center justify-center"
+                  style={{ background: "rgba(16, 185, 129, 0.15)" }}
+                >
+                  <Zap className="w-7 h-7" style={{ color: "#10B981" }} />
+                </div>
+                <span className="section-eyebrow">Tools</span>
+              </div>
+              <p className="text-5xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>
+                {loading ? "..." : stats?.toolCount || 0}
+              </p>
+              <p className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
+                Traffic magnets generated
+              </p>
+            </div>
+
+            <div className="premium-card p-7">
+              <div className="flex items-center justify-between mb-5">
+                <div
+                  className="w-14 h-14 rounded-2xl flex items-center justify-center"
+                  style={{ background: "rgba(245, 158, 11, 0.15)" }}
+                >
+                  <TrendingUp className="w-7 h-7" style={{ color: "#F59E0B" }} />
+                </div>
+                <span className="section-eyebrow">Niches</span>
+              </div>
+              <p className="text-5xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>
+                {loading
+                  ? "..."
+                  : projects.length > 0
+                  ? new Set(projects.map((p) => p.niche)).size
+                  : 0}
+              </p>
+              <p className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
+                Markets explored
+              </p>
+            </div>
+          </div>
         </div>
 
-        {/* Your Projects Section */}
-        <div className="premium-card p-6">
-          <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <h2
-              className="section-eyebrow"
-            >
-              YOUR PROJECTS
-            </h2>
+        {/* Projects Section */}
+        <div>
+          <div className="flex items-center justify-between mb-5">
+            <h3 className="section-eyebrow">YOUR PROJECTS</h3>
             <Link to="/projects/new">
-              <button
-                className="btn-primary flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold"
-              >
+              <button className="btn-primary rounded-2xl px-5 py-2.5 text-sm font-semibold inline-flex items-center gap-2">
                 <Plus className="w-4 h-4" />
                 New Project
               </button>
             </Link>
           </div>
 
-          {/* Filters */}
-          <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center">
-            <div className="flex-1 relative">
-              <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
-                style={{ color: "var(--text-muted)" }}
-              />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by name or niche..."
-                className="input-premium w-full pl-10 pr-4 py-3 text-sm"
-              />
+          {/* Search & Filters */}
+          {projects.length > 0 && (
+            <div className="premium-card p-5 mb-5">
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1 relative">
+                  <Search
+                    className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5"
+                    style={{ color: "var(--text-muted)" }}
+                  />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search projects by name or niche..."
+                    className="w-full pl-12 pr-5 py-3.5 rounded-2xl text-base"
+                    style={{
+                      background: "rgba(255, 255, 255, 0.95)",
+                      border: "1px solid var(--border)",
+                      color: "var(--text-primary)",
+                    }}
+                  />
+                </div>
+                <select
+                  value={goalFilter}
+                  onChange={(e) => setGoalFilter(e.target.value)}
+                  className="px-5 py-3.5 rounded-2xl text-base font-medium"
+                  style={{
+                    background: "rgba(255, 255, 255, 0.95)",
+                    border: "1px solid var(--border)",
+                    color: "var(--text-primary)",
+                  }}
+                >
+                  <option value="all">All Goals</option>
+                  <option value="backlinks">Backlinks</option>
+                  <option value="leads">Leads</option>
+                  <option value="traffic">Traffic</option>
+                  <option value="engagement">Engagement</option>
+                </select>
+              </div>
             </div>
-            <select
-              value={goalFilter}
-              onChange={(e) => setGoalFilter(e.target.value)}
-              className="input-premium px-4 py-3 text-sm"
-            >
-              <option value="all">All Goals</option>
-              <option value="backlinks">Backlinks</option>
-              <option value="leads">Leads</option>
-              <option value="traffic">Traffic</option>
-              <option value="engagement">Engagement</option>
-            </select>
-          </div>
+          )}
 
           {/* Project List */}
           {loading ? (
-            <div className="text-center py-12">
-              <p style={{ color: "var(--text-secondary)" }}>Loading projects...</p>
+            <div className="premium-card p-16 text-center">
+              <div className="spinner mx-auto mb-4" />
+              <p className="text-lg font-medium" style={{ color: "var(--text-secondary)" }}>
+                Loading your projects...
+              </p>
             </div>
           ) : filteredProjects.length === 0 ? (
-            <div
-              className="rounded-[24px] p-12 text-center"
-              style={{
-                background: "var(--bg-elevated)",
-                border: "1px solid var(--border)",
-              }}
-            >
+            <div className="premium-card p-16 text-center">
               <div
-                className="w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center"
-                style={{ background: "rgba(124, 92, 252, 0.15)" }}
+                className="w-24 h-24 mx-auto mb-6 rounded-3xl flex items-center justify-center"
+                style={{ background: "rgba(99, 91, 255, 0.15)" }}
               >
-                <Rocket className="w-10 h-10" style={{ color: "var(--brand)" }} />
+                <Rocket className="w-12 h-12" style={{ color: "var(--brand)" }} />
               </div>
-              <h3 className="text-2xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>
+              <h3 className="text-3xl font-bold mb-3" style={{ color: "var(--text-primary)" }}>
                 {projects.length === 0
-                  ? "Your first project is one click away"
-                  : "No projects match your search"}
+                  ? "Ready to build your first traffic magnet?"
+                  : "No matching projects"}
               </h3>
-              <p className="mb-6" style={{ color: "var(--text-secondary)" }}>
+              <p className="text-lg mb-8 max-w-md mx-auto" style={{ color: "var(--text-secondary)" }}>
                 {projects.length === 0
-                  ? "Create a project to start building traffic-magnet business assets"
-                  : "Try adjusting your filters"}
+                  ? "Create a project, choose your niche, and let AI discover tool opportunities for you."
+                  : "Try adjusting your search or filter settings"}
               </p>
               {projects.length === 0 && (
                 <Link to="/projects/new">
-                  <button
-                    className="btn-primary rounded-2xl px-6 py-3 font-semibold"
-                  >
-                    Create Your First Project
+                  <button className="btn-primary rounded-2xl px-8 py-4 text-lg font-semibold inline-flex items-center gap-2">
+                    <Zap className="w-5 h-5" />
+                    Create First Project
+                    <ArrowRight className="w-5 h-5" />
                   </button>
                 </Link>
               )}
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {filteredProjects.map((project, index) => (
                 <div
                   key={project.id}
-                  className="w-full rounded-3xl border border-[var(--border)] bg-white/80 p-4 transition-all hover:border-[rgba(99,91,255,0.22)] hover:shadow-sm md:p-5 flex items-center gap-4 group relative"
+                  className="premium-card p-6 flex items-center gap-5 group cursor-pointer"
                   style={{
-                    borderColor: hoveredProject === project.id ? "rgba(99, 91, 255, 0.24)" : "var(--border)",
+                    borderColor:
+                      hoveredProject === project.id ? "rgba(99, 91, 255, 0.3)" : "var(--border)",
                   }}
                   onMouseEnter={() => setHoveredProject(project.id)}
                   onMouseLeave={() => setHoveredProject(null)}
+                  onClick={() => navigate(`/projects/${project.id}`)}
                 >
-                  <button
-                    onClick={() => navigate(`/projects/${project.id}`)}
-                    className="flex items-center gap-4 flex-1 min-w-0"
+                  <div
+                    className="w-16 h-16 rounded-2xl flex items-center justify-center font-bold text-white text-2xl flex-shrink-0 shadow-md"
+                    style={{
+                      background: `linear-gradient(135deg, ${getProjectColor(index)}, var(--brand-dim))`,
+                    }}
                   >
-                    <div
-                      className="w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-white text-lg flex-shrink-0 shadow-sm"
-                      style={{ background: `linear-gradient(135deg, ${getProjectColor(index)}, var(--brand-dim))` }}
-                    >
-                      {getProjectInitial(project.name)}
-                    </div>
-                    <div className="flex-1 text-left min-w-0">
-                      <h3 className="font-semibold mb-1" style={{ color: "var(--text-primary)" }}>{project.name}</h3>
-                      <div className="flex items-center gap-3 flex-wrap">
-                        <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-                          {project.niche}
-                        </p>
-                        {project.goal && (
-                          <span
-                            className="px-2 py-1 rounded-full text-xs font-semibold"
-                            style={{
-                              background: `${GOAL_COLORS[project.goal]}20`,
-                              color: GOAL_COLORS[project.goal],
-                            }}
-                          >
-                            {GOAL_LABELS[project.goal]}
-                          </span>
-                        )}
-                        <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-                          {project.tool_count} {project.tool_count === 1 ? "asset" : "assets"}
+                    {getProjectInitial(project.name)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>
+                      {project.name}
+                    </h3>
+                    <div className="flex items-center gap-4 flex-wrap">
+                      <p className="text-base font-medium" style={{ color: "var(--text-secondary)" }}>
+                        {project.niche}
+                      </p>
+                      {project.goal && (
+                        <span
+                          className="px-3 py-1.5 rounded-xl text-sm font-bold"
+                          style={{
+                            background: `${GOAL_COLORS[project.goal]}20`,
+                            color: GOAL_COLORS[project.goal],
+                          }}
+                        >
+                          {GOAL_LABELS[project.goal]}
                         </span>
-                      </div>
+                      )}
+                      <span className="text-sm font-semibold" style={{ color: "var(--text-muted)" }}>
+                        {project.tool_count} {project.tool_count === 1 ? "tool" : "tools"}
+                      </span>
                     </div>
-                  </button>
-                  <div className="flex items-center gap-2 flex-shrink-0">
+                  </div>
+                  <div className="flex items-center gap-3 flex-shrink-0">
                     {hoveredProject === project.id && (
                       <>
                         <button
                           onClick={(e) => handleArchiveProject(e, project)}
-                          className="p-2 rounded-xl transition-all hover:brightness-110"
+                          className="p-3 rounded-2xl transition-all hover:scale-110"
                           style={{
                             background: "rgba(245, 158, 11, 0.15)",
                             color: "var(--accent-amber)",
                           }}
-                          title="Archive project"
+                          title="Archive"
                         >
-                          <Archive className="w-4 h-4" />
+                          <Archive className="w-5 h-5" />
                         </button>
                         <button
                           onClick={(e) => handleDeleteClick(e, project)}
-                          className="p-2 rounded-xl transition-all hover:brightness-110"
+                          className="p-3 rounded-2xl transition-all hover:scale-110"
                           style={{
                             background: "rgba(239, 68, 68, 0.15)",
                             color: "#EF4444",
                           }}
-                          title="Delete project"
+                          title="Delete"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-5 h-5" />
                         </button>
                       </>
                     )}
-                    <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-                      {new Date(project.created_at).toLocaleDateString()}
-                    </p>
+                    <div className="text-right">
+                      <p className="text-sm font-medium mb-1" style={{ color: "var(--text-muted)" }}>
+                        Created
+                      </p>
+                      <p className="text-sm font-semibold" style={{ color: "var(--text-secondary)" }}>
+                        {new Date(project.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
                     <ChevronRight
-                      className="w-5 h-5 group-hover:translate-x-1 transition-transform"
-                      style={{ color: "var(--text-muted)" }}
+                      className="w-6 h-6 group-hover:translate-x-2 transition-transform"
+                      style={{ color: "var(--brand)" }}
                     />
                   </div>
                 </div>
@@ -548,23 +572,23 @@ export default function Dashboard() {
             </div>
           )}
         </div>
-
-        {/* Delete Confirmation Modal */}
-        {deleteModalOpen && projectToDelete && (
-          <ConfirmModal
-            isOpen={deleteModalOpen}
-            onClose={() => {
-              setDeleteModalOpen(false);
-              setProjectToDelete(null);
-            }}
-            onConfirm={handleDeleteConfirm}
-            title="Delete Project"
-            description={`Are you sure you want to delete "${projectToDelete.name}"? This will permanently delete all ${projectToDelete.tool_count} assets in this project. This action cannot be undone.`}
-            confirmLabel="Delete Project"
-            confirmVariant="danger"
-          />
-        )}
       </div>
+
+      {/* Delete Modal */}
+      {deleteModalOpen && projectToDelete && (
+        <ConfirmModal
+          isOpen={deleteModalOpen}
+          onClose={() => {
+            setDeleteModalOpen(false);
+            setProjectToDelete(null);
+          }}
+          onConfirm={handleDeleteConfirm}
+          title="Delete Project"
+          description={`Are you sure you want to delete "${projectToDelete.name}"? This will permanently delete all ${projectToDelete.tool_count} assets. This action cannot be undone.`}
+          confirmLabel="Delete Project"
+          confirmVariant="danger"
+        />
+      )}
     </DashboardLayout>
   );
 }
