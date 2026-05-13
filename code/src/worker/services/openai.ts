@@ -634,6 +634,302 @@ DESIGN SYSTEM (use these tokens)
 }
 
 ═══════════════════════════════════════════════════════════
+CRITICAL LAYOUT ARCHITECTURE (most important — must follow exactly)
+═══════════════════════════════════════════════════════════
+
+The .experience-shell wrapper is FULL-WIDTH. Do NOT cap it.
+
+CORRECT pattern (this is non-negotiable):
+
+.experience-shell {
+  width: 100%;
+  /* NO max-width, NO margin auto, NO padding */
+}
+
+EACH SECTION takes full width with its own background:
+
+section, .site-nav, .site-footer {
+  width: 100%;
+}
+
+INSIDE each section, use a container div that centers content at 1200px:
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+REQUIRED PATTERN for every section:
+
+<section class="trust-bar">
+  <div class="container">
+    <!-- content here, max 1200px centered -->
+  </div>
+</section>
+
+This way:
+- Section backgrounds span edge-to-edge (full viewport width)
+- Content stays centered at 1200px max
+- Dark final-cta section can have full-width dark background
+- Trust bar gray background spans full screen
+- Footer extends full width but content is constrained
+
+SECTION-BY-SECTION WIDTH SPECIFICATIONS:
+
+1. site-nav:
+   - position: sticky, top: 0, width: 100%, z-index: 50
+   - Background: rgba(255,255,255,0.85), backdrop-filter: blur(12px)
+   - Border-bottom 1px var(--line)
+   - Inner container: max-width 1200px, flex layout, padding 0 24px
+
+2. hero-grid:
+   - Width 100%, full-width background gradient
+   - Inner container: max-width 1200px, padding clamp(80px,12vw,140px) 24px
+   - Grid 1.1fr 1fr, gap clamp(48px, 6vw, 80px)
+
+3. trust-bar:
+   - Width 100%, background var(--surface-soft) (full width!)
+   - Border-top and border-bottom 1px var(--line)
+   - Inner container: max-width 1200px, padding 48px 24px
+
+4. tool-panel:
+   - Width 100%, background var(--surface)
+   - Inner container: max-width 920px, padding clamp(80px,10vw,120px) 24px
+
+5. metrics-section:
+   - Width 100%, background var(--surface-soft) (FULL WIDTH BACKGROUND)
+   - Inner container: max-width 1200px, padding clamp(72px,10vw,100px) 24px
+
+6. benefits-grid:
+   - Width 100%, white background
+   - Inner container: max-width 1200px, padding clamp(80px,10vw,120px) 24px
+
+7. timeline-rail:
+   - Width 100%, white background
+   - Inner container: max-width 1100px, padding clamp(80px,10vw,120px) 24px
+
+8. testimonial-grid:
+   - Width 100%, background var(--surface-soft)
+   - Inner container: max-width 1200px, padding clamp(72px,10vw,100px) 24px
+
+9. faq-section:
+   - Width 100%, white background
+   - Inner container: max-width 760px, padding clamp(72px,10vw,100px) 24px
+
+10. final-cta:
+    - Width 100%, white background outer
+    - Inner container: max-width 1200px, padding 80px 24px
+    - INSIDE container: a dark rounded box (24px radius) with the dark gradient
+    - That dark box has its own padding clamp(56px,8vw,88px) clamp(32px,6vw,64px)
+
+11. site-footer:
+    - Width 100%, white background, border-top 1px var(--line)
+    - Inner container: max-width 1200px, padding 72px 24px 40px
+
+═══════════════════════════════════════════════════════════
+ADDITIONAL LAYOUT FIXES
+═══════════════════════════════════════════════════════════
+
+ISSUE 1: Hero gap too large on tablet
+Fix: Use clamp(40px, 6vw, 80px) instead of fixed 80px
+
+ISSUE 2: Hero composition (right side) looks empty/floating
+Fix: The ai-product-preview card needs more visual substance:
+- Add a subtle gradient blob ::before pseudo-element positioned behind the card
+  with brand-primary at 8% opacity, 60px blur, 40% larger than the card
+- The card itself needs at least 4-5 internal elements (header row, status bar,
+  3 signal cards, recommendation card) to feel substantial
+- Total card height should be approximately 480-560px to balance the left content
+
+ISSUE 3: Field cards too cramped (padding: 24px is too small)
+Fix: Field card padding should be 24px 24px (vertical breathing room)
+Field-card label area needs 12px gap between icon-chip and label text
+
+ISSUE 4: Metric numbers look weak
+Fix:
+- font-size: clamp(40px, 5vw, 56px)
+- font-weight: 800
+- letter-spacing: -0.03em
+- line-height: 1
+- Each metric in its own column with proper spacing
+- Label below metric: 14-15px weight 500, muted, margin-top 8px
+
+ISSUE 5: Benefit cards inconsistent
+Fix: Every benefit-card needs:
+- Min-height 240px (so they're all equal height)
+- Padding 32px (not 24px)
+- Display flex, flex-direction column
+- Icon-chip at top (48px square, brand-soft background, rounded 12px,
+  contains CSS-only icon shape — like a small colored square or rotated shape)
+- Title margin-top 20px (not 16px)
+- Description: flex 1 (fills remaining space)
+- Optional "Learn more →" link at bottom
+
+ISSUE 6: Timeline rail steps don't connect visually
+Fix:
+- Use display: grid, grid-template-columns: repeat(4, 1fr), gap 0
+- Each step uses position relative
+- Connecting line: a single absolutely-positioned div spanning across all 4 steps
+  at the top (where the number circles are), 2px dashed brand-primary at 20% opacity
+- Number circles: position relative, z-index 2, white background to "cut" the line
+- This creates the actual connected timeline visual
+
+ISSUE 7: Testimonials feel flat
+Fix:
+- Each testimonial card needs a large stylized opening quote mark (using CSS ::before)
+- Quote mark: font-size 80px, line-height 0, color brand-primary at 25% opacity,
+  position absolute top-right, font-family serif
+- Card needs position: relative to anchor the quote mark
+- Min-height 280px for visual balance
+
+ISSUE 8: FAQ items missing visual feedback
+Fix:
+- summary cursor: pointer, padding: 24px 28px
+- summary::-webkit-details-marker { display: none; }
+- summary { list-style: none; }
+- summary uses display: flex, justify-content: space-between, align-items: center
+- Plus icon: a styled span with CSS-only "+" that rotates 45deg on [open]
+- Open state: summary background var(--surface-soft), border-radius unchanged
+- Answer padding: 0 28px 28px 28px
+
+ISSUE 9: Final CTA dark box doesn't have enough visual interest
+Fix:
+- background: linear-gradient(135deg, #1A0B3E 0%, #2D1B69 50%, #3D2D9E 100%)
+- Add subtle pattern overlay:
+  background-image: radial-gradient(circle at 20% 30%, rgba(167,139,250,0.15) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 70%, rgba(110,87,224,0.15) 0%, transparent 50%)
+- Border-radius: 32px (slightly larger than other cards for emphasis)
+- Inside box: text-align center, white text
+- H2: clamp(36px, 5vw, 52px), weight 700, white, max-width 800px, margin auto
+- Subhead: 18-19px, white at 75%, max-width 600px, margin auto, 24px top margin
+- Button below: 40px top margin, white bg, brand-primary text, weight 700,
+  17px font, padding 18px 40px, 14px radius, shadow-xl
+
+ISSUE 10: Footer columns alignment
+Fix:
+- footer-grid: display grid, grid-template-columns: 2fr 1fr 1fr 1fr (brand column wider)
+- gap: 48px
+- Bottom row: margin-top 64px, padding-top 32px, border-top 1px var(--line-soft)
+- Bottom row uses display flex, justify-content space-between, align-items center
+
+═══════════════════════════════════════════════════════════
+RESPONSIVE BEHAVIOR (must be specific)
+═══════════════════════════════════════════════════════════
+
+@media (max-width: 1024px) {
+  .hero-grid { grid-template-columns: 1fr; gap: 64px; }
+  .hero-composition { max-width: 540px; margin: 0 auto; }
+  .benefits-grid .container > div { grid-template-columns: repeat(2, 1fr); }
+  .metrics-section .container > div { grid-template-columns: repeat(2, 1fr); gap: 48px; }
+  .timeline-rail .container > div { grid-template-columns: 1fr; gap: 32px; }
+  .timeline-rail .connector-line { display: none; }
+  .footer-grid { grid-template-columns: 1fr 1fr; gap: 40px; }
+}
+
+@media (max-width: 640px) {
+  .site-nav .nav-links { display: none; }
+  .site-nav .container { justify-content: space-between; }
+  .hero-grid { padding: 64px 20px; }
+  .benefits-grid .container > div { grid-template-columns: 1fr; }
+  .testimonial-grid .container > div { grid-template-columns: 1fr; }
+  .footer-grid { grid-template-columns: 1fr; gap: 32px; }
+  .final-cta .dark-box { padding: 48px 28px; border-radius: 24px; }
+  h1 { font-size: clamp(34px, 8vw, 44px) !important; }
+  h2 { font-size: clamp(28px, 6vw, 36px) !important; }
+}
+
+═══════════════════════════════════════════════════════════
+SECTION-HEAD STANDARDIZATION
+═══════════════════════════════════════════════════════════
+
+Every section that has a header (metrics, benefits, timeline, testimonials,
+faq) MUST use this consistent structure:
+
+<div class="section-head">
+  <span class="eyebrow">EYEBROW TEXT</span>
+  <h2>Main Section Headline</h2>
+  <p class="lead">Optional supporting paragraph max 2 lines</p>
+</div>
+
+.section-head {
+  text-align: center;
+  max-width: 720px;
+  margin: 0 auto 64px;  /* 64px bottom margin before content */
+}
+
+.eyebrow {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--brand-primary);
+  margin-bottom: 16px;
+}
+
+.section-head h2 {
+  font-size: clamp(32px, 4vw, 44px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: var(--ink);
+  margin: 0 0 16px;
+}
+
+.section-head .lead {
+  font-size: 18px;
+  line-height: 1.6;
+  color: var(--muted);
+  margin: 0;
+}
+
+This consistent header pattern makes every section feel professional and
+related, not random.
+
+═══════════════════════════════════════════════════════════
+THINGS THE PREVIOUS OUTPUT GOT RIGHT — KEEP THESE
+═══════════════════════════════════════════════════════════
+
+- CSS variable system is correct
+- Color palette is correct
+- Inter font usage is correct
+- Component class names are correct
+- Border-radius values are correct
+- Shadow values are correct
+
+═══════════════════════════════════════════════════════════
+DON'T BREAK
+═══════════════════════════════════════════════════════════
+
+- Do not change the validator (assertPremiumHtmlQuality)
+- Do not change required component class names
+- Do not change the function signature
+- Do not modify other functions in the file
+
+═══════════════════════════════════════════════════════════
+WHY THIS FIXES THE MISMATCH
+═══════════════════════════════════════════════════════════
+
+The previous output looked "off" because:
+
+1. The whole page was capped at 1200px including section backgrounds, so the
+   nav and trust-bar and footer all looked floated and disconnected
+2. Sections that should have visual rhythm (alternating white/grey backgrounds)
+   couldn't show that because backgrounds were clipped
+3. The dark final-cta was a small dark box instead of feeling like a proper
+   conversion section
+4. Spacing was inconsistent because some sections had different container widths
+5. The section headers didn't follow a single pattern, making the page feel
+   like 11 different designers worked on it
+
+After the fix, the page will follow the SAME pattern used by Stripe, Linear,
+Vercel, Notion, Anthropic, and every other premium SaaS site: full-width
+backgrounds, centered content, consistent section headers, proper visual
+rhythm between sections.
+
+═══════════════════════════════════════════════════════════
 VISUAL THEME LOCK (from blueprint.visual_theme — REQUIRED)
 ═══════════════════════════════════════════════════════════
 Theme key: ${resolveVisualThemeKey(blueprint)}
@@ -655,6 +951,7 @@ TYPOGRAPHY (refined, professional)
 REQUIRED PAGE STRUCTURE
 ═══════════════════════════════════════════════════════════
 All class names below MUST appear in the HTML for validation.
+- Layout: follow CRITICAL LAYOUT ARCHITECTURE — .experience-shell is full-width only (no max-width); each .site-nav, section, and .site-footer is width:100% with an inner <div class="container"> per section max-width rules; wrap center nav links in <div class="nav-links">; final-cta: full-width section, inner .container, then inner .dark-box for the gradient conversion panel.
 
 <main class="experience-shell">
 
@@ -662,11 +959,11 @@ All class names below MUST appear in the HTML for validation.
        1. NAVIGATION — sticky, refined, with subtle backdrop blur
        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
   <nav class="site-nav">
-    - Sticky top, white/95% with backdrop-filter: blur(12px)
+    - Full-width bar; inner <div class="container"> flex row, height 68px, align items center
+    - Sticky top, rgba(255,255,255,0.85), backdrop-filter: blur(12px)
     - Border-bottom 1px solid var(--line)
-    - Height 68px, max-width 1200px container with side padding
     - Brand logo (text + small colored dot/square mark): weight 700, 18px
-    - 3-4 center nav links: weight 500, 15px, ink-soft, hover to ink
+    - Center links inside <div class="nav-links">: weight 500, 15px, ink-soft, hover to ink
     - Right side: secondary "Log in" link + primary CTA button
     - CTA button: brand-primary bg, white text, 10px radius, 9px 18px padding
   </nav>
@@ -675,10 +972,9 @@ All class names below MUST appear in the HTML for validation.
        2. HERO — split 55/45 layout, premium and confident
        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
   <section class="hero-grid">
-    - Padding clamp(80px, 12vw, 140px) top/bottom, container 1200px
-    - Background: subtle radial gradient — 
-      radial-gradient(ellipse 800px 600px at 70% 0%, rgba(110,87,224,0.04), transparent)
-    - Grid: 1.1fr 1fr, gap 80px, align-items center
+    - Full-width section; background gradient on the section itself
+    - Inner <div class="container"> with padding clamp(80px,12vw,140px) 24px
+    - CSS grid on .container: 1.1fr 1fr, gap clamp(40px, 6vw, 80px), align-items center
     
     <div class="hero-copy">
       - Pill badge at top: small icon dot + label like "New: AI-powered insights"
@@ -705,8 +1001,8 @@ All class names below MUST appear in the HTML for validation.
           - Strong title text
           - Smaller muted description
           - Right side: small badge or metric chip
-        - One highlighted "recommendation" card with brand-soft background
-        - Subtle ::before pseudo-element with offset gradient for depth (optional)
+        - Total visual height target ~480-560px; include header row, status bar, 3 signal rows, one highlighted recommendation block
+        - Subtle ::before gradient blob behind card (brand-primary ~8% opacity, ~60px blur, larger than card) per ADDITIONAL LAYOUT FIXES
         
         Example signal-card content (qualitative, NOT fake numbers):
         - "Buyer-intent keywords identified" / "12 long-tail opportunities"
@@ -720,8 +1016,8 @@ All class names below MUST appear in the HTML for validation.
        3. TRUST BAR — refined logo strip or stat row
        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
   <section class="trust-bar">
-    - Background var(--surface-soft), border-top/bottom 1px var(--line)
-    - Padding 48px 24px
+    - Full-width background var(--surface-soft), borders top/bottom 1px var(--line)
+    - Inner <div class="container"> padding 48px 24px
     - Small centered "Trusted by growth teams at" label (13px uppercase, muted)
     - Below: 5-6 horizontally arranged text "logos" — just brand names in 
       weight 600, 15-16px, muted-light color, evenly spaced with 48-64px gaps
@@ -734,13 +1030,10 @@ All class names below MUST appear in the HTML for validation.
        4. TOOL PANEL — the interactive AI configurator (centerpiece)
        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
   <section class="tool-panel">
-    - Padding clamp(80px, 10vw, 120px) 24px
-    - Max-width 880px, centered
+    - Full width; inner <div class="container"> max-width 920px (narrower than 1200), padding clamp(80px,10vw,120px) 24px
     
     <div class="section-head">
-      - Eyebrow label "Try it free" / "Interactive Demo"
-      - H2 headline (2 lines max)
-      - Subheadline paragraph below
+      - Use standardized structure: <span class="eyebrow">...</span>, <h2>...</h2>, <p class="lead">...</p>
     </div>
     
     <div class="configurator-card">
@@ -754,9 +1047,8 @@ All class names below MUST appear in the HTML for validation.
         
         Each field-card:
         - Background var(--surface-soft), 1px border var(--line), 14px radius
-        - Padding 20px
+        - Padding 24px; label row: display flex, align-items center, 12px gap between icon-chip and label text (14px weight 600)
         - Hover: border-color brand-primary, very subtle lift
-        - Label row: icon-chip (8px colored circle) + label text (14px weight 600)
         - Description below label (13px muted)
         - Input/select below: white bg, 1px border, 10px radius, 12px 14px padding
         - Input focus: border brand-primary, 3px outline brand-primary at 12% opacity
@@ -813,13 +1105,10 @@ All class names below MUST appear in the HTML for validation.
        5. METRICS / OUTCOMES — premium stat showcase
        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
   <section class="metrics-section">
-    - Background var(--surface-soft), padding clamp(72px, 10vw, 100px) 24px
-    - Centered section-head (eyebrow + h2 + subhead)
-    - Below: 4-column grid of metric blocks (2x2 on mobile)
-    - Each metric:
-      - Large number: 48-56px, weight 800, ink color (or brand-primary for emphasis)
-      - Label below: 14-15px, weight 500, muted
-      - Optional small description: 13px, muted-light
+    - Full-width background var(--surface-soft); inner <div class="container"> padding clamp(72px,10vw,100px) 24px
+    - section-head with <span class="eyebrow">, <h2>, <p class="lead"> per SECTION-HEAD STANDARDIZATION
+    - Below section-head: inner <div> inside .container wrapping the 4-column metrics grid (for .metrics-section .container > div responsive rules)
+    - Each metric number: clamp(40px,5vw,56px), weight 800, letter-spacing -0.03em, line-height 1; label 14-15px weight 500 muted, margin-top 8px
     - Use qualitative outcomes NOT fake numbers:
       Example: "10x faster" / "Strategy generation"
                "AI-powered" / "Insights engine"
@@ -831,18 +1120,15 @@ All class names below MUST appear in the HTML for validation.
        6. BENEFITS — feature grid with icons and depth
        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
   <section class="benefits-grid">
-    - Padding clamp(80px, 10vw, 120px) 24px, max-width 1200px
-    - section-head at top
-    - 3-column grid (1 col on mobile), gap 32px
+    - Full width white background; inner <div class="container"> padding clamp(80px,10vw,120px) 24px
+    - section-head at top (eyebrow + h2 + lead)
+    - Inner grid wrapper inside .container: a single child <div> wrapping the 3-column grid (so responsive selectors like .benefits-grid .container > div match)
     - 6 benefit-card items (use blueprint.features):
       Each card:
-      - White bg, 1px border var(--line), 16px radius, 32px padding
+      - min-height 240px; display flex; flex-direction column; white bg, 1px border var(--line), 16px radius, padding 32px
       - Hover: border brand-primary at 30% opacity, shadow-md, slight lift
-      - Top: icon-chip — 48px square, brand-soft bg, brand-primary text
-        Inside: CSS-only icon shape (rotated square, circle with line, etc.)
-      - H3 title (18px weight 600), margin 20px top
-      - Description (15px muted, 1.6 line height)
-      - Optional small link "Learn more →" at bottom
+      - Icon-chip: 48px square, brand-soft bg, rounded 12px, brand-primary CSS-only icon
+      - H3 title margin-top 20px; description flex:1; optional "Learn more →" at bottom
     - Features to highlight: ${JSON.stringify(features)}
   </section>
 
@@ -850,14 +1136,11 @@ All class names below MUST appear in the HTML for validation.
        7. TIMELINE / MONETIZATION ROADMAP — process steps
        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
   <section class="timeline-rail">
-    - Padding clamp(80px, 10vw, 120px) 24px, max-width 1100px
-    - section-head: eyebrow "How it works" / "From free asset to revenue"
-    - 4 roadmap-step items in horizontal row (vertical stack on mobile)
-    - Each step:
-      - Number badge: 40px circle, brand-primary bg, white text, weight 700
-      - Title (17px weight 600) below number
-      - Description (14px muted, 1.6) below title
-      - Connecting line between steps: 2px dashed line in brand-primary at 20% opacity
+    - Full width; inner <div class="container"> max-width 1100px, padding clamp(80px,10vw,120px) 24px
+    - section-head (eyebrow + h2 + lead)
+    - Relative wrapper inside .container: include <div class="connector-line"></div> and a child <div> wrapping the 4-column step grid (for .timeline-rail .container > div responsive rules)
+    - Grid: display grid; grid-template-columns: repeat(4, 1fr); each .roadmap-step position relative; number circles z-index above line with white bg "cutting" the dashed line
+    - 4 roadmap-step items (vertical stack on mobile)
     - Use blueprint.monetization_roadmap content if available
   </section>
 
@@ -865,16 +1148,14 @@ All class names below MUST appear in the HTML for validation.
        8. TESTIMONIALS — credible quotes (no avatars, no fake logos)
        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
   <section class="testimonial-grid">
-    - Padding clamp(72px, 10vw, 100px) 24px, max-width 1100px
-    - section-head with eyebrow "Loved by builders" / "Real outcomes"
-    - 2-3 column grid, gap 32px
+    - Full-width background var(--surface-soft); inner <div class="container"> padding clamp(72px,10vw,100px) 24px
+    - section-head (eyebrow + h2 + lead)
+    - Inner grid: 3 columns (1 on mobile), gap 32px; wrap cards in a child <div> inside .container for .testimonial-grid .container > div selectors
     - 3 testimonial-card items:
-      - White bg, 1px border, 16px radius, 32px padding
-      - Top: quote mark (large stylized " in brand-primary at 30% opacity)
+      - position relative; min-height 280px; white bg, 1px border, 16px radius, 32px padding
+      - Large decorative quote via ::before (serif, ~80px, brand-primary ~25% opacity, top-right)
       - Quote text: 16-17px ink-soft, line-height 1.65, weight 500
-      - Bottom attribution row:
-        - Initials avatar: 40px circle, brand-soft bg, brand-primary text initials
-        - Name (15px weight 600) + role (13px muted)
+      - Bottom attribution: initials circle + name + role
     - Use plausible names like "Sarah Chen / Growth Lead at Atlas Studio"
   </section>
 
@@ -882,18 +1163,14 @@ All class names below MUST appear in the HTML for validation.
        9. FAQ — native accordion, clean styling
        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
   <section class="faq-section">
-    - Padding clamp(72px, 10vw, 100px) 24px
-    - Max-width 760px, centered
-    - section-head: eyebrow + h2 "Frequently asked questions"
+    - Full width white; inner <div class="container"> max-width 760px, padding clamp(72px,10vw,100px) 24px
+    - section-head (eyebrow + h2 + lead) for FAQ title area
     - 6-8 FAQ items as <details>:
-      Each: 
+      Each:
       - 1px border var(--line), 14px radius, margin-bottom 12px
-      - Padding 0 (controlled by summary/content padding)
-      - <summary>: 20px padding, weight 600 16px, cursor pointer
-        - Has list-style: none and ::-webkit-details-marker { display:none }
-        - Plus icon on right (CSS-only) that rotates to minus on open
-      - Open state content: padding 4px 20px 24px, 15px muted, 1.65 line-height
-      - Open state: background var(--surface-soft)
+      - summary: list-style none, ::-webkit-details-marker display none, display flex justify-between align center, padding 24px 28px, cursor pointer, weight 600 16px
+      - Plus icon span with CSS + that rotates 45deg when details[open]
+      - Open summary background var(--surface-soft); answer padding 0 28px 28px 28px, 15px muted
     - Generate FAQs from blueprint context (relevant to the tool/asset)
   </section>
 
@@ -901,35 +1178,22 @@ All class names below MUST appear in the HTML for validation.
        10. FINAL CTA — premium conversion block
        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
   <section class="final-cta">
-    - Container max-width 1100px, padding clamp(64px, 10vw, 100px) 24px
-    - Inside: large rounded container (24px radius)
-    - Background: rich dark surface var(--surface-dark)
-      WITH subtle gradient overlay:
-      background: linear-gradient(135deg, #0F0F12 0%, #1A1530 100%)
-    - OR use brand-tinted version:
-      background: linear-gradient(135deg, var(--brand-primary), #3D2D9E)
-    - Padding clamp(56px, 8vw, 88px) clamp(32px, 6vw, 64px)
-    - Text-align center, color white
-    - H2 emotional headline (40-48px weight 700, white)
-    - Subheadline (18-19px, white at 80% opacity, max-width 640px)
-    - Single primary CTA button:
-      - White bg, brand-primary text, 16px 36px, 12px radius
-      - Weight 700, 17px, shadow-lg
-      - Hover: subtle lift + slight scale (1.02)
-    - Below button: small text "No credit card required • Cancel anytime" in white at 60%
+    - Full-width white outer background
+    - Inner <div class="container"> max-width 1200px, padding 80px 24px
+    - Inside container: <div class="dark-box"> — this holds the gradient, border-radius 32px, layered backgrounds per ADDITIONAL LAYOUT FIXES ISSUE 9, padding clamp(56px,8vw,88px) clamp(32px,6vw,64px), centered white typography and CTA button
+    - Below button: reassurance line in white at ~60% opacity
   </section>
 
   <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
        11. FOOTER — polished 4-column SaaS footer
        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
   <footer class="site-footer">
-    - Background white, border-top 1px var(--line)
-    - Padding 72px 24px 40px, max-width 1200px
-    
+    - Full width white, border-top 1px var(--line)
+    - Inner <div class="container"> padding 72px 24px 40px
     <div class="footer-grid">
-      - 4-column grid (2x2 on tablet, 1 col on mobile), gap 48px
+      - grid-template-columns: 2fr 1fr 1fr 1fr; gap 48px (stack per responsive rules)
       
-      Column 1 (wider, 1.5fr):
+      Column 1 (2fr / brand column):
       - Brand mark (logo dot + name)
       - Brand description (2 lines, 14px muted)
       - <div class="newsletter">
@@ -945,8 +1209,8 @@ All class names below MUST appear in the HTML for validation.
       - No bullet points, just stacked links with 12px line-height spacing
     </div>
     
-    Bottom row (margin-top 56px, padding-top 32px, border-top 1px line-soft):
-    - Flex justify-between
+    Bottom row (margin-top 64px, padding-top 32px, border-top 1px var(--line-soft)):
+    - display flex; justify-content space-between; align-items center
     - Left: copyright "© 2025 [Brand]. All rights reserved." (13px muted)
     - Right: text social links (Twitter, LinkedIn, GitHub) — 13px muted, hover ink
     - NO icon images, just text
@@ -1027,7 +1291,7 @@ DO NOT:
 ✗ Use glassmorphism (backdrop-filter blur over 12px)
 ✗ Use multiple dark sections (only final-cta is dark)
 ✗ Use floating gradient orbs as primary visuals
-✗ Use border-radius over 24px
+✗ Use border-radius over 24px on general UI cards (exception: final-cta inner .dark-box may use 32px per ADDITIONAL LAYOUT FIXES)
 ✗ Use shadows with blur over 30px
 ✗ Use Font Awesome, icon libraries, or Tailwind CDN
 ✗ Use Arial or system fonts (Inter only)
@@ -1037,17 +1301,10 @@ DO NOT:
 ✗ Use over-the-top neon glows
 
 ═══════════════════════════════════════════════════════════
-RESPONSIVE DESIGN
+RESPONSIVE DESIGN (include in <style>)
 ═══════════════════════════════════════════════════════════
-@media (max-width: 1024px) — tablet adjustments
-@media (max-width: 768px) — mobile:
-  - hero-grid: 1 column, hero-composition below hero-copy
-  - benefits-grid, testimonial-grid, metrics: stack to 1 column
-  - timeline-rail: vertical stack
-  - footer-grid: 2 columns or stacked
-  - All padding reduced by 30-40%
-  - H1: clamp(36px, 8vw, 48px)
-  - Section padding: 64px
+- Implement the exact @media blocks from "RESPONSIVE BEHAVIOR" under CRITICAL LAYOUT ARCHITECTURE above.
+- Add prefers-reduced-motion rules where animations exist.
 
 ═══════════════════════════════════════════════════════════
 BLUEPRINT DATA TO IMPLEMENT
