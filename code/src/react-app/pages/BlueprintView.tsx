@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router";
 import DashboardLayout from "@/react-app/components/DashboardLayout";
-import { ArrowLeft, Loader2, Check, Download, Code2 } from "lucide-react";
+import { ArrowLeft, Loader2, Check, Download, Code2, RefreshCw } from "lucide-react";
 import { useToast } from "@/react-app/components/Toast";
 import { VISUAL_THEMES, normalizeVisualThemeId } from "@/react-app/lib/visualThemes";
 
@@ -280,6 +280,11 @@ export default function BlueprintView() {
     } else {
       navigate("/magnets");
     }
+  };
+
+  const regenerateLandingPage = async () => {
+    setLandingPageHtml(null);
+    await generateLandingPageHandler();
   };
 
   const persistVisualTheme = async (themeId: string) => {
@@ -1134,6 +1139,17 @@ export default function BlueprintView() {
                     >
                       <ArrowLeft className="w-4 h-4" />
                       Back
+                    </button>
+                    <button
+                      type="button"
+                      onClick={regenerateLandingPage}
+                      className="flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold text-white transition-all hover:brightness-110"
+                      style={{
+                        background: "var(--brand)",
+                      }}
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                      Regenerate
                     </button>
                   </div>
                 </>
