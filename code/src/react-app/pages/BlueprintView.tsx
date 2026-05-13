@@ -44,10 +44,35 @@ export default function BlueprintView() {
   const [copied, setCopied] = useState(false);
   const [generatingLanding, setGeneratingLanding] = useState(false);
   const [landingPageHtml, setLandingPageHtml] = useState<string | null>(null);
+  const [savingTheme, setSavingTheme] = useState(false);
+
+  const themes = [
+    { id: "modern", name: "Modern", desc: "Clean, minimalist with bold accents", color: "#1F2937" },
+    { id: "ocean", name: "Ocean", desc: "Cool blues with professional feel", color: "#0EA5E9" },
+    { id: "forest", name: "Forest", desc: "Natural greens, earthy and trusted", color: "#10B981" },
+    { id: "sunset", name: "Sunset", desc: "Warm, energetic with vibrant gradient", color: "#F97316" },
+    { id: "purple", name: "Purple", desc: "Premium, creative, sophisticated", color: "#A855F7" },
+    { id: "slate", name: "Slate", desc: "Professional grayscale with neutral accent", color: "#475569" },
+  ] as const;
+
+  const normalizeThemeId = (raw: unknown): string => {
+    const v = String(raw ?? "modern").trim().toLowerCase();
+    return themes.some((t) => t.id === v) ? v : "modern";
+  };
 
   useEffect(() => {
     loadTool();
   }, [id]);
+
+  useEffect(() => {
+    if (!tool?.blueprint) return;
+    try {
+      const bp = JSON.parse(tool.blueprint);
+      setSelectedTheme(normalizeThemeId(bp.visual_theme ?? bp.theme));
+    } catch {
+      /* ignore */
+    }
+  }, [tool?.blueprint]);
 
   const loadTool = async () => {
     try {
@@ -260,14 +285,34 @@ export default function BlueprintView() {
     await generateLandingPageHandler();
   };
 
-  const themes = [
-    { id: "modern", name: "Modern", desc: "Clean, minimalist with bold accents", color: "#1F2937" },
-    { id: "ocean", name: "Ocean", desc: "Cool blues with professional feel", color: "#0EA5E9" },
-    { id: "forest", name: "Forest", desc: "Natural greens, earthy and trusted", color: "#10B981" },
-    { id: "sunset", name: "Sunset", desc: "Warm, energetic with vibrant gradient", color: "#F97316" },
-    { id: "purple", name: "Purple", desc: "Premium, creative, sophisticated", color: "#A855F7" },
-    { id: "slate", name: "Slate", desc: "Professional grayscale with neutral accent", color: "#475569" },
-  ];
+  const persistVisualTheme = async (themeId: string) => {
+    if (!tool?.blueprint) return;
+    setSavingTheme(true);
+    try {
+      let bp: Record<string, unknown>;
+      try {
+        bp = JSON.parse(tool.blueprint);
+      } catch {
+        showToast({ title: "Could not read blueprint to save theme", type: "error" });
+        return;
+      }
+      bp.visual_theme = themeId;
+      const next = JSON.stringify(bp);
+      const res = await fetch(`/api/tools/${tool.id}/blueprint/apply`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ blueprint: next }),
+      });
+      if (!res.ok) {
+        showToast({ title: "Failed to save theme", type: "error" });
+        return;
+      }
+      setTool((prev: Tool | null) => (prev ? { ...prev, blueprint: next } : null));
+    } finally {
+      setSavingTheme(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -674,6 +719,30 @@ export default function BlueprintView() {
                 </p>
               </div>
 
+              {/* Visual theme (stored on blueprint) */}
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <svg className="w-4 h-4" style={{ color: "var(--text-muted)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                  </svg>
+                  <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+                    VISUAL THEME
+                  </h4>
+                  {savingTheme && <Loader2 className="h-4 w-4 animate-spin" style={{ color: "var(--brand)" }} aria-hidden />}
+                </div>
+                <p className="text-sm leading-relaxed" style={{ color: "var(--text-primary)" }}>
+                  <strong>
+                    {themes.find((t) => t.id === normalizeThemeId(blueprint.visual_theme ?? blueprint.theme))?.name ??
+                      "Modern"}
+                  </strong>
+                  <span style={{ color: "var(--text-muted)" }}>
+                    {" "}
+                    — used when you build a standalone page or embed widget. Change it below; it saves to your blueprint
+                    automatically.
+                  </span>
+                </p>
+              </div>
+
               {/* Theme Selector */}
               <div>
                 <h4 className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: "var(--text-muted)" }}>
@@ -683,7 +752,10 @@ export default function BlueprintView() {
                   {themes.map((theme) => (
                     <div
                       key={theme.id}
-                      onClick={() => setSelectedTheme(theme.id)}
+                      onClick={() => {
+                        setSelectedTheme(theme.id);
+                        void persistVisualTheme(theme.id);
+                      }}
                       className={`relative p-3 rounded-lg cursor-pointer transition-all border-2 ${
                         selectedTheme === theme.id ? "border-orange-500" : "border-transparent"
                       }`}

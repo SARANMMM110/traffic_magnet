@@ -7,7 +7,7 @@ import {
   deleteSession,
   MOCHA_SESSION_TOKEN_COOKIE_NAME,
 } from "@getmocha/users-service/backend";
-import { discoverToolIdeas, generateBlueprint, generateToolHTML, generateSEOContent, generateContentWrapper, regenerateBlueprintFromBlueprint, generateLandingPage, generateVariation } from "./services/openai";
+import { discoverToolIdeas, generateBlueprint, generateToolHTML, generateSEOContent, generateContentWrapper, regenerateBlueprintFromBlueprint, generateLandingPage, generateVariation, resolveVisualThemeKey } from "./services/openai";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -623,6 +623,7 @@ app.post("/api/tools/:id/blueprint", authMiddleware, async (c) => {
     blueprint.internal_links = blueprint.internal_links || [];
     blueprint.features = blueprint.features || [];
     blueprint.theme_suggestions = blueprint.theme_suggestions || [];
+    blueprint.visual_theme = resolveVisualThemeKey(blueprint);
 
     // CRITICAL: Clean text fields to ensure they don't contain serialized JSON
     // This prevents raw JSON fragments from appearing in the UI
@@ -721,6 +722,17 @@ app.post("/api/tools/:id/blueprint/regenerate", authMiddleware, async (c) => {
 
     // Parse and validate
     const blueprint = JSON.parse(blueprintJson);
+    let previousVisualTheme = "modern";
+    try {
+      const prevBp = JSON.parse(tool.blueprint as string);
+      previousVisualTheme = resolveVisualThemeKey(prevBp);
+    } catch {
+      /* ignore */
+    }
+    blueprint.visual_theme = resolveVisualThemeKey({
+      ...blueprint,
+      visual_theme: blueprint.visual_theme ?? previousVisualTheme,
+    });
     const validation = validateBlueprint(blueprint);
     
     if (!validation.valid) {
@@ -737,6 +749,7 @@ app.post("/api/tools/:id/blueprint/regenerate", authMiddleware, async (c) => {
     blueprint.internal_links = blueprint.internal_links || [];
     blueprint.features = blueprint.features || [];
     blueprint.theme_suggestions = blueprint.theme_suggestions || [];
+    blueprint.visual_theme = resolveVisualThemeKey(blueprint);
 
     // CRITICAL: Clean text fields to ensure they don't contain serialized JSON
     const cleanTextField = (field: any): string => {
@@ -838,6 +851,7 @@ app.post("/api/tools/:id/html", authMiddleware, async (c) => {
       cta_text: `Generate my ${action === "embed" ? "AI insights" : "opportunity report"}`,
       ...blueprint,
     };
+    blueprint.visual_theme = resolveVisualThemeKey(blueprint);
 
     const html = await generateToolHTML(
       blueprint,
@@ -1051,6 +1065,7 @@ app.post("/api/tools/:id/landing-page", authMiddleware, async (c) => {
       cta_text: `Start using ${tool.name}`,
       ...blueprint,
     };
+    blueprint.visual_theme = resolveVisualThemeKey(blueprint);
 
     if (typeof blueprint.title !== "string" || !blueprint.title.trim()) {
       blueprint.title = tool.name;
