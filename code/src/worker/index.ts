@@ -159,9 +159,19 @@ app.get("/api/usage", authMiddleware, async (c) => {
     "SELECT COUNT(*) as count FROM projects WHERE user_id = ? AND is_archived = 0"
   ).bind(user.id).first();
 
-  // Count tools
+  // All tool rows (includes discovery ideas — many per project)
   const toolCount = await c.env.DB.prepare(
     "SELECT COUNT(*) as count FROM tools WHERE user_id = ?"
+  ).bind(user.id).first();
+
+  // Tools with generated HTML (what users consider "created" / shipped)
+  const toolsBuiltCount = await c.env.DB.prepare(
+    "SELECT COUNT(*) as count FROM tools WHERE user_id = ? AND html_content IS NOT NULL"
+  ).bind(user.id).first();
+
+  // Blueprint-backed tools (what /api/magnets lists)
+  const toolsWithBlueprintCount = await c.env.DB.prepare(
+    "SELECT COUNT(*) as count FROM tools WHERE user_id = ? AND blueprint IS NOT NULL"
   ).bind(user.id).first();
 
   // Count unique niches
@@ -172,6 +182,8 @@ app.get("/api/usage", authMiddleware, async (c) => {
   return c.json({
     projects: projectCount?.count || 0,
     tools: toolCount?.count || 0,
+    toolsCreated: toolsBuiltCount?.count || 0,
+    toolsWithBlueprint: toolsWithBlueprintCount?.count || 0,
     niches: nicheCount?.count || 0,
     plan: "pro",
     limit: 999,

@@ -39,7 +39,7 @@ const NAV_GROUPS: NavGroup[] = [
     title: "Build",
     items: [
       { to: "/projects/new", icon: Zap, label: "New Project" },
-      { to: "/magnets", icon: FolderKanban, label: "My Assets" },
+      { to: "/magnets", icon: FolderKanban, label: "My tools" },
       { to: "/content", icon: FileText, label: "Content Studio" },
     ],
   },

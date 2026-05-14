@@ -8,6 +8,8 @@ import { ArrowLeft, Eye, EyeOff, Info, Check, KeyRound, Save, ShieldCheck } from
 interface UsageData {
   projects: number;
   tools: number;
+  toolsCreated?: number;
+  toolsWithBlueprint?: number;
   niches: number;
   plan: string;
   limit: number;

@@ -16,8 +16,15 @@ interface Magnet {
 }
 
 interface UsageData {
+  /** Finished tools (HTML generated) — same meaning as API `toolsCreated` */
   used: number;
   limit: number;
+}
+
+function parseApiCount(value: unknown): number {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
 }
 
 export default function MyMagnets() {
@@ -34,11 +41,10 @@ export default function MyMagnets() {
   }, []);
 
   useEffect(() => {
-    // Animate progress bar
-    if (usage.used && usage.limit) {
-      const percentage = (usage.used / usage.limit) * 100;
-      setTimeout(() => setProgressWidth(percentage), 100);
-    }
+    if (!usage.limit) return;
+    const percentage = (usage.used / usage.limit) * 100;
+    const t = setTimeout(() => setProgressWidth(percentage), 100);
+    return () => clearTimeout(t);
   }, [usage]);
 
   const loadData = async () => {
@@ -55,7 +61,11 @@ export default function MyMagnets() {
 
       if (usageRes.ok) {
         const data = await usageRes.json();
-        setUsage({ used: data.tools || 0, limit: 10000 }); // 10000 lifetime magnets for pro plan
+        const used =
+          data.toolsCreated !== undefined && data.toolsCreated !== null
+            ? parseApiCount(data.toolsCreated)
+            : 0;
+        setUsage({ used, limit: 10000 });
       }
     } catch (error) {
       console.error("Failed to load data:", error);
@@ -112,10 +122,12 @@ export default function MyMagnets() {
       <div className="page-shell max-w-6xl">
         {/* Header */}
         <div className="surface-panel mb-8 p-6">
-          <div className="section-eyebrow mb-2">Asset Library</div>
-          <h1 className="text-4xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>My Ai Auto Traffic projects</h1>
+          <div className="section-eyebrow mb-2">Tool library</div>
+          <h1 className="text-4xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>My tools</h1>
           <p style={{ color: "var(--text-secondary)" }}>
-            All blueprints you've generated across your projects.
+            Tools with a saved blueprint across your projects. The usage meter counts{" "}
+            <strong>finished tools</strong> — rows where the interactive HTML has been generated at least
+            once — not discovery-only ideas still sitting in a project.
           </p>
         </div>
 
@@ -123,7 +135,7 @@ export default function MyMagnets() {
         <div className="premium-card p-6 mb-8">
           <div className="flex items-center justify-between mb-3">
             <p className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
-              {usage.used} of {usage.limit} lifetime Ai Auto Traffic projects used
+              {usage.used} of {usage.limit} finished tools (HTML generated)
             </p>
             <p className="text-lg font-bold" style={{ color: "var(--text-primary)" }}>
               {usage.used} / {usage.limit}
@@ -148,7 +160,7 @@ export default function MyMagnets() {
           {usagePercentage >= 100 && (
             <div>
               <p className="text-sm font-medium" style={{ color: "#F43F5E" }}>
-                You've used all your Ai Auto Traffic project slots.
+                You&apos;ve reached your lifetime cap for finished tools.
               </p>
               <Link
                 to="/settings"
@@ -161,7 +173,7 @@ export default function MyMagnets() {
           )}
           {usagePercentage >= 80 && usagePercentage < 100 && (
             <p className="text-sm font-medium" style={{ color: "#F59E0B" }}>
-              Running low — {usage.limit - usage.used} project slots remaining.
+              Running low — {usage.limit - usage.used} tool slots remaining.
             </p>
           )}
         </div>
