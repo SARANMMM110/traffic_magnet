@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router";
+import { useAuth } from "@getmocha/users-service/react";
 import DashboardLayout from "@/react-app/components/DashboardLayout";
 import { useToast } from "@/react-app/components/Toast";
 import {
@@ -24,6 +25,13 @@ import {
   GraduationCap,
   Home,
   Repeat,
+  Newspaper,
+  LineChart,
+  Building2,
+  HeartHandshake,
+  Laptop,
+  PieChart,
+  ListChecks,
 } from "lucide-react";
 
 interface OpportunityType {
@@ -34,7 +42,6 @@ interface OpportunityType {
   gradient: string;
   potential: "High" | "Medium" | "Strong";
   monetization: string;
-  trafficScore: number;
   categories: string[];
   audience: string;
 }
@@ -48,7 +55,6 @@ const OPPORTUNITIES: OpportunityType[] = [
     gradient: "from-purple-500 via-purple-600 to-indigo-600",
     potential: "High",
     monetization: "Backlinks & Affiliates",
-    trafficScore: 95,
     categories: [
       "Search Intent Intelligence",
       "Topical Authority Systems",
@@ -66,7 +72,6 @@ const OPPORTUNITIES: OpportunityType[] = [
     gradient: "from-emerald-500 via-green-600 to-teal-600",
     potential: "High",
     monetization: "High Commission Potential",
-    trafficScore: 92,
     categories: [
       "Buyer Intent Analysis",
       "Product Comparison Funnels",
@@ -84,7 +89,6 @@ const OPPORTUNITIES: OpportunityType[] = [
     gradient: "from-pink-500 via-rose-600 to-red-600",
     potential: "Strong",
     monetization: "Leads & Engagement",
-    trafficScore: 88,
     categories: [
       "Audience Growth Systems",
       "Engagement Assets",
@@ -102,7 +106,6 @@ const OPPORTUNITIES: OpportunityType[] = [
     gradient: "from-blue-500 via-indigo-600 to-violet-600",
     potential: "High",
     monetization: "Qualified Leads",
-    trafficScore: 90,
     categories: [
       "PLG Strategy Tools",
       "Conversion Intelligence",
@@ -120,7 +123,6 @@ const OPPORTUNITIES: OpportunityType[] = [
     gradient: "from-orange-500 via-amber-600 to-yellow-600",
     potential: "Strong",
     monetization: "Affiliate & Traffic",
-    trafficScore: 85,
     categories: [
       "Product Research Tools",
       "Store Analytics",
@@ -138,7 +140,6 @@ const OPPORTUNITIES: OpportunityType[] = [
     gradient: "from-cyan-500 via-blue-600 to-indigo-600",
     potential: "High",
     monetization: "High-Value Leads",
-    trafficScore: 93,
     categories: [
       "Lead Qualification",
       "Pipeline Intelligence",
@@ -156,7 +157,6 @@ const OPPORTUNITIES: OpportunityType[] = [
     gradient: "from-fuchsia-500 via-purple-600 to-pink-600",
     potential: "Strong",
     monetization: "Traffic & Engagement",
-    trafficScore: 87,
     categories: [
       "Social Tools",
       "Quiz & Assessment Engines",
@@ -174,7 +174,6 @@ const OPPORTUNITIES: OpportunityType[] = [
     gradient: "from-lime-500 via-green-600 to-emerald-600",
     potential: "Medium",
     monetization: "Leads & Backlinks",
-    trafficScore: 82,
     categories: [
       "Local SEO Tools",
       "Reputation Systems",
@@ -192,7 +191,6 @@ const OPPORTUNITIES: OpportunityType[] = [
     gradient: "from-violet-500 via-purple-600 to-indigo-600",
     potential: "Strong",
     monetization: "Leads & Sales",
-    trafficScore: 86,
     categories: [
       "Course Launch Tools",
       "Student Acquisition",
@@ -210,7 +208,6 @@ const OPPORTUNITIES: OpportunityType[] = [
     gradient: "from-slate-500 via-gray-600 to-zinc-600",
     potential: "Medium",
     monetization: "Lead Generation",
-    trafficScore: 80,
     categories: [
       "Client Discovery",
       "Portfolio Intelligence",
@@ -228,7 +225,6 @@ const OPPORTUNITIES: OpportunityType[] = [
     gradient: "from-sky-500 via-blue-600 to-cyan-600",
     potential: "High",
     monetization: "B2B Leads",
-    trafficScore: 89,
     categories: [
       "Workflow Intelligence",
       "Automation Discovery",
@@ -246,7 +242,6 @@ const OPPORTUNITIES: OpportunityType[] = [
     gradient: "from-red-500 via-orange-600 to-amber-600",
     potential: "Strong",
     monetization: "Ads & Affiliates",
-    trafficScore: 84,
     categories: [
       "Content Analytics",
       "Audience Intelligence",
@@ -255,6 +250,74 @@ const OPPORTUNITIES: OpportunityType[] = [
       "Distribution Engines",
     ],
     audience: "Publishers, content teams, media brands",
+  },
+  {
+    id: "newsletter",
+    title: "Newsletter & Audience Engines",
+    description: "Subscriber growth, paid newsletters, and editorial flywheels for owned audiences",
+    icon: Newspaper,
+    gradient: "from-teal-500 via-cyan-600 to-blue-600",
+    potential: "High",
+    monetization: "Leads & Engagement",
+    categories: [
+      "Subscriber Acquisition",
+      "Paid Newsletter Systems",
+      "Referral & Growth Loops",
+      "Sponsorship Intelligence",
+      "Email Content Engines",
+    ],
+    audience: "Writers, media operators, indie publishers",
+  },
+  {
+    id: "attribution",
+    title: "Revenue & Attribution Systems",
+    description: "Measurement, funnel analytics, and revenue intelligence for growth teams",
+    icon: LineChart,
+    gradient: "from-indigo-500 via-blue-600 to-slate-700",
+    potential: "Strong",
+    monetization: "Qualified Leads",
+    categories: [
+      "Attribution Modeling",
+      "Funnel Diagnostics",
+      "Cohort & LTV Tools",
+      "Experiment Trackers",
+      "Board-Ready Reporting",
+    ],
+    audience: "Growth leads, RevOps, performance marketers",
+  },
+  {
+    id: "proptech",
+    title: "PropTech & Listings Growth",
+    description: "Listings optimization, buyer journeys, and local market intelligence",
+    icon: Building2,
+    gradient: "from-stone-500 via-neutral-600 to-zinc-700",
+    potential: "Medium",
+    monetization: "High-Value Leads",
+    categories: [
+      "Listing Intelligence",
+      "Buyer Journey Tools",
+      "Neighborhood Insights",
+      "Mortgage & Affordability",
+      "Agent Lead Systems",
+    ],
+    audience: "Brokerages, agents, proptech startups",
+  },
+  {
+    id: "membership",
+    title: "Community & Membership",
+    description: "Member acquisition, retention loops, and community-led monetization",
+    icon: HeartHandshake,
+    gradient: "from-rose-500 via-pink-600 to-fuchsia-600",
+    potential: "Strong",
+    monetization: "Leads & Sales",
+    categories: [
+      "Member Onboarding",
+      "Retention & Churn Tools",
+      "Community Programs",
+      "Tiered Access Systems",
+      "Partner Co-Marketing",
+    ],
+    audience: "Community builders, membership brands, coaches",
   },
 ];
 
@@ -267,6 +330,7 @@ const GOALS = [
 
 export default function NewProject() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { showToast } = useToast();
   
   const [step, setStep] = useState<"discover" | "configure">("discover");
@@ -385,66 +449,100 @@ export default function NewProject() {
   };
 
   const isAtLimit = usage.projects >= usage.limit;
+  const opportunityCount = OPPORTUNITIES.length;
+  const firstName = user?.google_user_data?.name?.split(" ")[0] ?? "there";
 
   if (step === "discover") {
     return (
       <DashboardLayout>
         <div className="min-h-screen pb-16">
-          {/* Hero Header */}
-          <div className="relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 opacity-60" />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(139,92,246,0.1),transparent_50%)]" />
-            
-            <div className="relative max-w-7xl mx-auto px-6 lg:px-8 py-12">
-              <Link
-                to="/dashboard"
-                className="inline-flex items-center gap-2 mb-8 text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors group"
-              >
-                <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-                Back to Dashboard
-              </Link>
+          <div className="page-shell max-w-7xl pt-6 md:pt-8">
+            <Link
+              to="/dashboard"
+              className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden />
+              Back to dashboard
+            </Link>
 
-              <div className="mb-8">
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 backdrop-blur-sm border border-indigo-200/50 shadow-sm mb-6">
-                  <Sparkles className="w-4 h-4 text-indigo-600" />
-                  <span className="text-sm font-semibold text-indigo-900">AI Business Studio</span>
+            <div className="mb-10 grid gap-4 lg:grid-cols-[minmax(0,1fr)_min(100%,280px)] lg:items-stretch">
+              {/* Main welcome banner — flat dashboard style */}
+              <div
+                className="relative flex min-h-[200px] overflow-hidden rounded-3xl p-8 text-white shadow-lg md:min-h-[220px] md:p-10"
+                style={{
+                  background: "linear-gradient(135deg, #6366f1 0%, var(--brand) 45%, #4f46e5 100%)",
+                }}
+              >
+                <div
+                  className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/10 blur-2xl"
+                  aria-hidden
+                />
+                <div className="relative z-[1] flex w-full flex-col justify-center gap-6 md:flex-row md:items-center md:justify-between">
+                  <div className="max-w-xl space-y-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/70">
+                      New project
+                    </p>
+                    <h1 className="text-balance text-2xl font-bold leading-tight md:text-3xl lg:text-[1.85rem]">
+                      Hi {firstName}, welcome back!
+                    </h1>
+                    <p className="text-pretty text-sm leading-relaxed text-white/90 md:text-[15px] md:leading-7">
+                      Start from an opportunity lane below, pick a category, and let AI surface tools and
+                      pages you can ship. Everything stays organized in one workspace.
+                    </p>
+                  </div>
+
+                  <div className="relative hidden shrink-0 sm:flex sm:flex-col sm:items-end">
+                    <div className="absolute -inset-4 rounded-3xl bg-white/5 blur-xl" aria-hidden />
+                    <div className="relative flex items-end gap-3">
+                      <div className="rounded-2xl bg-white/15 p-4 shadow-inner ring-1 ring-white/20 backdrop-blur-sm">
+                        <Laptop className="h-14 w-14 text-white/95" strokeWidth={1.15} aria-hidden />
+                      </div>
+                      <div className="mb-1 flex flex-col gap-2 rounded-xl bg-white/15 px-3 py-2.5 ring-1 ring-white/20">
+                        <div className="flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-sm bg-amber-300" />
+                          <span className="h-1.5 w-10 rounded-full bg-white/80" />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-sm bg-sky-300" />
+                          <span className="h-1.5 w-7 rounded-full bg-white/55" />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-sm bg-white/50" />
+                          <span className="h-1.5 w-8 rounded-full bg-white/40" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                
-                <h1 className="text-5xl font-bold text-slate-900 mb-4 leading-tight">
-                  Discover Your Growth
-                  <br />
-                  <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-                    Opportunity
-                  </span>
-                </h1>
-                
-                <p className="text-xl text-slate-600 max-w-3xl leading-relaxed">
-                  Select a business model to explore AI-powered asset opportunities.
-                  Each system generates traffic, leads, and monetization engines.
-                </p>
               </div>
 
-              {/* Stats Bar */}
-              <div className="flex flex-wrap gap-6 text-sm">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                  <span className="font-semibold text-slate-900">12 Opportunity Systems</span>
+              {/* Stacked stat cards */}
+              <div className="flex flex-col gap-4 md:flex-row lg:flex-col">
+                <div className="flex flex-1 items-center justify-between gap-4 rounded-2xl bg-amber-400 px-6 py-5 text-white shadow-lg ring-1 ring-black/5 md:min-h-[108px]">
+                  <div>
+                    <p className="text-sm font-semibold text-white/95">Opportunity systems</p>
+                    <p className="mt-1 text-3xl font-bold tabular-nums tracking-tight">{opportunityCount}</p>
+                  </div>
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/20">
+                    <PieChart className="h-7 w-7 text-white" strokeWidth={1.75} aria-hidden />
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-indigo-500" />
-                  <span className="font-semibold text-slate-900">60+ Categories</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-purple-500" />
-                  <span className="font-semibold text-slate-900">AI-Powered Discovery</span>
+                <div className="flex flex-1 items-center justify-between gap-4 rounded-2xl bg-rose-400 px-6 py-5 text-white shadow-lg ring-1 ring-black/5 md:min-h-[108px]">
+                  <div>
+                    <p className="text-sm font-semibold text-white/95">Category paths</p>
+                    <p className="mt-1 text-3xl font-bold tabular-nums tracking-tight">60+</p>
+                  </div>
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/20">
+                    <ListChecks className="h-7 w-7 text-white" strokeWidth={1.75} aria-hidden />
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Opportunity Grid */}
-          <div className="max-w-7xl mx-auto px-6 lg:px-8 py-12">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="page-shell max-w-7xl pb-12">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {OPPORTUNITIES.map((opportunity) => {
                 const Icon = opportunity.icon;
                 const isHovered = hoveredOpportunity === opportunity.id;
@@ -470,23 +568,20 @@ export default function NewProject() {
                       absolute inset-0 bg-gradient-to-br ${opportunity.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-500
                     `} />
                     
-                    {/* Icon */}
-                    <div className="relative mb-4">
-                      <div className={`
-                        w-16 h-16 rounded-2xl bg-gradient-to-br ${opportunity.gradient}
-                        flex items-center justify-center shadow-lg
-                        ${isHovered ? 'scale-110' : 'scale-100'} transition-transform duration-300
-                      `}>
-                        <Icon className="w-8 h-8 text-white" />
+                    <div className="relative mb-4 flex items-start justify-between gap-3">
+                      <div
+                        className={`
+                        flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${opportunity.gradient} shadow-lg
+                        ${isHovered ? "scale-105" : "scale-100"} transition-transform duration-300
+                      `}
+                      >
+                        <Icon className="h-7 w-7 text-white" strokeWidth={2} />
                       </div>
-                      
-                      {/* Traffic Score Badge */}
-                      <div className="absolute -top-2 -right-2 w-12 h-12 rounded-xl bg-white shadow-lg border-2 border-emerald-500 flex items-center justify-center">
-                        <div className="text-center">
-                          <div className="text-lg font-bold text-emerald-600 leading-none">{opportunity.trafficScore}</div>
-                          <div className="text-[9px] font-semibold text-slate-500 uppercase">Score</div>
+                      {isSelected && (
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--brand)] text-white shadow-md ring-2 ring-white">
+                          <Award className="h-4 w-4" strokeWidth={2.5} />
                         </div>
-                      </div>
+                      )}
                     </div>
 
                     {/* Content */}
@@ -519,19 +614,15 @@ export default function NewProject() {
                     {/* Category Count */}
                     <div className="flex items-center justify-between pt-4 border-t border-slate-100">
                       <span className="text-sm font-semibold text-slate-900">
-                        {opportunity.categories.length} Categories
+                        {opportunity.categories.length} categories
                       </span>
-                      <ChevronRight className={`
-                        w-5 h-5 text-indigo-600
-                        ${isHovered ? 'translate-x-1' : 'translate-x-0'} transition-transform
-                      `} />
+                      <ChevronRight
+                        className={`
+                        h-5 w-5 shrink-0 text-[var(--brand)]
+                        ${isHovered ? "translate-x-1" : "translate-x-0"} transition-transform
+                      `}
+                      />
                     </div>
-
-                    {isSelected && (
-                      <div className="absolute top-4 right-4 w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center shadow-lg">
-                        <Award className="w-5 h-5 text-white" />
-                      </div>
-                    )}
                   </button>
                 );
               })}
@@ -836,3 +927,4 @@ export default function NewProject() {
     </DashboardLayout>
   );
 }
+
