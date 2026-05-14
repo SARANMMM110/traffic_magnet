@@ -169,9 +169,11 @@ app.get("/api/usage", authMiddleware, async (c) => {
     "SELECT COUNT(*) as count FROM tools WHERE user_id = ? AND html_content IS NOT NULL"
   ).bind(user.id).first();
 
-  // Blueprint-backed tools (what /api/magnets lists)
+  // Blueprint-backed tools (same scope as GET /api/magnets — must belong to an existing project)
   const toolsWithBlueprintCount = await c.env.DB.prepare(
-    "SELECT COUNT(*) as count FROM tools WHERE user_id = ? AND blueprint IS NOT NULL"
+    `SELECT COUNT(*) as count FROM tools t
+     INNER JOIN projects p ON t.project_id = p.id
+     WHERE t.user_id = ? AND t.blueprint IS NOT NULL`
   ).bind(user.id).first();
 
   // Count unique niches
@@ -361,6 +363,13 @@ app.get("/api/dashboard/stats", authMiddleware, async (c) => {
     "SELECT COUNT(*) as count FROM seo_content WHERE user_id = ?"
   ).bind(user.id).first();
 
+  // Blueprints saved (same scope as GET /api/magnets)
+  const blueprintCount = await c.env.DB.prepare(
+    `SELECT COUNT(*) as count FROM tools t
+     INNER JOIN projects p ON t.project_id = p.id
+     WHERE t.user_id = ? AND t.blueprint IS NOT NULL`
+  ).bind(user.id).first();
+
   // Get recent projects with tool counts
   const recentProjects = await c.env.DB.prepare(
     `SELECT p.*, COUNT(t.id) as tool_count 
@@ -375,6 +384,7 @@ app.get("/api/dashboard/stats", authMiddleware, async (c) => {
   return c.json({
     projectCount: projectCount?.count || 0,
     toolCount: toolCount?.count || 0,
+    blueprintCount: blueprintCount?.count || 0,
     builtToolCount: builtToolCount?.count || 0,
     seoPageCount: seoPageCount?.count || 0,
     recentProjects: recentProjects.results || []

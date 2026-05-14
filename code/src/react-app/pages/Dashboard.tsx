@@ -18,6 +18,9 @@ import {
   Archive,
   ArrowRight,
   Calendar,
+  Compass,
+  FileCode2,
+  FolderKanban,
   FolderOpen,
   LayoutDashboard,
   Plus,
@@ -28,6 +31,7 @@ import {
 interface DashboardStats {
   projectCount: number;
   toolCount: number;
+  blueprintCount: number;
   builtToolCount: number;
   seoPageCount: number;
 }
@@ -75,7 +79,12 @@ export default function Dashboard() {
 
       if (statsRes.ok) {
         const statsData = await statsRes.json();
-        setStats(statsData);
+        const blueprintCount =
+          typeof statsData.blueprintCount === "number" ? statsData.blueprintCount : 0;
+        setStats({
+          ...statsData,
+          blueprintCount,
+        } as DashboardStats);
       }
 
       if (projectsRes.ok) {
@@ -164,48 +173,93 @@ export default function Dashboard() {
   return (
     <DashboardLayout>
       <div className="page-shell max-w-7xl space-y-8">
-        <div className="surface-panel flex flex-col gap-5 p-6 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-1">
-            <div className="section-eyebrow">Overview</div>
-            <h1 className="flex items-center gap-2 text-4xl font-bold">
-              <LayoutDashboard className="h-9 w-9 text-[var(--brand)]" />
-              Dashboard
-            </h1>
-            <p className="text-muted-foreground">
-              Welcome back, {firstName}. Track projects, tools, and publishing at a glance.
-            </p>
+        <section className="space-y-6">
+          <div className="relative overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm">
+            <div
+              className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full opacity-[0.12]"
+              style={{ background: "radial-gradient(circle at center, var(--brand), transparent 70%)" }}
+            />
+            <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+            <div className="relative flex flex-col gap-6 p-6 md:flex-row md:items-center md:justify-between md:p-8">
+              <div className="flex max-w-xl flex-col gap-4 sm:flex-row sm:items-start sm:gap-5">
+                <div
+                  className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border shadow-sm"
+                  style={{
+                    background:
+                      "linear-gradient(145deg, color-mix(in srgb, var(--brand) 18%, white), color-mix(in srgb, var(--brand) 8%, transparent))",
+                    borderColor: "color-mix(in srgb, var(--brand) 25%, transparent)",
+                  }}
+                >
+                  <LayoutDashboard className="h-7 w-7 text-[var(--brand)]" strokeWidth={2} />
+                </div>
+                <div className="min-w-0 space-y-2">
+                  <div className="section-eyebrow">Overview</div>
+                  <h1 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">Dashboard</h1>
+                  <p className="text-pretty text-sm leading-relaxed text-muted-foreground md:text-base">
+                    Welcome back, <span className="font-medium text-foreground">{firstName}</span>. Track
+                    workspaces, blueprints, and markets in one place — then open any project below.
+                  </p>
+                </div>
+              </div>
+              <Link to="/projects/new" className="shrink-0">
+                <Button size="lg" className="h-12 w-full gap-2 rounded-xl px-6 shadow-md sm:w-auto">
+                  <Plus className="h-5 w-5" />
+                  New project
+                </Button>
+              </Link>
+            </div>
           </div>
-          <Link to="/projects/new">
-            <Button size="lg" className="gap-2">
-              <Plus className="h-5 w-5" />
-              New project
-            </Button>
-          </Link>
-        </div>
 
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card className="p-6">
-            <p className="text-sm font-medium text-muted-foreground">Projects</p>
-            <p className="mt-2 text-3xl font-bold tabular-nums">
-              {loading ? "—" : stats?.projectCount ?? 0}
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">Active workspaces</p>
-          </Card>
-          <Card className="p-6">
-            <p className="text-sm font-medium text-muted-foreground">Tools</p>
-            <p className="mt-2 text-3xl font-bold tabular-nums">
-              {loading ? "—" : stats?.toolCount ?? 0}
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">Generated assets</p>
-          </Card>
-          <Card className="p-6">
-            <p className="text-sm font-medium text-muted-foreground">Niches</p>
-            <p className="mt-2 text-3xl font-bold tabular-nums">
-              {loading ? "—" : nicheCount}
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">Distinct markets</p>
-          </Card>
-        </div>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Card className="group relative overflow-hidden border-border/80 bg-gradient-to-b from-card to-muted/25 p-6 shadow-sm transition-shadow hover:shadow-md">
+              <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[var(--brand)]/[0.07] blur-2xl transition-opacity group-hover:opacity-100" />
+              <div className="relative flex flex-col gap-1">
+                <div className="mb-3 inline-flex w-fit rounded-xl bg-[var(--brand)]/10 p-2.5 text-[var(--brand)]">
+                  <FolderKanban className="h-5 w-5" strokeWidth={2} />
+                </div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Projects</p>
+                <p className="text-4xl font-bold tabular-nums tracking-tight text-foreground">
+                  {loading ? "—" : stats?.projectCount ?? 0}
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">Active workspaces you&apos;re building in</p>
+              </div>
+            </Card>
+
+            <Card className="group relative overflow-hidden border-border/80 bg-gradient-to-b from-card to-muted/25 p-6 shadow-sm transition-shadow hover:shadow-md">
+              <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-emerald-500/[0.08] blur-2xl transition-opacity group-hover:opacity-100" />
+              <div className="relative flex flex-col gap-1">
+                <div className="mb-3 inline-flex w-fit rounded-xl bg-emerald-500/10 p-2.5 text-emerald-600 dark:text-emerald-400">
+                  <FileCode2 className="h-5 w-5" strokeWidth={2} />
+                </div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Blueprints</p>
+                <p className="text-4xl font-bold tabular-nums tracking-tight text-foreground">
+                  {loading ? "—" : stats?.blueprintCount ?? 0}
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">Saved tool specs across projects</p>
+                {!loading && stats != null && stats.toolCount > 0 && (
+                  <p className="mt-3 border-t border-border/60 pt-3 text-xs text-muted-foreground">
+                    <span className="font-medium tabular-nums text-foreground">{stats.toolCount}</span>{" "}
+                    discovery ideas in the pipeline
+                  </p>
+                )}
+              </div>
+            </Card>
+
+            <Card className="group relative overflow-hidden border-border/80 bg-gradient-to-b from-card to-muted/25 p-6 shadow-sm transition-shadow hover:shadow-md">
+              <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-amber-500/[0.08] blur-2xl transition-opacity group-hover:opacity-100" />
+              <div className="relative flex flex-col gap-1">
+                <div className="mb-3 inline-flex w-fit rounded-xl bg-amber-500/10 p-2.5 text-amber-700 dark:text-amber-400">
+                  <Compass className="h-5 w-5" strokeWidth={2} />
+                </div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Niches</p>
+                <p className="text-4xl font-bold tabular-nums tracking-tight text-foreground">
+                  {loading ? "—" : nicheCount}
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">Distinct markets in your portfolio</p>
+              </div>
+            </Card>
+          </div>
+        </section>
 
         <div className="space-y-2">
           <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">

@@ -16,7 +16,7 @@ interface Magnet {
 }
 
 interface UsageData {
-  /** Finished tools (HTML generated) — same meaning as API `toolsCreated` */
+  /** Tools with a saved blueprint — same as this page list and API `toolsWithBlueprint` */
   used: number;
   limit: number;
 }
@@ -62,8 +62,8 @@ export default function MyMagnets() {
       if (usageRes.ok) {
         const data = await usageRes.json();
         const used =
-          data.toolsCreated !== undefined && data.toolsCreated !== null
-            ? parseApiCount(data.toolsCreated)
+          data.toolsWithBlueprint !== undefined && data.toolsWithBlueprint !== null
+            ? parseApiCount(data.toolsWithBlueprint)
             : 0;
         setUsage({ used, limit: 10000 });
       }
@@ -125,9 +125,8 @@ export default function MyMagnets() {
           <div className="section-eyebrow mb-2">Tool library</div>
           <h1 className="text-4xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>My tools</h1>
           <p style={{ color: "var(--text-secondary)" }}>
-            Tools with a saved blueprint across your projects. The usage meter counts{" "}
-            <strong>finished tools</strong> — rows where the interactive HTML has been generated at least
-            once — not discovery-only ideas still sitting in a project.
+            Tools with a saved blueprint across your projects. The usage meter uses the same count as this
+            list — one slot per blueprint, not discovery-only ideas without a blueprint yet.
           </p>
         </div>
 
@@ -135,7 +134,7 @@ export default function MyMagnets() {
         <div className="premium-card p-6 mb-8">
           <div className="flex items-center justify-between mb-3">
             <p className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
-              {usage.used} of {usage.limit} finished tools (HTML generated)
+              {usage.used} of {usage.limit} blueprints saved
             </p>
             <p className="text-lg font-bold" style={{ color: "var(--text-primary)" }}>
               {usage.used} / {usage.limit}
@@ -160,7 +159,7 @@ export default function MyMagnets() {
           {usagePercentage >= 100 && (
             <div>
               <p className="text-sm font-medium" style={{ color: "#F43F5E" }}>
-                You&apos;ve reached your lifetime cap for finished tools.
+                You&apos;ve reached your lifetime cap for saved blueprints.
               </p>
               <Link
                 to="/settings"
@@ -173,7 +172,7 @@ export default function MyMagnets() {
           )}
           {usagePercentage >= 80 && usagePercentage < 100 && (
             <p className="text-sm font-medium" style={{ color: "#F59E0B" }}>
-              Running low — {usage.limit - usage.used} tool slots remaining.
+              Running low — {usage.limit - usage.used} blueprint slots remaining.
             </p>
           )}
         </div>
