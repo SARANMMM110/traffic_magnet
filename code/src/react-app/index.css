@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -30,6 +30,50 @@
 
 .animate-fade-in-up {
   animation: fade-in-up 0.3s ease-out;
+}
+
+@keyframes tm-float-soft {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes tm-signal-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+@keyframes tm-shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+.animate-tm-float {
+  animation: tm-float-soft 6s ease-in-out infinite;
+}
+
+.animate-tm-signal {
+  animation: tm-signal-pulse 2.4s ease-in-out infinite;
+}
+
+.animate-tm-shimmer {
+  background-size: 200% 100%;
+  animation: tm-shimmer 8s linear infinite;
 }
 
 @layer base {
