@@ -1,1 +1,6 @@
 d1_dump.sql 
+node_modules/
+build/
+dist/
+.env
+*.log
