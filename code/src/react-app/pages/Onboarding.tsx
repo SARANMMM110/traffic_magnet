@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { useNavigate } from "react-router";
 import DashboardLayout from "@/react-app/components/DashboardLayout";
 import {
   ArrowRight,
   BarChart3,
   BookOpen,
+  ChevronLeft,
   ChevronRight,
   Code2,
   DollarSign,
@@ -57,12 +59,55 @@ function HeroIllustration() {
 }
 
 const STEPPER = [
-  { id: 1, label: "Pick Niche", Icon: LayoutGrid, numPrefix: true },
-  { id: 2, label: "Define Goal", Icon: ArrowRight, numPrefix: false },
-  { id: 3, label: "Customize", Icon: SlidersHorizontal, numPrefix: false },
-  { id: 4, label: "AI Generation", Icon: null, numPrefix: false },
-  { id: 5, label: "Review & Launch", Icon: null, numPrefix: false },
+  { id: 1, label: "Pick Niche", Icon: LayoutGrid },
+  { id: 2, label: "Define Goal", Icon: ArrowRight },
+  { id: 3, label: "Customize", Icon: SlidersHorizontal },
+  { id: 4, label: "AI Generation", Icon: null },
+  { id: 5, label: "Review & Launch", Icon: null },
 ] as const;
+
+const STEP_PANELS: Array<{
+  title: string;
+  description: string;
+  cta: string;
+  ctaAction: "new-project" | "none";
+}> = [
+  {
+    title: "Pick Your Business Opportunity",
+    description:
+      "Choose a niche or market where you want to create growth assets. Our AI will find high-opportunity tool ideas for you.",
+    cta: "Choose Your Niche",
+    ctaAction: "new-project",
+  },
+  {
+    title: "Define Your Goal",
+    description:
+      "Clarify whether you want leads, affiliate revenue, or authority—so every asset we generate aligns to a measurable outcome.",
+    cta: "Set goal & continue",
+    ctaAction: "new-project",
+  },
+  {
+    title: "Customize Your Asset",
+    description:
+      "Tune tone, depth, and format. Traffic Magnet adapts layout, schema, and calls-to-action to match your brand and funnel.",
+    cta: "Open customization",
+    ctaAction: "new-project",
+  },
+  {
+    title: "AI Generation",
+    description:
+      "We synthesize research, structure, and copy into a blueprint-ready asset. Review deltas before anything goes live.",
+    cta: "Start generation",
+    ctaAction: "new-project",
+  },
+  {
+    title: "Review & Launch",
+    description:
+      "Validate previews, publishing targets, and tracking. When you are ready, ship to your site or export for your stack.",
+    cta: "Go to project workspace",
+    ctaAction: "new-project",
+  },
+];
 
 const RESOURCE_CARDS = [
   {
@@ -118,11 +163,13 @@ const EXPLORE = [
 
 export default function Onboarding() {
   const navigate = useNavigate();
-  const activeStep = 1;
+  const [activeStep, setActiveStep] = useState(1);
+  const panel = STEP_PANELS[activeStep - 1] ?? STEP_PANELS[0];
+  const total = STEPPER.length;
 
   return (
     <DashboardLayout>
-      <div className="min-h-full bg-[#f4f0fb] pb-16 pt-2">
+      <div className="min-h-full pb-16 pt-2">
         <div className="mx-auto max-w-[920px] px-4 sm:px-6">
           {/* Header — outside card */}
           <header className="flex flex-col gap-6 py-6 sm:flex-row sm:items-start sm:justify-between">
@@ -150,7 +197,7 @@ export default function Onboarding() {
                 Your setup progress
               </p>
               <p className="text-sm font-semibold text-violet-600">
-                {activeStep} / {STEPPER.length} completed
+                Step {activeStep} of {total}
               </p>
             </div>
 
@@ -160,8 +207,7 @@ export default function Onboarding() {
                   const active = step.id === activeStep;
                   const Icon = step.Icon;
                   const last = i === STEPPER.length - 1;
-                  const displayLabel =
-                    active && step.numPrefix ? `1 ${step.label}` : step.label;
+                  const displayLabel = active ? `${step.id} ${step.label}` : step.label;
 
                   return (
                     <div key={step.id} className="flex min-w-0 flex-1 items-start">
@@ -199,6 +245,27 @@ export default function Onboarding() {
                 })}
               </div>
             </div>
+
+            <div className="mt-8 flex flex-col-reverse gap-3 border-t border-slate-100 pt-6 sm:flex-row sm:items-center sm:justify-between">
+              <button
+                type="button"
+                disabled={activeStep <= 1}
+                onClick={() => setActiveStep((s) => Math.max(1, s - 1))}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 disabled:pointer-events-none disabled:opacity-40"
+              >
+                <ChevronLeft className="h-4 w-4" strokeWidth={2} />
+                Back
+              </button>
+              <button
+                type="button"
+                disabled={activeStep >= total}
+                onClick={() => setActiveStep((s) => Math.min(total, s + 1))}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-violet-700 disabled:pointer-events-none disabled:opacity-40"
+              >
+                Next
+                <ChevronRight className="h-4 w-4" strokeWidth={2} />
+              </button>
+            </div>
           </section>
 
           {/* Active step card */}
@@ -209,21 +276,20 @@ export default function Onboarding() {
                   <Target className="h-6 w-6 text-violet-600" strokeWidth={2} />
                 </div>
                 <p className="mt-4 text-xs font-medium uppercase tracking-wide text-slate-500">
-                  Step 1 of 5
+                  Step {activeStep} of {total}
                 </p>
-                <h2 className="mt-1 text-xl font-bold text-slate-900 sm:text-2xl">
-                  Pick Your Business Opportunity
-                </h2>
+                <h2 className="mt-1 text-xl font-bold text-slate-900 sm:text-2xl">{panel.title}</h2>
                 <p className="mt-3 max-w-lg text-sm leading-relaxed text-slate-600 sm:text-[15px]">
-                  Choose a niche or market where you want to create growth assets. Our AI will find
-                  high-opportunity tool ideas for you.
+                  {panel.description}
                 </p>
                 <button
                   type="button"
-                  onClick={() => navigate("/projects/new")}
+                  onClick={() => {
+                    if (panel.ctaAction === "new-project") navigate("/projects/new");
+                  }}
                   className="mt-6 inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-semibold text-white shadow-md transition hover:bg-violet-700"
                 >
-                  Choose Your Niche
+                  {panel.cta}
                   <ArrowRight className="h-4 w-4" strokeWidth={2} />
                 </button>
               </div>
