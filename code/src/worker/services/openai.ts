@@ -2,6 +2,7 @@ import OpenAI from "openai";
 import {
   buildPlatformContentWrapperPackage,
   renderPlatformLandingPage,
+  renderPlatformBusinessAsset,
   shouldUsePlatformRender,
 } from "../render/platformEngine";
 

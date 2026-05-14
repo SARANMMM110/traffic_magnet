@@ -1,4 +1,4 @@
-import Sidebar from "./Sidebar";
+import WorkspaceSidebar from "./WorkspaceSidebar";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -6,10 +6,12 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
-    <div className="app-shell flex h-screen overflow-hidden md:p-3 md:gap-3">
-      <Sidebar />
-      <main className="flex-1 overflow-y-auto w-full md:w-auto md:rounded-[24px]">
-        {children}
+    <div className="flex h-screen overflow-hidden bg-gradient-to-br from-slate-50 via-indigo-50/30 to-purple-50/20">
+      <WorkspaceSidebar />
+      <main className="flex-1 overflow-y-auto">
+        <div className="min-h-full p-6 lg:p-8">
+          {children}
+        </div>
       </main>
     </div>
   );

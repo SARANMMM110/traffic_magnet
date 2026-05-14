@@ -1,5 +1,5 @@
 import { buildCopyPack, mergeCopyIntoSpec } from "./copyEngine";
-import type { CalculationEngineId, FaqItem, InsightCard, ToolRenderSpec } from "./types";
+import type { CalculationEngineId, FaqItem, InsightCard, ToolRenderSpec, FormField } from "./types";
 
 const ALLOWED_THEMES = new Set(["modern", "ocean", "forest", "sunset", "purple", "slate"]);
 

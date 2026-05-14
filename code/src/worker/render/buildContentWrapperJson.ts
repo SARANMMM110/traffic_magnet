@@ -31,6 +31,24 @@ export function buildContentWrapperJson(
   const pageH1 = clip(`${keyword}: ${title} — ${spec.brandLine}`, 110);
 
   const demo = runCalculationEngine(spec.engineId, {});
+  
+  const kw = Array.isArray(blueprint.target_keywords)
+    ? (blueprint.target_keywords as unknown[]).map((x) => String(x))
+    : [];
+  const semantic = Array.from(
+    new Set([
+      keyword,
+      niche,
+      title,
+      ...kw,
+      `${keyword} strategy`,
+      `${keyword} monetization`,
+      `${niche} lead generation`,
+      "EEAT content",
+      "conversion optimization",
+    ])
+  ).slice(0, 24);
+  
   const chipRow = semantic
     .slice(0, 8)
     .map((k) => `<span class="cw-chip">${escapeHtml(k)}</span>`)
@@ -62,23 +80,6 @@ export function buildContentWrapperJson(
   const feats = Array.isArray(blueprint.features)
     ? (blueprint.features as unknown[]).slice(0, 8).map((x) => clip(String(x), 220))
     : spec.positioningBullets.slice(0, 6);
-
-  const kw = Array.isArray(blueprint.target_keywords)
-    ? (blueprint.target_keywords as unknown[]).map((x) => String(x))
-    : [];
-  const semantic = Array.from(
-    new Set([
-      keyword,
-      niche,
-      title,
-      ...kw,
-      `${keyword} strategy`,
-      `${keyword} monetization`,
-      `${niche} lead generation`,
-      "EEAT content",
-      "conversion optimization",
-    ])
-  ).slice(0, 24);
 
   const faq_section = spec.faq.slice(0, 8).map((f) => ({
     question: f.question,

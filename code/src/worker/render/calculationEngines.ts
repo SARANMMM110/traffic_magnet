@@ -1,4 +1,4 @@
-import type { CalculationEngineId, EngineResult, InsightCard, MetricTile } from "./types";
+import type { CalculationEngineId, EngineResult, InsightCard } from "./types";
 
 function clamp(n: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, n));
@@ -36,7 +36,7 @@ function insightsFor(
   engine: string,
   lines: [string, string, string][]
 ): InsightCard[] {
-  return lines.map(([eyebrow, title, body], i) => ({
+  return lines.map(([eyebrow, title, body]) => ({
     eyebrow,
     title,
     body: `${body} (${engine} model)`,

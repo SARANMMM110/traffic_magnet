@@ -1,934 +1,423 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router";
 import DashboardLayout from "@/react-app/components/DashboardLayout";
-import { BadgeDollarSign, BriefcaseBusiness, Check, Copy, Dumbbell, Eye, EyeOff, ExternalLink, Key, Search, ShoppingBag, Sparkles, Target, Bolt, TrendingUp } from "lucide-react";
-
-type Step = 1 | 2 | 3 | 4 | 5 | 6;
-type Provider = "openai" | "anthropic" | null;
-
-const NICHE_TEMPLATES = [
-  { name: "SEO Agency", value: "SEO agency" },
-  { name: "Affiliate Marketing", value: "affiliate marketing" },
-  { name: "SaaS Product", value: "SaaS product" },
-  { name: "Health & Fitness", value: "health and fitness" },
-  { name: "Personal Finance", value: "personal finance" },
-  { name: "E-Commerce", value: "e-commerce" },
-];
-
-const NICHE_ICONS = [Search, BadgeDollarSign, BriefcaseBusiness, Dumbbell, TrendingUp, ShoppingBag];
-
-const GOALS = [
-  { value: "backlinks", label: "Drive Backlinks" },
-  { value: "leads", label: "Generate Leads" },
-  { value: "traffic", label: "Increase Traffic" },
-  { value: "engagement", label: "Improve Engagement" },
-];
+import {
+  Sparkles,
+  TrendingUp,
+  Target,
+  CheckCircle2,
+  Book,
+  Code,
+  FileText,
+  Lightbulb,
+  Users,
+  Search,
+  DollarSign,
+  ChevronRight,
+  Zap,
+  ArrowRight,
+} from "lucide-react";
 
 export default function Onboarding() {
   const navigate = useNavigate();
-  const [currentStep, setCurrentStep] = useState<Step>(2);
-  
-  // Step 1 state
-  const [provider, setProvider] = useState<Provider>(null);
-  const [apiKey, setApiKey] = useState("");
-  const [showApiKey, setShowApiKey] = useState(false);
-  const [savingKey, setSavingKey] = useState(false);
-  
-  // Step 3 state
-  const [niche, setNiche] = useState("");
-  const [projectName, setProjectName] = useState("");
-  const [goal, setGoal] = useState("traffic");
-  const [creatingProject, setCreatingProject] = useState(false);
-  const [projectId, setProjectId] = useState<string | null>(null);
-  
-  // Step 4 state
-  const [generatingIdeas, setGeneratingIdeas] = useState(false);
-  const [ideas, setIdeas] = useState<any[]>([]);
-  const [hasApiKey, setHasApiKey] = useState(false);
-  
-  // Step 5 state
-  const [buildingTool, setBuildingTool] = useState(false);
-  const [builtTool, setBuiltTool] = useState<any>(null);
-  
-  useEffect(() => {
-    checkApiKey();
-  }, []);
+  const [currentStep] = useState(1);
+  const totalSteps = 5;
 
-  const checkApiKey = async () => {
-    try {
-      const response = await fetch("/api/settings/keys", { credentials: "include" });
-      if (response.ok) {
-        const data = await response.json();
-        setHasApiKey(!!(data.openai_key || data.anthropic_key));
-      }
-    } catch (error) {
-      console.error("Failed to check API key:", error);
-    }
-  };
+  const steps = [
+    { number: 1, label: "Choose Niche" },
+    { number: 2, label: "Define Goal" },
+    { number: 3, label: "Customize" },
+    { number: 4, label: "AI Generation" },
+    { number: 5, label: "Review & Launch" },
+  ];
 
-  const handleSaveKey = async () => {
-    if (!apiKey.trim()) return;
-    
-    setSavingKey(true);
-    try {
-      const response = await fetch("/api/settings/keys", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          openai_key: provider === "openai" ? apiKey : null,
-          anthropic_key: provider === "anthropic" ? apiKey : null,
-        }),
-      });
+  const studioTips = [
+    {
+      icon: TrendingUp,
+      title: "High Impact",
+      description: "Focus on niches with strong demand and monetization.",
+    },
+    {
+      icon: Lightbulb,
+      title: "Solve Real Problems",
+      description: "Tools that solve real pain points get more traffic and links.",
+    },
+    {
+      icon: CheckCircle2,
+      title: "Validate & Scale",
+      description: "Test, improve and scale what brings the best results.",
+    },
+  ];
 
-      if (response.ok) {
-        setHasApiKey(true);
-        setCurrentStep(2);
-      }
-    } catch (error) {
-      console.error("Failed to save key:", error);
-    } finally {
-      setSavingKey(false);
-    }
-  };
+  const helpfulGuides = [
+    {
+      icon: Book,
+      title: "Getting Started Guide",
+      description: "Learn the basics and start building in minutes.",
+      color: "from-emerald-500 to-teal-600",
+    },
+    {
+      icon: Code,
+      title: "API & Integrations",
+      description: "Connect tools and unlock advanced features.",
+      color: "from-purple-500 to-indigo-600",
+    },
+    {
+      icon: FileText,
+      title: "Feature Documentation",
+      description: "Explore everything Growth Studio can do.",
+      color: "from-blue-500 to-cyan-600",
+    },
+  ];
 
-  const handleCreateProject = async () => {
-    if (!niche.trim()) return;
-    
-    setCreatingProject(true);
-    try {
-      const response = await fetch("/api/projects", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          niche: niche.trim(),
-          name: projectName.trim() || `${niche.trim()} Project`,
-          goal: goal || null,
-          audience: null,
-        }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setProjectId(data.id);
-        setCurrentStep(4);
-      }
-    } catch (error) {
-      console.error("Failed to create project:", error);
-    } finally {
-      setCreatingProject(false);
-    }
-  };
-
-  const handleGenerateIdeas = async () => {
-    if (!projectId) return;
-    
-    setGeneratingIdeas(true);
-    try {
-      const response = await fetch(`/api/projects/${projectId}/discover`, {
-        method: "POST",
-        credentials: "include",
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setIdeas(data.tools.slice(0, 3));
-        setGeneratingIdeas(false);
-      }
-    } catch (error) {
-      console.error("Failed to generate ideas:", error);
-      setGeneratingIdeas(false);
-    }
-  };
-
-  const handleBuildTool = async () => {
-    if (!ideas[0]) return;
-    
-    setBuildingTool(true);
-    try {
-      // Generate blueprint
-      await fetch(`/api/tools/${ideas[0].id}/blueprint`, {
-        method: "POST",
-        credentials: "include",
-      });
-
-      // Generate HTML
-      const htmlResponse = await fetch(`/api/tools/${ideas[0].id}/html`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "standalone",
-          use_platform_engine: import.meta.env.VITE_USE_PLATFORM_RENDER === "true",
-        }),
-      });
-
-      if (htmlResponse.ok) {
-        const toolData = await htmlResponse.json();
-        setBuiltTool(toolData);
-        setCurrentStep(6);
-      }
-    } catch (error) {
-      console.error("Failed to build tool:", error);
-    } finally {
-      setBuildingTool(false);
-    }
-  };
-
-  const getEmbedCode = () => {
-    if (!builtTool) return "";
-    return `<iframe src="https://yourdomain.com/tools/${builtTool.id}.html" width="100%" height="500" frameborder="0"></iframe>`;
-  };
-
-  const copyEmbedCode = () => {
-    navigator.clipboard.writeText(getEmbedCode());
-  };
+  const recommendedTools = [
+    {
+      icon: Sparkles,
+      title: "AI Tool Ideas Finder",
+      description: "Discover 100+ tool ideas based on your niche and market demand.",
+      color: "from-emerald-400 to-teal-500",
+      iconBg: "bg-emerald-50",
+      iconColor: "text-emerald-600",
+    },
+    {
+      icon: DollarSign,
+      title: "Revenue Model Explorer",
+      description: "Find the best ways to monetize your assets.",
+      color: "from-amber-400 to-orange-500",
+      iconBg: "bg-amber-50",
+      iconColor: "text-amber-600",
+    },
+    {
+      icon: Search,
+      title: "Keyword Opportunity",
+      description: "Uncover low-competition, high-intent keyword gems.",
+      color: "from-purple-400 to-indigo-500",
+      iconBg: "bg-purple-50",
+      iconColor: "text-purple-600",
+    },
+    {
+      icon: Users,
+      title: "Competitor Analyzer",
+      description: "See what's working for others and do it better.",
+      color: "from-blue-400 to-cyan-500",
+      iconBg: "bg-blue-50",
+      iconColor: "text-blue-600",
+    },
+  ];
 
   return (
     <DashboardLayout>
-      <div className="page-shell max-w-[760px]">
-      <div className="mb-6 flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-orange-500 text-white shadow-sm">
-          <Bolt className="h-5 w-5" />
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 pb-20">
+        {/* Hero Header */}
+        <div className="bg-white border-b border-slate-200">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-4xl font-bold text-slate-900 mb-2 flex items-center gap-3">
+                  Start Here
+                  <span className="text-4xl">👋</span>
+                </h1>
+                <p className="text-lg text-slate-600">
+                  Follow these simple steps to create your first growth asset.
+                </p>
+              </div>
+              {/* Decorative Rocket Illustration Placeholder */}
+              <div className="hidden lg:block">
+                <div className="w-48 h-32 rounded-2xl bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100 flex items-center justify-center">
+                  <Zap className="w-16 h-16 text-indigo-600" />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>
-            Start Here
-          </h1>
-          <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-            Build your first Ai Auto Traffic project with a simple guided flow.
-          </p>
-        </div>
-      </div>
 
-      {/* Progress Bar */}
-      <div className="premium-card mb-8 p-5">
-          <div className="mb-4 flex items-center justify-between">
-            <p className="text-xs font-bold uppercase tracking-[0.18em]" style={{ color: "var(--text-muted)" }}>
-              Your progress
-            </p>
-            <p className="text-xs font-semibold" style={{ color: "var(--brand)" }}>
-              {currentStep} / 6 steps done
-            </p>
-          </div>
-          <div className="flex items-center justify-between">
-            {[1, 2, 3, 4, 5, 6].map((step) => (
-              <div key={step} className="flex items-center flex-1 last:flex-none">
-                <div className="relative">
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all ${
-                      step < currentStep
-                        ? "border-transparent"
-                        : step === currentStep
-                        ? "border-2"
-                        : ""
-                    }`}
-                    style={{
-                      background: step <= currentStep ? "var(--brand)" : "var(--bg-elevated)",
-                      borderColor: step === currentStep ? "var(--brand-glow)" : "var(--border)",
-                    }}
-                  >
-                    {step < currentStep ? (
-                      <Check className="w-5 h-5 text-white" />
-                    ) : (
-                      <span
-                        className="text-sm font-bold"
-                        style={{ color: step <= currentStep ? "white" : "var(--text-muted)" }}
+        {/* Main Content */}
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left Column - Main Content */}
+            <div className="lg:col-span-2 space-y-8">
+              {/* Progress Tracker */}
+              <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+                <div className="flex items-center justify-between mb-6">
+                  <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                    YOUR BUILD PROGRESS
+                  </p>
+                  <p className="text-sm font-semibold text-indigo-600">
+                    {currentStep} of {totalSteps} completed
+                  </p>
+                </div>
+
+                {/* Step Circles */}
+                <div className="flex items-center justify-between mb-6">
+                  {steps.map((step) => (
+                    <div key={step.number} className="flex flex-col items-center flex-1">
+                      <div
+                        className={`
+                          w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg mb-2
+                          transition-all duration-300
+                          ${
+                            step.number === currentStep
+                              ? "bg-indigo-600 text-white ring-4 ring-indigo-100"
+                              : step.number < currentStep
+                              ? "bg-indigo-600 text-white"
+                              : "bg-slate-100 text-slate-400"
+                          }
+                        `}
                       >
-                        {step}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                {step < 6 && (
-                  <div
-                    className="flex-1 h-0.5 mx-2"
-                    style={{ background: step < currentStep ? "var(--brand)" : "var(--border)" }}
-                  />
-                )}
-              </div>
-            ))}
-          </div>
-      </div>
-
-      {/* Content */}
-      <div className="mx-auto max-w-[700px]">
-        {/* Step 1: Add API Key */}
-        {currentStep === 1 && (
-          <div className="space-y-8 animate-fade-in-up">
-            <div className="text-center space-y-4">
-              <div
-                className="w-20 h-20 rounded-full mx-auto flex items-center justify-center text-4xl relative"
-                style={{ background: "rgba(124, 92, 252, 0.15)" }}
-              >
-                <div
-                  className="absolute inset-0 rounded-full blur-xl opacity-50"
-                  style={{ background: "var(--brand)" }}
-                />
-                <Key className="w-10 h-10 relative z-10" style={{ color: "var(--brand)" }} />
-              </div>
-              <h1 className="text-3xl font-bold" style={{ color: "var(--text-primary)" }}>
-                Power up your account
-              </h1>
-              <p className="text-base max-w-md mx-auto" style={{ color: "var(--text-secondary)" }}>
-                Ai Auto Traffic uses AI to generate business asset ideas and build working HTML assets. You need your
-                own OpenAI or Anthropic API key — it takes 2 minutes and costs almost nothing to
-                generate an asset.
-              </p>
-            </div>
-
-            {/* Provider Selection */}
-            <div className="grid grid-cols-2 gap-4">
-              <button
-                onClick={() => setProvider("openai")}
-                className="glass-card p-6 text-left transition-all"
-                style={{
-                  borderColor: provider === "openai" ? "var(--brand)" : "var(--glass-border)",
-                  background: provider === "openai" ? "var(--brand-glow)" : "var(--glass-bg)",
-                }}
-              >
-                <div className="w-12 h-12 rounded-lg mb-3 flex items-center justify-center bg-black">
-                  <Sparkles className="w-6 h-6 text-white" />
-                </div>
-                <h3 className="font-semibold mb-1" style={{ color: "var(--text-primary)" }}>
-                  OpenAI
-                </h3>
-                <p className="text-sm mb-2" style={{ color: "var(--text-secondary)" }}>
-                  GPT-4o
-                </p>
-                <span
-                  className="text-xs px-2 py-1 rounded-full"
-                  style={{ background: "var(--accent-green)", color: "white" }}
-                >
-                  Most popular
-                </span>
-              </button>
-
-              <button
-                onClick={() => setProvider("anthropic")}
-                className="glass-card p-6 text-left transition-all"
-                style={{
-                  borderColor: provider === "anthropic" ? "var(--brand)" : "var(--glass-border)",
-                  background: provider === "anthropic" ? "var(--brand-glow)" : "var(--glass-bg)",
-                }}
-              >
-                <div className="w-12 h-12 rounded-lg mb-3 flex items-center justify-center bg-gradient-to-br from-orange-400 to-red-500">
-                  <span className="text-white font-bold">A</span>
-                </div>
-                <h3 className="font-semibold mb-1" style={{ color: "var(--text-primary)" }}>
-                  Anthropic
-                </h3>
-                <p className="text-sm mb-2" style={{ color: "var(--text-secondary)" }}>
-                  Claude 3.5
-                </p>
-                <span
-                  className="text-xs px-2 py-1 rounded-full"
-                  style={{ background: "var(--bg-elevated)", color: "var(--text-secondary)" }}
-                >
-                  Alternative
-                </span>
-              </button>
-            </div>
-
-            {/* API Key Input */}
-            {provider && (
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
-                    Paste your API key
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showApiKey ? "text" : "password"}
-                      value={apiKey}
-                      onChange={(e) => setApiKey(e.target.value)}
-                      placeholder={provider === "openai" ? "sk-..." : "sk-ant-..."}
-                      className="w-full px-4 py-3 pr-12 rounded-xl transition-all"
-                      style={{
-                        background: "var(--bg-elevated)",
-                        border: "1px solid var(--border-strong)",
-                        color: "var(--text-primary)",
-                      }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowApiKey(!showApiKey)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2"
-                      style={{ color: "var(--text-secondary)" }}
-                    >
-                      {showApiKey ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                  </div>
-                  <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                    Keys are encrypted and stored only for your account
-                  </p>
-                </div>
-
-                <div className="flex gap-3">
-                  <a
-                    href={
-                      provider === "openai"
-                        ? "https://platform.openai.com/api-keys"
-                        : "https://console.anthropic.com"
-                    }
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-sm font-medium hover:underline"
-                    style={{ color: "var(--brand)" }}
-                  >
-                    Get {provider === "openai" ? "OpenAI" : "Anthropic"} Key
-                    <ExternalLink className="w-4 h-4" />
-                  </a>
-                </div>
-
-                <button
-                  onClick={handleSaveKey}
-                  disabled={!apiKey.trim() || savingKey}
-                  className="w-full px-6 py-3 rounded-xl font-semibold text-white transition-all hover:brightness-110 disabled:opacity-50"
-                  style={{
-                    background: "linear-gradient(135deg, #7C5CFC, #5A3FD4)",
-                    boxShadow: "0 0 20px var(--brand-glow)",
-                  }}
-                >
-                  {savingKey ? "Saving..." : "Save Key & Continue"}
-                </button>
-              </div>
-            )}
-
-            <div className="text-center">
-              <button
-                onClick={() => setCurrentStep(2)}
-                className="text-sm hover:underline"
-                style={{ color: "var(--text-secondary)" }}
-              >
-                I'll add this later
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Step 2: How It Works */}
-        {currentStep === 2 && (
-          <div className="space-y-8 animate-fade-in-up">
-            <div className="premium-card overflow-hidden p-0">
-              <div className="border-b border-[var(--border)] bg-amber-50/70 p-6">
-                <div className="mb-3 flex items-center gap-2">
-                  <span className="rounded-full bg-white px-3 py-1 text-xs font-bold uppercase tracking-[0.14em]" style={{ color: "var(--accent-amber)" }}>
-                    Step 1 of 5
-                  </span>
-                </div>
-                <h2 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>
-                  Now let it compound
-                </h2>
-                <p className="mt-2 text-sm leading-6" style={{ color: "var(--text-secondary)" }}>
-                  One asset is a start. A library of assets becomes a traffic and monetization machine. Each useful asset targets intent people already search for.
-                </p>
-              </div>
-
-              <div className="space-y-3 p-6">
-                <div className="flex gap-3">
-                  <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-orange-100 text-xs font-bold text-orange-600">1</span>
-                  <p className="text-sm leading-6" style={{ color: "var(--text-secondary)" }}>
-                    Use the generator to discover more premium business asset ideas for your niche.
-                  </p>
-                </div>
-                <div className="flex gap-3">
-                  <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-orange-100 text-xs font-bold text-orange-600">2</span>
-                  <p className="text-sm leading-6" style={{ color: "var(--text-secondary)" }}>
-                    Generate a full landing page from any blueprint, then capture leads or publish directly.
-                  </p>
-                </div>
-                <div className="flex gap-3">
-                  <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-orange-100 text-xs font-bold text-orange-600">3</span>
-                  <p className="text-sm leading-6" style={{ color: "var(--text-secondary)" }}>
-                    Add more assets over time. Small search wins stack into compounding traffic and revenue opportunities.
-                  </p>
-                </div>
-                <button
-                  onClick={() => navigate("/dashboard")}
-                  className="btn-primary inline-flex items-center justify-center rounded-2xl px-5 py-3 text-sm font-semibold"
-                >
-                  Go to Dashboard
-                </button>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              {[
-                { title: "How to navigate the app", desc: "What every sidebar item does", icon: Target },
-                { title: "How to add your API key", desc: "OpenAI or Anthropic setup", icon: Key },
-                { title: "Full feature reference", desc: "Use every builder feature", icon: Sparkles },
-              ].map((item, index) => {
-                const Icon = item.icon;
-                return (
-                  <button
-                    key={item.title}
-                    onClick={() => index === 1 && setCurrentStep(1)}
-                    className="premium-card flex w-full items-center justify-between gap-4 rounded-2xl p-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-sm"
-                  >
-                    <span className="flex items-center gap-3">
-                      <span className="icon-tile h-9 w-9 rounded-xl">
-                        <Icon className="h-4 w-4" />
-                      </span>
-                      <span>
-                        <span className="block text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
-                          {item.title}
-                        </span>
-                        <span className="block text-xs" style={{ color: "var(--text-muted)" }}>
-                          {item.desc}
-                        </span>
-                      </span>
-                    </span>
-                    <span className="text-lg" style={{ color: "var(--text-muted)" }}>{">"}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Flow Diagram */}
-            <div className="grid gap-4 md:grid-cols-3">
-              <div className="premium-card p-5 space-y-3">
-                <div className="icon-tile h-11 w-11">
-                  <Target className="w-5 h-5" style={{ color: "var(--brand)" }} />
-                </div>
-                <h3 className="font-bold" style={{ color: "var(--text-primary)" }}>
-                  Pick a Niche
-                </h3>
-                <p className="text-xs leading-5" style={{ color: "var(--text-secondary)" }}>
-                  Choose SEO, fitness, finance, or any focused market.
-                </p>
-              </div>
-
-              <div className="premium-card p-5 space-y-3">
-                <div className="icon-tile h-11 w-11 text-[var(--accent-amber)]">
-                  <Bolt className="w-5 h-5" style={{ color: "var(--accent-amber)" }} />
-                </div>
-                <h3 className="font-bold" style={{ color: "var(--text-primary)" }}>
-                  AI Finds Opportunities
-                </h3>
-                <p className="text-xs leading-5" style={{ color: "var(--text-secondary)" }}>
-                  Find business asset ideas with useful search demand and clear monetization intent.
-                </p>
-              </div>
-
-              <div className="premium-card p-5 space-y-3">
-                <div className="icon-tile h-11 w-11 text-[var(--accent-green)]">
-                  <TrendingUp className="w-5 h-5" style={{ color: "var(--accent-green)" }} />
-                </div>
-                <h3 className="font-bold" style={{ color: "var(--text-primary)" }}>
-                  Build & Deploy
-                </h3>
-                <p className="text-xs leading-5" style={{ color: "var(--text-secondary)" }}>
-                  Generate the page, publish it, and repeat the workflow.
-                </p>
-              </div>
-            </div>
-
-            {/* Pro Tip */}
-            <div
-              className="rounded-xl p-4"
-              style={{ background: "rgba(245, 158, 11, 0.1)", border: "1px solid rgba(245, 158, 11, 0.3)" }}
-            >
-              <p className="text-sm" style={{ color: "var(--text-primary)" }}>
-                <strong>Pro tip:</strong> You don't win one big keyword. You win dozens of small
-                ones. Each tool targets a specific search. They stack. Traffic compounds every month.
-              </p>
-            </div>
-
-            <button
-              onClick={() => setCurrentStep(3)}
-              className="btn-primary w-full rounded-2xl px-6 py-3 font-semibold"
-            >
-              Got it, let's build
-            </button>
-          </div>
-        )}
-
-        {/* Step 3: Create First Project */}
-        {currentStep === 3 && (
-          <div className="space-y-8 animate-fade-in-up">
-            <div className="text-center space-y-2">
-              <h1 className="text-3xl font-bold" style={{ color: "var(--text-primary)" }}>
-                Start with a niche
-              </h1>
-              <p className="text-base" style={{ color: "var(--text-secondary)" }}>
-                A project groups all your business asset ideas for one topic or market.
-              </p>
-            </div>
-
-            {/* Niche Templates */}
-            <div className="grid grid-cols-2 gap-3">
-              {NICHE_TEMPLATES.map((template, i) => {
-                const NicheIcon = NICHE_ICONS[i % NICHE_ICONS.length];
-                return (
-                <button
-                  key={i}
-                  onClick={() => setNiche(template.value)}
-                  className="premium-card p-4 text-left transition-all"
-                >
-                  <div className="icon-tile mb-3 h-10 w-10">
-                    <NicheIcon className="h-5 w-5" />
-                  </div>
-                  <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
-                    {template.name}
-                  </p>
-                </button>
-                );
-              })}
-            </div>
-
-            {/* Custom Niche Input */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
-                Or describe your own niche...
-              </label>
-              <input
-                type="text"
-                value={niche}
-                onChange={(e) => setNiche(e.target.value)}
-                placeholder="e.g., Email marketing for SaaS"
-                className="w-full px-4 py-3 rounded-xl transition-all"
-                style={{
-                  background: "var(--bg-elevated)",
-                  border: "1px solid var(--border-strong)",
-                  color: "var(--text-primary)",
-                }}
-              />
-            </div>
-
-            {/* Project Name */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
-                Project name (auto-generated if blank)
-              </label>
-              <input
-                type="text"
-                value={projectName}
-                onChange={(e) => setProjectName(e.target.value)}
-                placeholder={niche ? `${niche} Project` : "My Project"}
-                className="w-full px-4 py-3 rounded-xl transition-all"
-                style={{
-                  background: "var(--bg-elevated)",
-                  border: "1px solid var(--border-strong)",
-                  color: "var(--text-primary)",
-                }}
-              />
-            </div>
-
-            {/* Goal Dropdown */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
-                Goal
-              </label>
-              <select
-                value={goal}
-                onChange={(e) => setGoal(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl transition-all"
-                style={{
-                  background: "var(--bg-elevated)",
-                  border: "1px solid var(--border-strong)",
-                  color: "var(--text-primary)",
-                }}
-              >
-                {GOALS.map((g) => (
-                  <option key={g.value} value={g.value}>
-                    {g.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <button
-              onClick={handleCreateProject}
-              disabled={!niche.trim() || creatingProject}
-              className="w-full px-6 py-3 rounded-xl font-semibold text-white transition-all hover:brightness-110 disabled:opacity-50"
-              style={{
-                background: "linear-gradient(135deg, #7C5CFC, #5A3FD4)",
-                boxShadow: "0 0 20px var(--brand-glow)",
-              }}
-            >
-              {creatingProject ? "Creating..." : "Create Project"}
-            </button>
-          </div>
-        )}
-
-        {/* Step 4: Generate Ideas */}
-        {currentStep === 4 && (
-          <div className="space-y-8 animate-fade-in-up">
-            <div className="text-center space-y-2">
-              <h1 className="text-3xl font-bold" style={{ color: "var(--text-primary)" }}>
-                Let AI find your best opportunities
-              </h1>
-              <p className="text-base" style={{ color: "var(--text-secondary)" }}>
-                We'll scan your niche and return premium business asset ideas ranked by traffic and monetization potential.
-              </p>
-            </div>
-
-            {/* Project Summary */}
-            <div className="glass-card p-6 space-y-2">
-              <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-                Project
-              </p>
-              <h3 className="text-xl font-bold" style={{ color: "var(--text-primary)" }}>
-                {projectName || `${niche} Project`}
-              </h3>
-              <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-                Niche: {niche}
-              </p>
-            </div>
-
-            {!hasApiKey && (
-              <div
-                className="rounded-xl p-4"
-                style={{ background: "rgba(244, 63, 94, 0.1)", border: "1px solid rgba(244, 63, 94, 0.3)" }}
-              >
-                <p className="text-sm" style={{ color: "var(--text-primary)" }}>
-                  Add your API key in Step 1 to unlock AI generation
-                </p>
-              </div>
-            )}
-
-            {hasApiKey && ideas.length === 0 && (
-              <button
-                onClick={handleGenerateIdeas}
-                disabled={generatingIdeas}
-                className="w-full px-6 py-3 rounded-xl font-semibold text-white transition-all hover:brightness-110 disabled:opacity-50"
-                style={{
-                  background: "linear-gradient(135deg, #7C5CFC, #5A3FD4)",
-                  boxShadow: "0 0 20px var(--brand-glow)",
-                }}
-              >
-                {generatingIdeas ? "Analyzing your niche..." : "Generate My Business Assets"}
-              </button>
-            )}
-
-            {ideas.length > 0 && (
-              <div className="space-y-4">
-                <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
-                  Top 3 ideas:
-                </p>
-                {ideas.map((idea, i) => (
-                  <div key={i} className="glass-card p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <h4 className="font-semibold" style={{ color: "var(--text-primary)" }}>
-                        {idea.name}
-                      </h4>
-                      <span
-                        className="px-3 py-1 rounded-full text-xs font-bold"
-                        style={{
-                          background: "rgba(124, 92, 252, 0.15)",
-                          color: "var(--brand)",
-                        }}
+                        {step.number}
+                      </div>
+                      <p
+                        className={`
+                          text-xs font-medium text-center
+                          ${step.number === currentStep ? "text-slate-900" : "text-slate-500"}
+                        `}
                       >
-                        {idea.score}
-                      </span>
+                        {step.label}
+                      </p>
+                      {step.number === currentStep && (
+                        <div className="mt-2 h-1 w-12 bg-indigo-600 rounded-full" />
+                      )}
                     </div>
-                    <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-                      {idea.category}
-                    </p>
-                  </div>
-                ))}
-                <button
-                  onClick={() => setCurrentStep(5)}
-                  className="w-full px-6 py-3 rounded-xl font-semibold text-white transition-all hover:brightness-110"
-                  style={{
-                    background: "linear-gradient(135deg, #7C5CFC, #5A3FD4)",
-                    boxShadow: "0 0 20px var(--brand-glow)",
-                  }}
-                >
-                  See All Ideas
-                </button>
+                  ))}
+                </div>
               </div>
-            )}
 
-            <div className="text-center">
-              <button
-                onClick={() => navigate("/dashboard")}
-                className="text-sm hover:underline"
-                style={{ color: "var(--text-secondary)" }}
-              >
-                I'll explore projects manually
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Step 5: Build First Tool */}
-        {currentStep === 5 && (
-          <div className="space-y-8 animate-fade-in-up">
-            <div className="text-center space-y-2">
-              <h1 className="text-3xl font-bold" style={{ color: "var(--text-primary)" }}>
-                Build your first real tool
-              </h1>
-              <p className="text-base" style={{ color: "var(--text-secondary)" }}>
-                Pick one idea and AI will write a complete working HTML business asset.
-              </p>
-            </div>
-
-            {ideas[0] && (
-              <div className="glass-card p-6 space-y-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="text-xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>
-                      {ideas[0].name}
-                    </h3>
-                    <p className="text-sm mb-3" style={{ color: "var(--text-secondary)" }}>
-                      {ideas[0].category}
-                    </p>
+              {/* Current Step Card */}
+              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-8">
+                  <div className="inline-block px-3 py-1 rounded-lg bg-indigo-600 text-white text-xs font-bold uppercase tracking-wider mb-4">
+                    STEP {currentStep} OF {totalSteps}
                   </div>
-                  <span
-                    className="px-3 py-1 rounded-full text-sm font-bold"
-                    style={{
-                      background: "rgba(124, 92, 252, 0.15)",
-                      color: "var(--brand)",
-                    }}
+                  <h2 className="text-3xl font-bold text-slate-900 mb-3">
+                    Choose Your Business
+                    <br />
+                    <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                      Opportunity
+                    </span>
+                  </h2>
+                  <p className="text-slate-700 text-lg leading-relaxed mb-6">
+                    Select a niche or market where you want to create traffic, leads, and revenue. Our AI will surface the best opportunities tailored for you.
+                  </p>
+
+                  {/* Decorative Icons */}
+                  <div className="flex items-center gap-8 mb-6">
+                    <div className="flex items-center gap-2">
+                      <div className="w-12 h-12 rounded-xl bg-white shadow-md flex items-center justify-center">
+                        <TrendingUp className="w-6 h-6 text-emerald-600" />
+                      </div>
+                      <div className="w-12 h-12 rounded-xl bg-white shadow-md flex items-center justify-center">
+                        <DollarSign className="w-6 h-6 text-amber-600" />
+                      </div>
+                      <div className="w-12 h-12 rounded-xl bg-white shadow-md flex items-center justify-center">
+                        <Users className="w-6 h-6 text-blue-600" />
+                      </div>
+                      <div className="w-12 h-12 rounded-xl bg-white shadow-md flex items-center justify-center">
+                        <Target className="w-6 h-6 text-rose-600" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => navigate("/projects/new")}
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors shadow-lg hover:shadow-xl"
                   >
-                    Score: {ideas[0].score}
-                  </span>
-                </div>
-                <div
-                  className="p-4 rounded-lg"
-                  style={{ background: "var(--bg-elevated)" }}
-                >
-                  <p className="text-sm font-medium mb-1" style={{ color: "var(--text-primary)" }}>
-                    Why this works:
-                  </p>
-                  <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-                    High search volume with low competition. Perfect for ranking quickly and
-                    attracting backlinks.
-                  </p>
+                    Explore Opportunities
+                    <ArrowRight className="w-5 h-5" />
+                  </button>
                 </div>
               </div>
-            )}
 
-            {!buildingTool && !builtTool && (
-              <button
-                onClick={handleBuildTool}
-                className="w-full px-6 py-3 rounded-xl font-semibold text-white transition-all hover:brightness-110"
-                style={{
-                  background: "linear-gradient(135deg, #7C5CFC, #5A3FD4)",
-                  boxShadow: "0 0 20px var(--brand-glow)",
-                }}
-              >
-                Build This Tool
-              </button>
-            )}
-
-            {buildingTool && (
-              <div className="text-center space-y-3">
-                <div className="inline-block w-12 h-12 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: "var(--brand)" }} />
-                <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-                  Writing the business logic... Adding mobile styling... Generating embed code...
-                </p>
+              {/* Helpful Guides */}
+              <div>
+                <h3 className="text-xl font-bold text-slate-900 mb-4">Helpful Guides</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {helpfulGuides.map((guide) => {
+                    const Icon = guide.icon;
+                    return (
+                      <button
+                        key={guide.title}
+                        className="group bg-white rounded-2xl border border-slate-200 p-5 text-left hover:border-indigo-300 hover:shadow-md transition-all"
+                      >
+                        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${guide.color} flex items-center justify-center mb-3 shadow-md`}>
+                          <Icon className="w-6 h-6 text-white" />
+                        </div>
+                        <h4 className="font-semibold text-slate-900 mb-1 flex items-center justify-between">
+                          {guide.title}
+                          <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all" />
+                        </h4>
+                        <p className="text-sm text-slate-600">{guide.description}</p>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            )}
 
-            {builtTool && (
-              <div className="space-y-4">
-                <div
-                  className="rounded-xl p-6 text-center space-y-3"
-                  style={{ background: "rgba(0, 208, 132, 0.1)", border: "1px solid rgba(0, 208, 132, 0.3)" }}
-                >
-                  <div className="w-16 h-16 mx-auto rounded-full flex items-center justify-center" style={{ background: "var(--accent-green)" }}>
-                    <Check className="w-8 h-8 text-white" />
+              {/* Recommended Tools */}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-bold text-slate-900">Recommended for you</h3>
+                  <button className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 flex items-center gap-1">
+                    See all
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {recommendedTools.map((tool) => {
+                    const Icon = tool.icon;
+                    return (
+                      <div
+                        key={tool.title}
+                        className="group bg-white rounded-2xl border border-slate-200 p-6 hover:border-indigo-300 hover:shadow-lg transition-all relative overflow-hidden"
+                      >
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-full -mr-16 -mt-16 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="relative">
+                          <div className={`w-12 h-12 rounded-xl ${tool.iconBg} flex items-center justify-center mb-4`}>
+                            <Icon className={`w-6 h-6 ${tool.iconColor}`} />
+                          </div>
+                          <h4 className="font-bold text-slate-900 mb-2">{tool.title}</h4>
+                          <p className="text-sm text-slate-600 mb-4">{tool.description}</p>
+                          <button className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-md hover:shadow-lg transition-all ml-auto">
+                            <ChevronRight className="w-5 h-5" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Bottom CTA */}
+              <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 rounded-2xl p-8 text-white shadow-xl">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                      <Zap className="w-8 h-8 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold mb-1">Ready to build something powerful?</h3>
+                      <p className="text-indigo-100">
+                        Create your first project and let AI handle the heavy lifting.
+                      </p>
+                    </div>
                   </div>
-                  <p className="font-semibold" style={{ color: "var(--text-primary)" }}>
-                    Tool built successfully!
-                  </p>
+                  <button
+                    onClick={() => navigate("/projects/new")}
+                    className="px-6 py-3 rounded-xl bg-white text-indigo-600 font-semibold hover:bg-indigo-50 transition-colors shadow-lg flex items-center gap-2"
+                  >
+                    Create New Project
+                    <ArrowRight className="w-5 h-5" />
+                  </button>
                 </div>
-                <button
-                  onClick={() => setCurrentStep(6)}
-                  className="w-full px-6 py-3 rounded-xl font-semibold text-white transition-all hover:brightness-110"
-                  style={{
-                    background: "linear-gradient(135deg, #7C5CFC, #5A3FD4)",
-                    boxShadow: "0 0 20px var(--brand-glow)",
-                  }}
-                >
-                  Continue
+              </div>
+            </div>
+
+            {/* Right Column - Studio Tips */}
+            <div className="lg:col-span-1">
+              <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm sticky top-8">
+                <div className="flex items-center gap-2 mb-6">
+                  <Sparkles className="w-5 h-5 text-indigo-600" />
+                  <h3 className="text-lg font-bold text-slate-900">Studio Tips</h3>
+                </div>
+                <div className="space-y-5">
+                  {studioTips.map((tip, index) => {
+                    const Icon = tip.icon;
+                    return (
+                      <div key={index} className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center flex-shrink-0">
+                          <Icon className="w-5 h-5 text-indigo-600" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-slate-900 mb-1">{tip.title}</h4>
+                          <p className="text-sm text-slate-600 leading-relaxed">{tip.description}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <button className="mt-6 w-full text-sm font-semibold text-indigo-600 hover:text-indigo-700 flex items-center justify-center gap-1">
+                  View all tips
+                  <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
-            )}
+            </div>
           </div>
-        )}
+        </div>
 
-        {/* Step 6: Deploy */}
-        {currentStep === 6 && (
-          <div className="space-y-8 animate-fade-in-up">
-            <div className="text-center space-y-2">
-              <h1 className="text-3xl font-bold" style={{ color: "var(--text-primary)" }}>
-                Your tool is ready. Put it on your site.
-              </h1>
-              <p className="text-base" style={{ color: "var(--text-secondary)" }}>
-                Copy the embed code below and paste it anywhere on your website.
-              </p>
+        {/* Footer Links */}
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-12 border-t border-slate-200 mt-12">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
+                OUR OTHER APPS
+              </h4>
+              <ul className="space-y-2 text-sm text-slate-600">
+                <li>
+                  <button className="hover:text-indigo-600">AI Agent Factory</button>
+                </li>
+                <li>
+                  <button className="hover:text-indigo-600 text-slate-400">(Coming Soon!)</button>
+                </li>
+              </ul>
             </div>
-
-            {/* Embed Code */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
-                  Embed Code
-                </label>
-                <button
-                  onClick={copyEmbedCode}
-                  className="flex items-center gap-2 text-sm font-medium hover:underline"
-                  style={{ color: "var(--brand)" }}
-                >
-                  <Copy className="w-4 h-4" />
-                  Copy
-                </button>
-              </div>
-              <div
-                className="p-4 rounded-xl font-mono text-xs overflow-x-auto"
-                style={{ background: "var(--bg-elevated)", color: "var(--text-primary)" }}
-              >
-                <pre>{getEmbedCode()}</pre>
-              </div>
+            <div>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
+                FREE SEO TOOLS
+              </h4>
+              <ul className="space-y-2 text-sm text-slate-600">
+                <li>
+                  <button className="hover:text-indigo-600">AI Bot Checker</button>
+                </li>
+                <li>
+                  <button className="hover:text-indigo-600">Traffic Opportunity Finder</button>
+                </li>
+                <li>
+                  <button className="hover:text-indigo-600">Traffic Magnets Keyword Intelligence</button>
+                </li>
+                <li>
+                  <button className="hover:text-indigo-600">Rank New Websites Fast!</button>
+                </li>
+              </ul>
             </div>
-
-            {/* Deployment Tabs */}
-            <div className="glass-card p-6 space-y-4">
-              <h3 className="font-semibold" style={{ color: "var(--text-primary)" }}>
-                Quick deploy guides:
-              </h3>
-              <div className="space-y-3">
-                <div>
-                  <p className="text-sm font-medium mb-2" style={{ color: "var(--text-primary)" }}>
-                    WordPress
-                  </p>
-                  <ol className="text-sm space-y-1" style={{ color: "var(--text-secondary)" }}>
-                    <li>1. Edit your page or post</li>
-                    <li>2. Add a "Custom HTML" block</li>
-                    <li>3. Paste the embed code</li>
-                  </ol>
-                </div>
-                <div>
-                  <p className="text-sm font-medium mb-2" style={{ color: "var(--text-primary)" }}>
-                    Plain HTML
-                  </p>
-                  <ol className="text-sm space-y-1" style={{ color: "var(--text-secondary)" }}>
-                    <li>1. Open your HTML file</li>
-                    <li>2. Paste the iframe code where you want it</li>
-                    <li>3. Save and upload</li>
-                  </ol>
-                </div>
-              </div>
+            <div>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
+                FREE TRAFFIC TOOLS
+              </h4>
+              <ul className="space-y-2 text-sm text-slate-600">
+                <li>
+                  <button className="hover:text-indigo-600">Backlink Gap Analyzer</button>
+                </li>
+                <li>
+                  <button className="hover:text-indigo-600">Topical Map Generator</button>
+                </li>
+                <li>
+                  <button className="hover:text-indigo-600">Expired Domain Finder</button>
+                </li>
+                <li>
+                  <button className="hover:text-indigo-600">Content Gap Scanner</button>
+                </li>
+              </ul>
             </div>
-
-            <button
-              onClick={() => navigate("/dashboard")}
-              className="w-full px-6 py-3 rounded-xl font-semibold text-white transition-all hover:brightness-110"
-              style={{
-                background: "linear-gradient(135deg, #7C5CFC, #5A3FD4)",
-                boxShadow: "0 0 20px var(--brand-glow)",
-              }}
-            >
-              Go to My Dashboard
-            </button>
+            <div>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
+                FREE MARKETING TOOLS
+              </h4>
+              <ul className="space-y-2 text-sm text-slate-600">
+                <li>
+                  <button className="hover:text-indigo-600">HookViral</button>
+                </li>
+                <li>
+                  <button className="hover:text-indigo-600">AI Writing Studio</button>
+                </li>
+                <li>
+                  <button className="hover:text-indigo-600">VidOptima</button>
+                </li>
+                <li>
+                  <button className="hover:text-indigo-600">Hormozi Landing Page Pro</button>
+                </li>
+              </ul>
+            </div>
           </div>
-        )}
-      </div>
+        </div>
       </div>
     </DashboardLayout>
   );
