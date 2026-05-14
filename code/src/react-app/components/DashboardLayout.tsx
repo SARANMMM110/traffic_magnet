@@ -1,7 +1,8 @@
+import type { ReactNode } from "react";
 import WorkspaceSidebar from "./WorkspaceSidebar";
 
 interface DashboardLayoutProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
