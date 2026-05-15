@@ -1,8 +1,25 @@
 import { useState, useEffect } from "react";
 import DashboardLayout from "@/react-app/components/DashboardLayout";
-import { cn } from "@/react-app/lib/utils";
 import { useToast } from "@/react-app/components/Toast";
 import { useBlobHtmlPreview } from "@/react-app/lib/useBlobHtmlPreview";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/react-app/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/react-app/components/ui/tabs";
+import { Badge } from "@/react-app/components/ui/badge";
+import { Button } from "@/react-app/components/ui/button";
+import { Separator } from "@/react-app/components/ui/separator";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/react-app/components/ui/accordion";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/react-app/components/ui/select";
 import {
   FileText,
   Loader2,
@@ -17,6 +34,11 @@ import {
   ArrowRight,
   Eye,
   Code2,
+  Layers,
+  Hash,
+  MessageCircleQuestion,
+  Gauge,
+  Library,
 } from "lucide-react";
 
 interface HowItWorksStep {
@@ -338,11 +360,11 @@ export default function ContentWrapper() {
       const ctaContent = includeCta && ctaGoal && ctaUrl
         ? `
   <section class="final-cta">
-    <div class="page-container">
+    <div class="wrap">
       <div class="cta-content">
-        <h2>Ready to Get Started?</h2>
+        <h2>Ready when you are</h2>
         <p>${ctaGoal}</p>
-        <a href="${ctaUrl}" class="cta-button">Start Now</a>
+        <a href="${ctaUrl}" class="cta-button">Continue →</a>
       </div>
     </div>
   </section>
@@ -356,56 +378,317 @@ export default function ContentWrapper() {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${contentPackage.meta_title}</title>
   <meta name="description" content="${contentPackage.meta_description}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.6; color: #111827; }
-    .page-container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
-    .hero { padding: 120px 32px 100px; text-align: center; background: linear-gradient(180deg, #fafbff 0%, #fff 100%); }
-    .hero h1 { font-size: clamp(40px, 6vw, 68px); font-weight: 800; margin-bottom: 24px; letter-spacing: -0.02em; }
-    .hero-intro { max-width: 720px; margin: 0 auto 40px; font-size: 18px; color: #475569; }
-    .btn-primary { display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #7C5CFC, #a78bfa); color: white; border-radius: 12px; text-decoration: none; font-weight: 600; box-shadow: 0 4px 20px rgba(124, 92, 252, 0.3); transition: all 0.3s; }
-    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(124, 92, 252, 0.4); }
-    .tool-section { padding: 100px 0; }
-    .tool-card { max-width: 1100px; margin: 0 auto; background: rgba(255,255,255,0.9); border-radius: 24px; padding: 48px; box-shadow: 0 20px 60px rgba(0,0,0,0.08); }
-    .steps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 32px; margin: 80px 0; }
-    .step-card { background: white; border: 1px solid #e5e7eb; border-radius: 16px; padding: 32px; }
-    .step-number { width: 48px; height: 48px; background: linear-gradient(135deg, #7C5CFC, #a78bfa); color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 700; margin-bottom: 20px; }
-    .step-card h3 { font-size: 20px; margin-bottom: 12px; }
-    .benefits-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; margin: 80px 0; }
-    .benefit-card { background: white; border: 1px solid #e5e7eb; border-radius: 16px; padding: 28px; display: flex; gap: 20px; }
-    .benefit-icon { width: 40px; height: 40px; background: linear-gradient(135deg, #7C5CFC, #a78bfa); color: white; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; }
-    .faq-item { background: white; border: 1px solid #e5e7eb; border-radius: 12px; margin-bottom: 16px; }
-    .faq-item summary { padding: 24px; cursor: pointer; font-weight: 600; list-style: none; }
-    .faq-answer { padding: 0 24px 24px; color: #64748b; }
-    .final-cta { padding: 100px 32px; background: linear-gradient(135deg, #7C5CFC, #a78bfa); text-align: center; }
-    .cta-content h2 { font-size: 42px; color: white; margin-bottom: 20px; }
-    .cta-content p { font-size: 18px; color: rgba(255,255,255,0.95); margin-bottom: 32px; }
-    .cta-button { display: inline-block; padding: 18px 48px; background: white; color: #7C5CFC; border-radius: 12px; text-decoration: none; font-weight: 600; }
+    body {
+      font-family: 'Source Sans 3', system-ui, sans-serif;
+      line-height: 1.65;
+      color: #0f172a;
+      background: #f8f7f4;
+    }
+    .wrap { max-width: 1120px; margin: 0 auto; padding: 0 22px; }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: #94a3b8;
+    }
+    .eyebrow::before {
+      content: '';
+      width: 28px;
+      height: 2px;
+      background: linear-gradient(90deg, #64748b, #cbd5e1);
+      border-radius: 2px;
+    }
+    .hero {
+      background: radial-gradient(120% 90% at 10% 0%, rgba(71, 85, 105, 0.2), transparent 55%),
+        radial-gradient(90% 70% at 90% 10%, rgba(30, 41, 59, 0.15), transparent 50%),
+        linear-gradient(165deg, #0b1224 0%, #111827 42%, #0f172a 100%);
+      color: #e2e8f0;
+      padding: 72px 0 64px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+    }
+    .hero-grid {
+      display: grid;
+      gap: 40px;
+      align-items: start;
+    }
+    @media (min-width: 900px) {
+      .hero-grid { grid-template-columns: 1.15fr 0.85fr; gap: 56px; }
+    }
+    .hero h1 {
+      font-family: 'Fraunces', Georgia, serif;
+      font-weight: 600;
+      font-size: clamp(2.1rem, 4vw, 3.25rem);
+      line-height: 1.12;
+      letter-spacing: -0.02em;
+      color: #f8fafc;
+      margin: 16px 0 20px;
+    }
+    .hero-intro {
+      font-size: 1.05rem;
+      color: rgba(226, 232, 240, 0.88);
+      max-width: 52ch;
+    }
+    .hero-panel {
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      border-radius: 18px;
+      padding: 22px 22px 20px;
+      background: rgba(15, 23, 42, 0.55);
+      backdrop-filter: blur(10px);
+    }
+    .hero-panel h2 {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #94a3b8;
+      margin-bottom: 12px;
+    }
+    .meta-row { display: flex; flex-wrap: wrap; gap: 10px; }
+    .meta-pill {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      color: #e2e8f0;
+      background: rgba(2, 6, 23, 0.35);
+    }
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 28px;
+      padding: 12px 20px;
+      border-radius: 999px;
+      border: 1px solid rgba(226, 232, 240, 0.35);
+      color: #f8fafc;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 14px;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .btn-ghost:hover { background: rgba(248, 250, 252, 0.08); border-color: rgba(248, 250, 252, 0.55); }
+    .tool-band {
+      margin-top: -36px;
+      padding-bottom: 72px;
+    }
+    .tool-frame {
+      border-radius: 20px;
+      border: 1px solid #e2e8f0;
+      background: #fff;
+      box-shadow: 0 24px 80px rgba(15, 23, 42, 0.08);
+      padding: 8px;
+    }
+    .tool-chrome {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px 14px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .dot { width: 9px; height: 9px; border-radius: 999px; background: #e2e8f0; }
+    .dot:nth-child(1) { background: #fda4af; }
+    .dot:nth-child(2) { background: #fcd34d; }
+    .dot:nth-child(3) { background: #cbd5e1; }
+    .chrome-title { font-size: 12px; font-weight: 600; color: #64748b; margin-left: 8px; }
+    .tool-body { padding: 28px 24px 32px; }
+    .section { padding: 72px 0; }
+    .section-head {
+      max-width: 640px;
+      margin-bottom: 36px;
+    }
+    .section-head h2 {
+      font-family: 'Fraunces', Georgia, serif;
+      font-size: clamp(1.6rem, 2.6vw, 2.1rem);
+      color: #0f172a;
+      margin-bottom: 10px;
+    }
+    .section-head p { color: #475569; font-size: 1rem; }
+    .rail {
+      display: grid;
+      gap: 18px;
+    }
+    @media (min-width: 768px) {
+      .rail { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    .step-card {
+      position: relative;
+      padding: 22px 20px 22px 20px;
+      border-radius: 16px;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      min-height: 100%;
+    }
+    .step-card::before {
+      content: '';
+      position: absolute;
+      left: 18px;
+      top: 48px;
+      bottom: -18px;
+      width: 2px;
+      background: linear-gradient(#94a3b8, transparent);
+      opacity: 0.35;
+      display: none;
+    }
+    @media (min-width: 768px) {
+      .step-card:not(:last-child)::before { display: block; }
+    }
+    .step-number {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 14px;
+      color: #334155;
+      background: rgba(241, 245, 249, 0.95);
+      border: 1px solid #cbd5e1;
+      margin-bottom: 14px;
+    }
+    .step-card h3 { font-size: 1.05rem; margin-bottom: 8px; color: #0f172a; }
+    .step-card p { font-size: 0.95rem; color: #475569; }
+    .benefits-grid {
+      display: grid;
+      gap: 16px;
+    }
+    @media (min-width: 720px) {
+      .benefits-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    .benefit-card {
+      display: flex;
+      gap: 16px;
+      padding: 20px;
+      border-radius: 16px;
+      background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+      border: 1px solid #e2e8f0;
+    }
+    .benefit-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 13px;
+      color: #334155;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      flex-shrink: 0;
+    }
+    .benefit-card h3 { font-size: 1rem; margin-bottom: 6px; color: #0f172a; }
+    .benefit-card p { font-size: 0.92rem; color: #475569; }
+    .faq-wrap { margin-top: 48px; }
+    .faq-item {
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      background: #fff;
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+    .faq-item summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 18px 20px;
+      font-weight: 600;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .faq-item summary::-webkit-details-marker { display: none; }
+    .faq-answer { padding: 0 20px 18px; color: #475569; font-size: 0.95rem; border-top: 1px solid #f1f5f9; }
+    .final-cta {
+      padding: 64px 22px;
+      background: linear-gradient(120deg, #1e293b 0%, #334155 50%, #0f172a 100%);
+      color: #f1f5f9;
+      text-align: center;
+    }
+    .cta-content h2 {
+      font-family: 'Fraunces', Georgia, serif;
+      font-size: clamp(1.75rem, 3vw, 2.35rem);
+      margin-bottom: 12px;
+      color: #f8fafc;
+    }
+    .cta-content p { font-size: 1.05rem; opacity: 0.95; margin-bottom: 22px; max-width: 560px; margin-left: auto; margin-right: auto; }
+    .cta-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px 28px;
+      border-radius: 999px;
+      background: #ffffff;
+      color: #0f172a;
+      text-decoration: none;
+      font-weight: 700;
+      border: 1px solid rgba(255, 255, 255, 0.85);
+      box-shadow: 0 10px 40px rgba(2, 6, 23, 0.2);
+    }
   </style>
 </head>
 <body>
-  <section class="hero">
-    <div class="page-container">
-      <h1>${contentPackage.page_h1}</h1>
-      <div class="hero-intro">${contentPackage.introduction}</div>
-      <a href="#tool" class="btn-primary">Get Started</a>
+  <header class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <div class="eyebrow">Interactive landing</div>
+        <h1>${contentPackage.page_h1}</h1>
+        <div class="hero-intro">${contentPackage.introduction}</div>
+        <a href="#tool" class="btn-ghost">Jump to the tool →</a>
+      </div>
+      <aside class="hero-panel" aria-label="Search signals">
+        <h2>On-page signals</h2>
+        <p style="font-size:14px;color:#cbd5e1;line-height:1.5;margin-bottom:14px;">Structured for readers and search: clear promise, proof, and a focused conversion path.</p>
+        <div class="meta-row">
+          <span class="meta-pill">Meta tuned</span>
+          <span class="meta-pill">FAQ coverage</span>
+          <span class="meta-pill">Embed-ready</span>
+        </div>
+      </aside>
     </div>
-  </section>
-  
-  <section class="tool-section" id="tool">
-    <div class="page-container">
-      <div class="tool-card">
-        ${sanitizeEmbedCode(embedCode) || '<p style="text-align:center;color:#999;">Tool embed code will appear here</p>'}
+  </header>
+
+  <section class="tool-band" id="tool">
+    <div class="wrap">
+      <div class="tool-frame">
+        <div class="tool-chrome" aria-hidden="true">
+          <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          <span class="chrome-title">Embedded experience</span>
+        </div>
+        <div class="tool-body">
+          ${sanitizeEmbedCode(embedCode) || '<p style="text-align:center;color:#94a3b8;font-size:15px;">Paste your widget embed to preview it in this frame.</p>'}
+        </div>
       </div>
     </div>
   </section>
-  
-  <section class="page-container">
-    <div class="steps-grid">${howItWorksHTML}</div>
-    <div class="benefits-grid">${benefitsHTML}</div>
-    ${faqHTML}
+
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>How it works</h2>
+        <p>A tight narrative arc visitors can scan in seconds—then act.</p>
+      </div>
+      <div class="rail">${howItWorksHTML}</div>
+      <div class="section-head" style="margin-top:56px;">
+        <h2>Why it matters</h2>
+        <p>Benefit-led proof points that reinforce the headline and reduce hesitation.</p>
+      </div>
+      <div class="benefits-grid">${benefitsHTML}</div>
+      <div class="faq-wrap">${faqHTML}</div>
+    </div>
   </section>
-  
+
   ${ctaContent}
 </body>
 </html>`;
@@ -545,401 +828,581 @@ export default function ContentWrapper() {
 
   return (
     <DashboardLayout>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
-        {/* Header */}
-        <div className="border-b border-slate-200/80 bg-white/80 backdrop-blur-sm">
-          <div className="mx-auto max-w-7xl px-6 py-8">
-            <div className="flex items-start gap-5">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/30">
-                <FileText className="h-8 w-8 text-white" />
-              </div>
-              <div className="flex-1">
-                <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-                  Content Wrapper
-                </h1>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                  Transform blueprints into SEO-optimized content packages with structured sections and exportable HTML
-                </p>
-              </div>
-            </div>
-
-            {/* Tabs */}
-            <div className="mt-8 flex gap-2">
-              <button
-                onClick={() => setActiveTab("generate")}
-                className={cn(
-                  "flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold transition-all",
-                  activeTab === "generate"
-                    ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/30"
-                    : "bg-white text-slate-600 hover:bg-slate-50 border border-slate-200"
-                )}
-              >
-                <Sparkles className="h-4 w-4" />
-                Generate
-              </button>
-              <button
-                onClick={() => setActiveTab("saved")}
-                className={cn(
-                  "flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold transition-all",
-                  activeTab === "saved"
-                    ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/30"
-                    : "bg-white text-slate-600 hover:bg-slate-50 border border-slate-200"
-                )}
-              >
-                <Folder className="h-4 w-4" />
-                Saved
-                <span className="ml-1 rounded-full bg-slate-900/10 px-2 py-0.5 text-xs font-bold">
-                  {campaigns.length}
-                </span>
-              </button>
-            </div>
-          </div>
+      <div className="relative min-h-screen overflow-hidden bg-[var(--bg-base)]">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-90"
+          aria-hidden
+        >
+          <div className="absolute -left-32 top-0 h-[420px] w-[520px] rounded-full bg-slate-400/10 blur-3xl" />
+          <div className="absolute right-[-120px] top-24 h-[380px] w-[480px] rounded-full bg-slate-300/15 blur-3xl" />
+          <div className="absolute bottom-0 left-1/3 h-[280px] w-[720px] translate-y-1/3 rounded-full bg-slate-900/[0.03] blur-3xl" />
         </div>
 
-        {/* Main Content */}
-        <div className="mx-auto max-w-7xl px-6 py-12">
-          {activeTab === "generate" ? (
-            <div className="space-y-8">
-              {/* Input Form */}
-              <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xl shadow-slate-900/5">
-                <div className="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-8 py-5">
-                  <h2 className="text-lg font-bold text-slate-900">Setup</h2>
-                  <p className="mt-1 text-sm text-slate-600">Paste your blueprint and configuration</p>
+        <div className="relative mx-auto max-w-7xl px-4 pb-16 pt-8 sm:px-6 lg:px-8 lg:pt-10">
+          <Tabs
+            value={activeTab}
+            onValueChange={(v) => setActiveTab(v as "generate" | "saved")}
+            className="gap-8"
+          >
+            <header className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+              <div className="max-w-2xl space-y-4">
+                <div className="inline-flex items-center gap-2 rounded-full border border-border bg-white/90 px-3 py-1 text-xs font-semibold text-muted-foreground shadow-sm backdrop-blur-sm">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-muted text-foreground">
+                    <Layers className="h-3.5 w-3.5" />
+                  </span>
+                  Content workspace
                 </div>
-                <div className="space-y-6 p-8">
-                  <div>
-                    <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
-                      Blueprint
-                    </label>
-                    <textarea
-                      value={blueprint}
-                      onChange={(e) => handleBlueprintChange(e.target.value)}
-                      placeholder="Paste blueprint or bundle here..."
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 transition-all focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
-                      rows={6}
-                    />
-                  </div>
-
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div>
-                      <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
-                        Target Keyword
-                      </label>
-                      <input
-                        type="text"
-                        value={targetKeyword}
-                        onChange={(e) => setTargetKeyword(e.target.value)}
-                        placeholder="e.g., affiliate revenue engine"
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 transition-all focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
-                        Niche / Topic
-                      </label>
-                      <input
-                        type="text"
-                        value={nicheTopic}
-                        onChange={(e) => setNicheTopic(e.target.value)}
-                        placeholder="e.g., personal finance"
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 transition-all focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
-                      Embed Code <span className="text-slate-400">(optional)</span>
-                    </label>
-                    <textarea
-                      value={embedCode}
-                      onChange={(e) => setEmbedCode(e.target.value)}
-                      placeholder="Paste widget embed code..."
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 font-mono text-sm text-slate-900 placeholder-slate-400 transition-all focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
-                      rows={4}
-                    />
-                  </div>
-
-                  <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-5">
-                    <label className="flex cursor-pointer items-center gap-3">
-                      <input
-                        type="checkbox"
-                        checked={includeCta}
-                        onChange={(e) => setIncludeCta(e.target.checked)}
-                        className="h-5 w-5 rounded border-slate-300 text-indigo-600 transition focus:ring-2 focus:ring-indigo-500/20"
-                      />
-                      <span className="text-sm font-semibold text-slate-900">
-                        Include Call to Action
-                      </span>
-                    </label>
-
-                    {includeCta && (
-                      <div className="mt-4 grid gap-3 md:grid-cols-2">
-                        <input
-                          type="text"
-                          value={ctaGoal}
-                          onChange={(e) => setCtaGoal(e.target.value)}
-                          placeholder="CTA text"
-                          className="rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                        />
-                        <input
-                          type="text"
-                          value={ctaUrl}
-                          onChange={(e) => setCtaUrl(e.target.value)}
-                          placeholder="URL"
-                          className="rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                        />
-                      </div>
-                    )}
-                  </div>
-
-                  <button
-                    onClick={handleGenerate}
-                    disabled={generating || !blueprint || !targetKeyword || !nicheTopic}
-                    className="flex w-full items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4 text-base font-bold text-white shadow-lg shadow-indigo-500/30 transition-all hover:shadow-xl hover:shadow-indigo-500/40 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {generating ? (
-                      <>
-                        <Loader2 className="h-5 w-5 animate-spin" />
-                        Generating...
-                      </>
-                    ) : (
-                      <>
-                        <Zap className="h-5 w-5" />
-                        Generate Content Package
-                        <ArrowRight className="h-5 w-5" />
-                      </>
-                    )}
-                  </button>
+                <div className="space-y-2">
+                  <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                    Content wrapper
+                  </h1>
+                  <p className="text-base leading-relaxed text-muted-foreground sm:text-[15px]">
+                    Generate structured SEO copy from your blueprint, review metadata and sections, then export a complete HTML landing page with your embed in place.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <Badge variant="outline" className="border-border bg-background font-medium text-foreground">
+                    Blueprint-aware
+                  </Badge>
+                  <Badge variant="outline" className="border-border bg-background font-medium text-foreground">
+                    Full-page export
+                  </Badge>
+                  <Badge variant="outline" className="border-border bg-muted/50 font-medium text-muted-foreground">
+                    Campaign library
+                  </Badge>
                 </div>
               </div>
 
-              {/* Output */}
+              <div className="flex w-full flex-col gap-3 sm:w-auto sm:items-end">
+                <TabsList variant="line" className="h-auto w-full justify-start gap-1 rounded-2xl border border-border bg-white/70 p-1 shadow-sm backdrop-blur-sm sm:w-auto sm:justify-end">
+                  <TabsTrigger value="generate" className="gap-2 rounded-xl px-4 py-2.5 data-[state=active]:shadow-sm">
+                    <Sparkles className="h-4 w-4 shrink-0" />
+                    Compose
+                  </TabsTrigger>
+                  <TabsTrigger value="saved" className="gap-2 rounded-xl px-4 py-2.5 data-[state=active]:shadow-sm">
+                    <Library className="h-4 w-4 shrink-0" />
+                    Library
+                    <span className="ml-0.5 rounded-full bg-muted px-2 py-0.5 text-[11px] font-bold tabular-nums text-muted-foreground">
+                      {campaigns.length}
+                    </span>
+                  </TabsTrigger>
+                </TabsList>
+                {activeTab === "generate" && (
+                  <div className="flex items-center gap-3 rounded-2xl border border-dashed border-border/80 bg-white/50 px-4 py-3 text-xs text-muted-foreground backdrop-blur-sm sm:max-w-xs sm:text-left">
+                    <Gauge className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    <span>
+                      <span className="font-semibold text-foreground">Readiness:</span>{" "}
+                      {[blueprint, targetKeyword, nicheTopic].filter(Boolean).length}/3 inputs set
+                    </span>
+                  </div>
+                )}
+              </div>
+            </header>
+
+            <TabsContent value="generate" className="mt-0 space-y-10 animate-fade-in-up outline-none">
+              <div className="space-y-6">
+                  <div className="grid gap-6 lg:grid-cols-2">
+                    <Card className="border-border/80 shadow-md shadow-slate-900/[0.04]">
+                      <CardHeader className="border-b border-border/60 bg-gradient-to-br from-white to-muted/30">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <CardTitle className="text-base font-semibold">Brief</CardTitle>
+                            <CardDescription>Blueprint or pasted bundle (auto-fill supported).</CardDescription>
+                          </div>
+                          <span className="rounded-lg bg-muted px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                            Step 1
+                          </span>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="pt-5">
+                        <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          Blueprint
+                        </label>
+                        <textarea
+                          value={blueprint}
+                          onChange={(e) => handleBlueprintChange(e.target.value)}
+                          placeholder="Paste blueprint, JSON bundle, or vendor export…"
+                          rows={7}
+                          className="min-h-[160px] w-full resize-y rounded-xl border border-input bg-background/80 px-3.5 py-3 text-sm shadow-inner transition-[box-shadow,border-color] placeholder:text-muted-foreground/70 focus-visible:border-foreground/25 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-foreground/10"
+                        />
+                      </CardContent>
+                    </Card>
+
+                    <Card className="border-border/80 shadow-md shadow-slate-900/[0.04]">
+                      <CardHeader className="border-b border-border/60 bg-gradient-to-br from-white to-muted/30">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <CardTitle className="text-base font-semibold">Targeting</CardTitle>
+                            <CardDescription>Anchor the page to one keyword and a clear topical lane.</CardDescription>
+                          </div>
+                          <span className="rounded-lg bg-muted px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                            Step 2
+                          </span>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-4 pt-5">
+                        <div>
+                          <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                            Target keyword
+                          </label>
+                          <input
+                            type="text"
+                            value={targetKeyword}
+                            onChange={(e) => setTargetKeyword(e.target.value)}
+                            placeholder="e.g., affiliate revenue engine"
+                            className="h-11 w-full rounded-xl border border-input bg-background/80 px-3.5 text-sm shadow-inner transition-[box-shadow,border-color] placeholder:text-muted-foreground/70 focus-visible:border-foreground/25 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-foreground/10"
+                          />
+                        </div>
+                        <div>
+                          <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                            Niche / topic
+                          </label>
+                          <input
+                            type="text"
+                            value={nicheTopic}
+                            onChange={(e) => setNicheTopic(e.target.value)}
+                            placeholder="e.g., personal finance"
+                            className="h-11 w-full rounded-xl border border-input bg-background/80 px-3.5 text-sm shadow-inner transition-[box-shadow,border-color] placeholder:text-muted-foreground/70 focus-visible:border-foreground/25 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-foreground/10"
+                          />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  <Card className="border-border/80 shadow-md shadow-slate-900/[0.04]">
+                    <CardHeader className="border-b border-border/60 bg-gradient-to-br from-slate-900/[0.03] to-white">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                          <CardTitle className="text-base font-semibold">Embed & conversion</CardTitle>
+                          <CardDescription>Optional widget embed plus a focused CTA lane.</CardDescription>
+                        </div>
+                        <span className="w-fit rounded-lg bg-slate-900/5 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-700">
+                          Step 3
+                        </span>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-5 pt-5">
+                      <div>
+                        <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          Embed code <span className="font-normal normal-case text-muted-foreground/80">(optional)</span>
+                        </label>
+                        <textarea
+                          value={embedCode}
+                          onChange={(e) => setEmbedCode(e.target.value)}
+                          placeholder="Paste widget / iframe snippet…"
+                          rows={4}
+                          className="w-full resize-y rounded-xl border border-input bg-muted/30 px-3.5 py-3 font-mono text-[13px] leading-relaxed shadow-inner transition-[box-shadow,border-color] placeholder:text-muted-foreground/70 focus-visible:border-foreground/25 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-foreground/10"
+                        />
+                      </div>
+
+                      <div className="rounded-2xl border border-border bg-muted/25 p-4">
+                        <label className="flex cursor-pointer items-start gap-3">
+                          <input
+                            type="checkbox"
+                            checked={includeCta}
+                            onChange={(e) => setIncludeCta(e.target.checked)}
+                            className="mt-0.5 h-4 w-4 rounded border-input text-foreground focus:ring-foreground/15"
+                          />
+                          <span>
+                            <span className="text-sm font-semibold text-foreground">Include call to action</span>
+                            <span className="mt-0.5 block text-xs text-muted-foreground">
+                              Adds a conversion block to generated HTML when goal and URL are set.
+                            </span>
+                          </span>
+                        </label>
+
+                        {includeCta && (
+                          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                            <div className="sm:col-span-2">
+                              <label className="mb-1.5 block text-xs font-medium text-muted-foreground">CTA intent</label>
+                              <Select value={ctaType} onValueChange={setCtaType}>
+                                <SelectTrigger className="h-11 w-full rounded-xl border-input bg-background">
+                                  <SelectValue placeholder="Choose intent" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="Collect Emails">Collect emails</SelectItem>
+                                  <SelectItem value="Book a Call">Book a call</SelectItem>
+                                  <SelectItem value="Start Trial">Start trial</SelectItem>
+                                  <SelectItem value="Buy Now">Buy now</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Goal copy</label>
+                              <input
+                                type="text"
+                                value={ctaGoal}
+                                onChange={(e) => setCtaGoal(e.target.value)}
+                                placeholder="What should visitors do next?"
+                                className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm focus-visible:border-foreground/25 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-foreground/10"
+                              />
+                            </div>
+                            <div>
+                              <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Destination URL</label>
+                              <input
+                                type="text"
+                                value={ctaUrl}
+                                onChange={(e) => setCtaUrl(e.target.value)}
+                                placeholder="https://"
+                                className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm focus-visible:border-foreground/25 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-foreground/10"
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <Button
+                        size="lg"
+                        className="h-12 w-full gap-2 rounded-2xl shadow-sm"
+                        onClick={handleGenerate}
+                        disabled={generating || !blueprint || !targetKeyword || !nicheTopic}
+                      >
+                        {generating ? (
+                          <>
+                            <Loader2 className="h-5 w-5 animate-spin" />
+                            Generating package…
+                          </>
+                        ) : (
+                          <>
+                            <Zap className="h-5 w-5" />
+                            Generate content package
+                            <ArrowRight className="h-4 w-4 opacity-90" />
+                          </>
+                        )}
+                      </Button>
+                    </CardContent>
+                  </Card>
+              </div>
+
               {contentPackage && (
                 <div className="space-y-6">
-                  {/* Actions */}
-                  <div className="flex flex-wrap gap-3">
-                    <button
-                      onClick={() => {
-                        const content = `SEO TITLE: ${contentPackage.meta_title}\n\nMETA DESCRIPTION: ${contentPackage.meta_description}\n\nH1: ${contentPackage.page_h1}\n\nINTRO:\n${contentPackage.introduction}`;
-                        navigator.clipboard.writeText(content);
-                        showToast({ type: "success", title: "Copied!", message: "Content copied" });
-                      }}
-                      className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
-                    >
-                      <Copy className="h-4 w-4" />
-                      Copy
-                    </button>
-                    <button
-                      onClick={() => setShowSaveModal(true)}
-                      className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
-                    >
-                      <Save className="h-4 w-4" />
-                      Save
-                    </button>
-                  </div>
-
-                  {/* Content Preview */}
-                  <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
-                    <div className="border-b border-slate-100 bg-gradient-to-r from-emerald-50 to-white px-8 py-5">
-                      <h3 className="text-lg font-bold text-slate-900">Generated Content</h3>
-                      <p className="mt-1 text-sm text-slate-600">SEO metadata and structured copy</p>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+                    <div>
+                      <h2 className="text-lg font-semibold text-foreground">Generated package</h2>
+                      <p className="text-sm text-muted-foreground">Review copy, coverage, then export HTML.</p>
                     </div>
-                    <div className="space-y-6 p-8">
-                      <div>
-                        <div className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">Meta Title</div>
-                        <div className="text-base text-slate-900">{contentPackage.meta_title}</div>
-                      </div>
-                      <div>
-                        <div className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">Meta Description</div>
-                        <div className="text-sm text-slate-700">{contentPackage.meta_description}</div>
-                      </div>
-                      <div className="border-t border-slate-100 pt-6">
-                        <div className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">Page Headline</div>
-                        <div className="text-2xl font-bold text-slate-900">{contentPackage.page_h1}</div>
-                      </div>
-                      <div>
-                        <div className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">Introduction</div>
-                        <div className="text-sm leading-relaxed text-slate-700" dangerouslySetInnerHTML={{ __html: contentPackage.introduction }} />
-                      </div>
-                      <div>
-                        <div className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">
-                          How It Works ({contentPackage.how_it_works.length} steps)
-                        </div>
-                        <div className="space-y-3">
-                          {contentPackage.how_it_works.map((step) => (
-                            <div key={step.step_number} className="rounded-lg border border-slate-100 bg-slate-50/50 p-4">
-                              <div className="font-bold text-slate-900">{step.step_number}. {step.title}</div>
-                              <div className="mt-1 text-sm text-slate-600">{step.description}</div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">
-                          Key Benefits ({contentPackage.key_benefits.length})
-                        </div>
-                        <div className="space-y-2">
-                          {contentPackage.key_benefits.map((benefit, i) => (
-                            <div key={i} className="flex items-start gap-3">
-                              <Check className="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-600" />
-                              <span className="text-sm text-slate-700">{benefit}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-xl"
+                        onClick={() => {
+                          const content = `SEO TITLE: ${contentPackage.meta_title}\n\nMETA DESCRIPTION: ${contentPackage.meta_description}\n\nH1: ${contentPackage.page_h1}\n\nINTRO:\n${contentPackage.introduction}`;
+                          navigator.clipboard.writeText(content);
+                          showToast({ type: "success", title: "Copied", message: "Top-of-funnel copy on your clipboard" });
+                        }}
+                      >
+                        <Copy className="h-4 w-4" />
+                        Copy hero block
+                      </Button>
+                      <Button variant="outline" size="sm" className="rounded-xl" onClick={() => setShowSaveModal(true)}>
+                        <Save className="h-4 w-4" />
+                        Save as campaign
+                      </Button>
                     </div>
                   </div>
 
-                  {/* HTML Builder */}
-                  <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
-                    <div className="border-b border-slate-100 bg-gradient-to-r from-indigo-50 to-white px-8 py-5">
-                      <h3 className="text-lg font-bold text-slate-900">Full Page HTML</h3>
-                      <p className="mt-1 text-sm text-slate-600">Generate complete landing page</p>
-                    </div>
-                    <div className="p-8">
+                  <Card className="overflow-hidden border-border/80 shadow-lg shadow-slate-900/[0.06]">
+                    <CardHeader className="border-b border-border/70 bg-gradient-to-r from-white via-muted/40 to-muted/20">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                          <CardTitle className="text-base font-semibold">Live breakdown</CardTitle>
+                          <CardDescription>Tabbed review so each section gets breathing room.</CardDescription>
+                        </div>
+                        <Badge variant="secondary" className="font-mono text-[11px]">
+                          {contentPackage.semantic_keywords.length} keywords
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pt-6">
+                      <Tabs defaultValue="signals" className="gap-5">
+                        <TabsList className="h-auto w-full flex-wrap justify-start gap-1 rounded-2xl bg-muted/60 p-1">
+                          <TabsTrigger value="signals" className="gap-1.5 rounded-xl px-3 py-2 text-xs sm:text-sm">
+                            <Hash className="h-3.5 w-3.5" />
+                            Signals
+                          </TabsTrigger>
+                          <TabsTrigger value="body" className="gap-1.5 rounded-xl px-3 py-2 text-xs sm:text-sm">
+                            <FileText className="h-3.5 w-3.5" />
+                            On-page
+                          </TabsTrigger>
+                          <TabsTrigger value="structure" className="gap-1.5 rounded-xl px-3 py-2 text-xs sm:text-sm">
+                            <Layers className="h-3.5 w-3.5" />
+                            Structure
+                          </TabsTrigger>
+                          <TabsTrigger value="faq" className="gap-1.5 rounded-xl px-3 py-2 text-xs sm:text-sm">
+                            <MessageCircleQuestion className="h-3.5 w-3.5" />
+                            FAQ
+                          </TabsTrigger>
+                        </TabsList>
+
+                        <TabsContent value="signals" className="mt-0 space-y-5 outline-none">
+                          <div className="grid gap-4 md:grid-cols-2">
+                            <div className="rounded-2xl border border-border bg-muted/20 p-4">
+                              <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Meta title</p>
+                              <p className="mt-2 text-sm font-medium leading-snug text-foreground">{contentPackage.meta_title}</p>
+                            </div>
+                            <div className="rounded-2xl border border-border bg-muted/20 p-4">
+                              <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Meta description</p>
+                              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{contentPackage.meta_description}</p>
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Semantic keywords</p>
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              {contentPackage.semantic_keywords.length === 0 ? (
+                                <span className="text-sm text-muted-foreground">No keyword list returned.</span>
+                              ) : (
+                                contentPackage.semantic_keywords.map((kw) => (
+                                  <Badge key={kw} variant="outline" className="rounded-full border-border bg-muted/40 font-normal text-foreground">
+                                    {kw}
+                                  </Badge>
+                                ))
+                              )}
+                            </div>
+                          </div>
+                        </TabsContent>
+
+                        <TabsContent value="body" className="mt-0 space-y-5 outline-none">
+                          <div>
+                            <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Page headline</p>
+                            <p className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">{contentPackage.page_h1}</p>
+                          </div>
+                          <Separator />
+                          <div>
+                            <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Introduction</p>
+                            <div
+                              className="mt-3 max-w-none text-sm leading-relaxed text-muted-foreground [&_a]:text-foreground [&_a]:underline [&_p:not(:last-child)]:mb-3"
+                              dangerouslySetInnerHTML={{ __html: contentPackage.introduction }}
+                            />
+                          </div>
+                        </TabsContent>
+
+                        <TabsContent value="structure" className="mt-0 grid gap-6 lg:grid-cols-2 outline-none">
+                          <div>
+                            <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                              How it works · {contentPackage.how_it_works.length} steps
+                            </p>
+                            <div className="relative mt-4 space-y-4 pl-1">
+                              <div className="absolute left-[15px] top-2 bottom-2 w-px bg-gradient-to-b from-border via-border to-transparent" aria-hidden />
+                              {contentPackage.how_it_works.map((step) => (
+                                <div key={step.step_number} className="relative flex gap-4">
+                                  <span className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border bg-muted text-xs font-bold text-foreground">
+                                    {step.step_number}
+                                  </span>
+                                  <div className="min-w-0 flex-1 rounded-2xl border border-border bg-white/80 p-4 shadow-sm">
+                                    <p className="font-semibold text-foreground">{step.title}</p>
+                                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{step.description}</p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                              Key benefits · {contentPackage.key_benefits.length}
+                            </p>
+                            <ul className="mt-4 space-y-3">
+                              {contentPackage.key_benefits.map((benefit, i) => (
+                                <li
+                                  key={i}
+                                  className="flex gap-3 rounded-2xl border border-border bg-gradient-to-br from-white to-muted/30 p-4 shadow-sm"
+                                >
+                                  <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-border bg-muted text-muted-foreground">
+                                    <Check className="h-4 w-4" />
+                                  </span>
+                                  <span className="text-sm leading-relaxed text-muted-foreground">{benefit}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </TabsContent>
+
+                        <TabsContent value="faq" className="mt-0 outline-none">
+                          {contentPackage.faq_section.length === 0 ? (
+                            <p className="text-sm text-muted-foreground">No FAQ items in this package.</p>
+                          ) : (
+                            <Accordion type="single" collapsible className="rounded-2xl border border-border bg-white/60">
+                              {contentPackage.faq_section.map((faq, idx) => (
+                                <AccordionItem key={idx} value={`faq-${idx}`} className="border-border/80">
+                                  <AccordionTrigger className="px-4 text-left text-sm font-semibold text-foreground hover:no-underline">
+                                    {faq.question}
+                                  </AccordionTrigger>
+                                  <AccordionContent className="px-4 text-sm leading-relaxed text-muted-foreground">
+                                    {faq.answer}
+                                  </AccordionContent>
+                                </AccordionItem>
+                              ))}
+                            </Accordion>
+                          )}
+                        </TabsContent>
+                      </Tabs>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-border/80 shadow-md">
+                    <CardHeader className="border-b border-border/60 bg-gradient-to-r from-slate-900/[0.04] to-white">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <CardTitle className="text-base font-semibold">Full-page HTML</CardTitle>
+                          <CardDescription>Editorial shell + embed frame + structured sections.</CardDescription>
+                        </div>
+                        {fullPageGenerated && (
+                          <Badge variant="outline" className="w-fit border-border bg-muted/50 text-foreground">
+                            Ready to ship
+                          </Badge>
+                        )}
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4 pt-6">
                       {!fullPageGenerated ? (
-                        <div className="space-y-4">
-                          <button
-                            onClick={handleGenerateFullHtmlPage}
-                            disabled={isGeneratingHtml}
-                            className="flex w-full items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4 text-base font-bold text-white shadow-lg shadow-indigo-500/30 transition hover:shadow-xl disabled:opacity-50"
-                          >
-                            {isGeneratingHtml ? (
-                              <>
-                                <Loader2 className="h-5 w-5 animate-spin" />
-                                Building HTML...
-                              </>
-                            ) : (
-                              <>
-                                <Code2 className="h-5 w-5" />
-                                Generate HTML Page
-                              </>
-                            )}
-                          </button>
-                        </div>
+                        <Button
+                          size="lg"
+                          className="h-12 w-full gap-2 rounded-2xl bg-slate-900 text-white hover:bg-slate-900/90"
+                          onClick={handleGenerateFullHtmlPage}
+                          disabled={isGeneratingHtml}
+                        >
+                          {isGeneratingHtml ? (
+                            <>
+                              <Loader2 className="h-5 w-5 animate-spin" />
+                              Building HTML…
+                            </>
+                          ) : (
+                            <>
+                              <Code2 className="h-5 w-5" />
+                              Generate HTML page
+                            </>
+                          )}
+                        </Button>
                       ) : (
                         <div className="space-y-4">
-                          <div className="flex gap-3">
-                            <button
+                          <div className="flex flex-col gap-2 sm:flex-row">
+                            <Button
+                              size="lg"
+                              className="h-11 flex-1 gap-2 rounded-2xl shadow-sm"
                               onClick={handleDownloadHtml}
-                              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-3 text-sm font-bold text-white shadow-lg transition hover:shadow-xl"
                             >
                               <Download className="h-4 w-4" />
                               Download HTML
-                            </button>
-                            <button
-                              onClick={handleCopyHtml}
-                              className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
-                            >
+                            </Button>
+                            <Button size="lg" variant="outline" className="h-11 flex-1 gap-2 rounded-2xl" onClick={handleCopyHtml}>
                               <Copy className="h-4 w-4" />
-                              Copy Code
-                            </button>
+                              Copy code
+                            </Button>
                           </div>
 
                           {fullPagePreviewUrl && (
-                            <div className="overflow-hidden rounded-xl border border-slate-200 shadow-lg">
-                              <div className="flex items-center gap-3 border-b border-slate-200 bg-slate-100 px-4 py-3">
-                                <Eye className="h-4 w-4 text-slate-600" />
-                                <span className="text-xs font-semibold text-slate-600">Live Preview</span>
+                            <div className="overflow-hidden rounded-2xl border border-border shadow-inner">
+                              <div className="flex items-center gap-2 border-b border-border bg-muted/50 px-4 py-2.5">
+                                <Eye className="h-4 w-4 text-muted-foreground" />
+                                <span className="text-xs font-semibold text-muted-foreground">Live preview</span>
                               </div>
                               <iframe
                                 src={fullPagePreviewUrl}
-                                title="Preview"
+                                title="HTML preview"
                                 sandbox="allow-scripts"
-                                className="h-[600px] w-full border-none bg-white"
+                                className="h-[min(640px,70vh)] w-full border-none bg-white"
                               />
                             </div>
                           )}
                         </div>
                       )}
-                    </div>
-                  </div>
+                    </CardContent>
+                  </Card>
                 </div>
               )}
-            </div>
-          ) : (
-            // Saved Tab
-            <div>
+            </TabsContent>
+
+            <TabsContent value="saved" className="mt-0 outline-none animate-fade-in-up">
               {loadingCampaigns ? (
-                <div className="flex min-h-[400px] items-center justify-center">
-                  <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+                <div className="flex min-h-[360px] items-center justify-center rounded-3xl border border-dashed border-border bg-white/50">
+                  <Loader2 className="h-9 w-9 animate-spin text-muted-foreground" />
                 </div>
               ) : campaigns.length === 0 ? (
-                <div className="flex flex-col items-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 px-8 py-20 text-center">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500/10 to-purple-500/10">
-                    <Folder className="h-8 w-8 text-indigo-600" />
-                  </div>
-                  <h3 className="mt-6 text-lg font-bold text-slate-900">No saved campaigns</h3>
-                  <p className="mt-2 max-w-sm text-sm text-slate-600">
-                    Generate content from the Generate tab to save campaigns here
-                  </p>
-                </div>
+                <Card className="border-dashed border-2 border-border/80 bg-white/60 py-16 text-center shadow-none">
+                  <CardContent className="flex flex-col items-center gap-3 pt-6">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
+                      <Folder className="h-7 w-7" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-lg font-semibold text-foreground">No campaigns yet</p>
+                      <p className="max-w-md text-sm text-muted-foreground">
+                        Generate a package once—auto-save runs in the background, and named saves land here for reload.
+                      </p>
+                    </div>
+                    <Button className="mt-2 rounded-xl" onClick={() => setActiveTab("generate")}>
+                      Go to compose
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </CardContent>
+                </Card>
               ) : (
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                   {campaigns.map((campaign) => (
-                    <div
+                    <Card
                       key={campaign.id}
-                      className="group overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:shadow-lg"
+                      className="group overflow-hidden border-border/80 shadow-md transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-lg"
                     >
-                      <div className="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-6 py-4">
-                        <h3 className="font-bold text-slate-900">{campaign.name}</h3>
-                        <div className="mt-1 text-xs text-slate-500">
-                          {new Date(campaign.created_at).toLocaleDateString()}
-                        </div>
-                      </div>
-                      <div className="p-6">
+                      <CardHeader className="border-b border-border/60 bg-gradient-to-br from-white to-muted/40 pb-4">
+                        <CardTitle className="line-clamp-2 text-base">{campaign.name}</CardTitle>
+                        <CardDescription>{new Date(campaign.created_at).toLocaleDateString(undefined, { dateStyle: "medium" })}</CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4 pt-5">
                         {campaign.target_keyword && (
-                          <div className="mb-3 inline-flex rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
+                          <Badge variant="outline" className="rounded-full border-border bg-muted/40 font-normal text-foreground">
                             {campaign.target_keyword}
-                          </div>
+                          </Badge>
                         )}
                         <div className="flex gap-2">
-                          <button
-                            onClick={() => handleLoadCampaign(campaign)}
-                            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2 text-sm font-semibold text-white shadow transition hover:shadow-md"
-                          >
+                          <Button className="flex-1 gap-2 rounded-xl bg-slate-900 text-white hover:bg-slate-900/90" onClick={() => handleLoadCampaign(campaign)}>
                             <ArrowRight className="h-4 w-4" />
                             Load
-                          </button>
-                          <button
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="icon"
+                            className="rounded-xl border border-transparent"
                             onClick={() => handleDeleteCampaign(campaign.id)}
-                            className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-100"
+                            aria-label="Delete campaign"
                           >
                             <Trash2 className="h-4 w-4" />
-                          </button>
+                          </Button>
                         </div>
-                      </div>
-                    </div>
+                      </CardContent>
+                    </Card>
                   ))}
                 </div>
               )}
-            </div>
-          )}
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
 
-      {/* Save Modal */}
       {showSaveModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm"
           onClick={() => setShowSaveModal(false)}
+          role="presentation"
         >
-          <div
-            className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl"
+          <Card
+            className="w-full max-w-md border-border/80 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="save-campaign-title"
           >
-            <div className="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-8 py-6">
-              <h3 className="text-xl font-bold text-slate-900">Save Campaign</h3>
-              <p className="mt-1 text-sm text-slate-600">Enter a name for this campaign</p>
-            </div>
-            <div className="p-8">
+            <CardHeader className="border-b border-border/60 bg-muted/30">
+              <CardTitle id="save-campaign-title" className="text-lg">
+                Save campaign
+              </CardTitle>
+              <CardDescription>Pick a memorable name—you can reload everything from the library.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5 pt-6">
               <input
                 type="text"
                 value={campaignName}
                 onChange={(e) => setCampaignName(e.target.value)}
-                placeholder="Campaign name..."
-                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm transition focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
+                placeholder="Campaign name…"
+                className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm focus-visible:border-foreground/25 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-foreground/10"
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && campaignName) {
@@ -947,23 +1410,16 @@ export default function ContentWrapper() {
                   }
                 }}
               />
-              <div className="mt-6 flex gap-3">
-                <button
-                  onClick={() => setShowSaveModal(false)}
-                  className="flex-1 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-                >
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setShowSaveModal(false)}>
                   Cancel
-                </button>
-                <button
-                  onClick={handleSaveCampaign}
-                  disabled={!campaignName}
-                  className="flex-1 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg transition hover:shadow-xl disabled:opacity-50"
-                >
+                </Button>
+                <Button className="flex-1 rounded-xl" disabled={!campaignName} onClick={handleSaveCampaign}>
                   Save
-                </button>
+                </Button>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
       )}
     </DashboardLayout>
