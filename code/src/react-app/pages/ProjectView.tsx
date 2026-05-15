@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import { useParams, useNavigate, Link } from "react-router";
 import DashboardLayout from "@/react-app/components/DashboardLayout";
+import { cn } from "@/react-app/lib/utils";
 import { useToast } from "@/react-app/components/Toast";
 import {
   ArrowLeft,
@@ -54,7 +55,255 @@ interface Tool {
   created_at: string;
 }
 
+function parseToolBlueprintJson(raw: string): Record<string, unknown> {
+  let blueprint: Record<string, unknown> = {};
+  try {
+    blueprint = JSON.parse(raw) as Record<string, unknown>;
+  } catch {
+    const lines = raw.split("\n");
+    let currentField = "";
+    let currentValue = "";
+    for (const line of lines) {
+      const colonIndex = line.indexOf(":");
+      if (colonIndex !== -1) {
+        if (currentField) {
+          const key = currentField.toLowerCase().replace(/\s+/g, "_");
+          blueprint[key] = currentValue.trim();
+        }
+        currentField = line.substring(0, colonIndex).trim();
+        currentValue = line.substring(colonIndex + 1).trim();
+      } else if (line.trim()) {
+        currentValue += ` ${line.trim()}`;
+      }
+    }
+    if (currentField) {
+      const key = currentField.toLowerCase().replace(/\s+/g, "_");
+      blueprint[key] = currentValue.trim();
+    }
+    const tk = blueprint.target_keywords;
+    if (typeof tk === "string") {
+      blueprint.target_keywords = tk.split(",").map((k: string) => k.trim());
+    }
+    const ir = blueprint.inputs_required;
+    if (typeof ir === "string") {
+      blueprint.inputs_required = ir.split(",").map((k: string) => k.trim());
+    }
+    const ils = blueprint.internal_linking_suggestions;
+    if (typeof ils === "string") {
+      blueprint.internal_links = ils.split(",").map((k: string) => k.trim());
+    }
+  }
+  return blueprint;
+}
+
+function ManuscriptHeading({ children }: { children: ReactNode }) {
+  return (
+    <h4 className="mb-2 font-mono text-[10px] font-semibold uppercase tracking-[0.22em] text-cyan-500/85">
+      {children}
+    </h4>
+  );
+}
+
+function ManuscriptBlock({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="border-l-2 border-cyan-600/35 pl-4">
+      <ManuscriptHeading>{title}</ManuscriptHeading>
+      <div className="text-sm leading-relaxed text-zinc-300">{children}</div>
+    </section>
+  );
+}
+
+function ManuscriptDot() {
+  return <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-cyan-500/90" aria-hidden />;
+}
+
+function BlueprintManuscriptPanelBody({ selectedTool }: { selectedTool: Tool }) {
+  const raw = selectedTool.blueprint;
+  if (!raw) return null;
+  const blueprint = parseToolBlueprintJson(raw);
+  const purpose = (blueprint.purpose as string) || selectedTool.description || "";
+  const strategySections = [
+    { title: "Market opportunity", value: blueprint.market_opportunity as string | undefined },
+    { title: "SEO opportunity", value: blueprint.seo_opportunity as string | undefined },
+    { title: "Traffic acquisition strategy", value: blueprint.traffic_acquisition_strategy as string | undefined },
+    { title: "Conversion psychology", value: blueprint.conversion_psychology as string | undefined },
+    { title: "Authority positioning", value: blueprint.authority_positioning as string | undefined },
+    { title: "Competitor advantage", value: blueprint.competitor_advantage as string | undefined },
+  ].filter((s) => Boolean(s.value));
+  const audiencePainPoints = Array.isArray(blueprint.audience_pain_points)
+    ? (blueprint.audience_pain_points as string[])
+    : [];
+  const monetizationRoadmap = Array.isArray(blueprint.monetization_roadmap)
+    ? (blueprint.monetization_roadmap as string[])
+    : [];
+  const eeatStructure = Array.isArray(blueprint.eeat_structure) ? (blueprint.eeat_structure as string[]) : [];
+  const keywords = Array.isArray(blueprint.target_keywords) ? (blueprint.target_keywords as string[]) : [];
+  const inputFields = Array.isArray(blueprint.inputs_required) ? blueprint.inputs_required : [];
+  const output = (blueprint.output_type as string) || "";
+  const calculationLogic = (blueprint.calculation_logic as string) || "";
+  const monetization = (blueprint.monetization_strategy as string) || "";
+  const internalLinks = Array.isArray(blueprint.internal_links) ? (blueprint.internal_links as string[]) : [];
+  const cta = (blueprint.call_to_action as string) || (blueprint.cta_text as string) || "";
+  const features = Array.isArray(blueprint.features) ? (blueprint.features as string[]) : [];
+
+  return (
+    <div className="space-y-7">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-dashed border-zinc-700/80 pb-4">
+        <p className="font-mono text-[10px] uppercase tracking-[0.35em] text-zinc-500">Manuscript summary</p>
+        <Link
+          to={`/blueprints/${selectedTool.id}`}
+          className="inline-flex items-center gap-2 rounded border border-cyan-700/45 bg-cyan-950/35 px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-widest text-cyan-300 transition-colors hover:border-cyan-500 hover:bg-cyan-950/55"
+        >
+          Open full dossier
+        </Link>
+      </div>
+
+      <ManuscriptBlock title="Purpose">
+        <p>{purpose}</p>
+      </ManuscriptBlock>
+
+      {strategySections.map((section) => (
+        <ManuscriptBlock key={section.title} title={section.title}>
+          <p>{section.value}</p>
+        </ManuscriptBlock>
+      ))}
+
+      {audiencePainPoints.length > 0 && (
+        <section className="border-l-2 border-cyan-600/35 pl-4">
+          <ManuscriptHeading>Audience pain points</ManuscriptHeading>
+          <ul className="space-y-2">
+            {audiencePainPoints.map((point: string, i: number) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-zinc-300">
+                <ManuscriptDot />
+                <span>{point}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <section className="border-l-2 border-cyan-600/35 pl-4">
+        <ManuscriptHeading>Target keywords</ManuscriptHeading>
+        {keywords.length > 0 ? (
+          <div className="flex flex-wrap gap-2">
+            {keywords.map((keyword: string, i: number) => (
+              <span
+                key={i}
+                className="border border-dashed border-zinc-600 bg-zinc-900/60 px-2 py-1 font-mono text-xs text-zinc-300"
+              >
+                {keyword}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm italic text-zinc-600">Not specified</p>
+        )}
+      </section>
+
+      <section className="border-l-2 border-cyan-600/35 pl-4">
+        <ManuscriptHeading>Inputs required</ManuscriptHeading>
+        {inputFields.length > 0 ? (
+          <ul className="space-y-1.5">
+            {inputFields.map((field: unknown, i: number) => {
+              const label = typeof field === "string" ? field : String((field as { label?: string }).label ?? field);
+              return (
+                <li key={i} className="font-mono text-xs text-zinc-400">
+                  {label}
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <p className="text-sm italic text-zinc-600">Not specified</p>
+        )}
+      </section>
+
+      <ManuscriptBlock title="Output type">
+        {output ? <p>{output}</p> : <p className="italic text-zinc-600">Not specified</p>}
+      </ManuscriptBlock>
+
+      <ManuscriptBlock title="Business logic">
+        {calculationLogic ? (
+          <p className="whitespace-pre-line">{calculationLogic}</p>
+        ) : (
+          <p className="italic text-zinc-600">Not specified</p>
+        )}
+      </ManuscriptBlock>
+
+      {features.length > 0 && (
+        <section className="border-l-2 border-cyan-600/35 pl-4">
+          <ManuscriptHeading>Features</ManuscriptHeading>
+          <ul className="space-y-2">
+            {features.map((feature: string, i: number) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-zinc-300">
+                <ManuscriptDot />
+                <span>{feature}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <ManuscriptBlock title="Monetization strategy">
+        {monetization ? <p>{monetization}</p> : <p className="italic text-zinc-600">Not specified</p>}
+      </ManuscriptBlock>
+
+      {monetizationRoadmap.length > 0 && (
+        <section className="border-l-2 border-cyan-600/35 pl-4">
+          <ManuscriptHeading>Monetization roadmap</ManuscriptHeading>
+          <ol className="list-decimal space-y-1.5 pl-4 text-sm text-zinc-300">
+            {monetizationRoadmap.map((item: string, i: number) => (
+              <li key={i}>{item}</li>
+            ))}
+          </ol>
+        </section>
+      )}
+
+      {eeatStructure.length > 0 && (
+        <section className="border-l-2 border-cyan-600/35 pl-4">
+          <ManuscriptHeading>EEAT structure</ManuscriptHeading>
+          <ul className="space-y-2">
+            {eeatStructure.map((item: string, i: number) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-zinc-300">
+                <ManuscriptDot />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <section className="border-l-2 border-cyan-600/35 pl-4">
+        <ManuscriptHeading>Internal linking suggestions</ManuscriptHeading>
+        {internalLinks.length > 0 ? (
+          <ul className="space-y-1.5">
+            {internalLinks.map((link: string, i: number) => (
+              <li key={i} className="break-all font-mono text-xs text-zinc-400">
+                {link}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm italic text-zinc-600">Not specified</p>
+        )}
+      </section>
+
+      <ManuscriptBlock title="Call to action">
+        {cta ? <p className="font-medium text-zinc-200">{cta}</p> : <p className="italic text-zinc-600">Not specified</p>}
+      </ManuscriptBlock>
+    </div>
+  );
+}
+
 type BuildStep = "analyzing" | "logic" | "styling" | "embed" | "done";
+
+/** Warm editorial shell for the project workspace (distinct from default dashboard chrome). */
+const PROJECT_WORKBENCH_SHELL = {
+  shellClassName:
+    "bg-[#d6d3d1] bg-[linear-gradient(165deg,rgb(214,211,209)_0%,rgb(245,242,239)_42%,rgb(200,195,190)_100%)]",
+  mainClassName: "bg-transparent",
+  innerClassName: "min-h-full p-5 sm:p-8 lg:p-10",
+} as const;
 
 export default function ProjectView() {
   const { id } = useParams();
@@ -185,15 +434,11 @@ export default function ProjectView() {
 
       if (response.ok) {
         const data = await response.json();
-        console.log("[Blueprint] Raw API response:", typeof data.blueprint);
-        
-        // Parse blueprint string into object
-        let blueprintObj;
+
         try {
-          blueprintObj = typeof data.blueprint === 'string' 
-            ? JSON.parse(data.blueprint) 
-            : data.blueprint;
-          console.log("[Blueprint] Parsed object keys:", Object.keys(blueprintObj));
+          if (typeof data.blueprint === "string") {
+            JSON.parse(data.blueprint);
+          }
         } catch (e) {
           console.error("[Blueprint] Failed to parse:", e);
           throw new Error("Invalid blueprint format");
@@ -730,9 +975,13 @@ ${format}`;
 
   if (loading) {
     return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center h-screen">
-          <Loader2 className="w-8 h-8 animate-spin" style={{ color: "var(--brand)" }} />
+      <DashboardLayout {...PROJECT_WORKBENCH_SHELL}>
+        <div className="flex min-h-[50vh] items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <div className="h-px w-24 bg-stone-800/25" aria-hidden />
+            <Loader2 className="h-8 w-8 animate-spin text-stone-700" aria-hidden />
+            <p className="font-mono text-[10px] uppercase tracking-[0.35em] text-stone-600">Opening project…</p>
+          </div>
         </div>
       </DashboardLayout>
     );
@@ -740,260 +989,264 @@ ${format}`;
 
   if (!project) {
     return (
-      <DashboardLayout>
-        <div className="p-8">
-          <p style={{ color: "var(--text-primary)" }}>Project not found</p>
+      <DashboardLayout {...PROJECT_WORKBENCH_SHELL}>
+        <div className="rounded-sm border border-stone-800/15 bg-[#f5f2ef]/90 p-8 shadow-sm">
+          <p className="font-serif text-lg text-stone-800">Project not found</p>
+          <button
+            type="button"
+            onClick={() => navigate("/dashboard")}
+            className="mt-4 font-mono text-[10px] font-semibold uppercase tracking-widest text-teal-900 underline decoration-teal-900/30 underline-offset-4 hover:text-teal-950"
+          >
+            ← Return to desk
+          </button>
         </div>
       </DashboardLayout>
     );
   }
 
   return (
-    <DashboardLayout>
-      <div className="page-shell max-w-7xl">
-        {/* Header */}
-        <div className="surface-panel mb-6 flex flex-col gap-5 p-6 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate("/dashboard")}
-              className="btn-secondary p-2 rounded-2xl transition-all"
-            >
-              <ArrowLeft className="w-5 h-5" style={{ color: "var(--text-secondary)" }} />
-            </button>
-            <div>
-              <h1 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>
-                {project.name}
-              </h1>
-              <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-                {project.niche} · {tools.length} assets
-              </p>
+    <DashboardLayout {...PROJECT_WORKBENCH_SHELL}>
+      <div className="relative mx-auto w-full max-w-5xl">
+        <div
+          className="pointer-events-none absolute -left-4 top-0 hidden h-72 w-72 rounded-full bg-teal-900/[0.04] blur-3xl md:block"
+          aria-hidden
+        />
+
+        <header className="relative mb-10 border-b border-stone-900/10 pb-10">
+          <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+            <div className="flex min-w-0 items-start gap-4">
+              <button
+                type="button"
+                onClick={() => navigate("/dashboard")}
+                className="mt-1 shrink-0 rounded-sm border border-stone-800/20 bg-[#ebe8e4]/80 p-2.5 text-stone-700 shadow-sm transition-colors hover:border-stone-800/40 hover:bg-[#f5f2ef]"
+                aria-label="Back to dashboard"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </button>
+              <div className="min-w-0">
+                <p className="font-mono text-[10px] font-medium uppercase tracking-[0.38em] text-stone-600">
+                  Project workbench
+                </p>
+                <h1 className="mt-2 font-serif text-3xl font-semibold leading-tight tracking-tight text-stone-900 sm:text-4xl">
+                  {project.name}
+                </h1>
+                <p className="mt-3 max-w-2xl text-sm leading-relaxed text-stone-600">
+                  <span className="text-stone-800">{project.niche}</span>
+                  <span className="mx-2 text-stone-400">·</span>
+                  <span>{tools.length} instruments on file</span>
+                  {project.goal ? (
+                    <>
+                      <span className="mx-2 text-stone-400">·</span>
+                      <span className="italic text-stone-600">Goal: {project.goal}</span>
+                    </>
+                  ) : null}
+                </p>
+              </div>
             </div>
+            <button
+              type="button"
+              onClick={exportCSV}
+              className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-sm border border-stone-800/25 bg-stone-900 px-4 py-3 font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-[#f5f2ef] shadow-md transition-colors hover:bg-stone-800 lg:self-auto"
+            >
+              <Download className="h-4 w-4" />
+              Export CSV
+            </button>
           </div>
-          <button
-            onClick={exportCSV}
-            className="btn-secondary flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold"
-          >
-            <Download className="w-4 h-4" />
-            Export CSV
-          </button>
-        </div>
 
-        {/* Tabs */}
-        <div className="tab-pill mb-6 flex w-fit flex-wrap items-center gap-1">
-          <button
-            onClick={() => setActiveTab("categories")}
-            className="rounded-xl px-4 py-3 font-semibold text-sm transition-all relative"
-            style={{
-              background: activeTab === "categories" ? "white" : "transparent",
-              color: activeTab === "categories" ? "var(--brand)" : "var(--text-secondary)",
-            }}
+          <nav
+            className="mt-10 flex flex-wrap border border-stone-800/15 bg-[#ebe8e4]/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)]"
+            aria-label="Project sections"
           >
-            Categories
-            <span
-              className="ml-2 px-2 py-0.5 rounded-full text-xs font-bold"
-              style={{
-                background: activeTab === "categories" ? "var(--brand)" : "var(--bg-elevated)",
-                color: activeTab === "categories" ? "white" : "var(--text-muted)",
-              }}
+            <button
+              type="button"
+              onClick={() => setActiveTab("categories")}
+              className={cn(
+                "relative flex min-h-[3.25rem] flex-1 items-center justify-center gap-2 border-stone-800/15 px-4 py-3 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] transition-colors sm:flex-1 sm:border-r",
+                activeTab === "categories"
+                  ? "bg-[#faf8f5] text-stone-900 after:absolute after:bottom-0 after:left-3 after:right-3 after:h-[3px] after:bg-teal-800 after:content-[''] sm:after:left-4 sm:after:right-4"
+                  : "text-stone-600 hover:bg-[#f2efe9] hover:text-stone-900",
+              )}
             >
-              {categories.length}
-            </span>
-          </button>
-          <button
-            onClick={() => setActiveTab("blueprint")}
-            className="rounded-xl px-4 py-3 font-semibold text-sm transition-all relative"
-            style={{
-              background: activeTab === "blueprint" ? "white" : "transparent",
-              color: activeTab === "blueprint" ? "var(--brand)" : "var(--text-secondary)",
-            }}
-          >
-            Asset Blueprint
-            <span
-              className="ml-2 px-2 py-0.5 rounded-full text-xs font-bold"
-              style={{
-                background: activeTab === "blueprint" ? "var(--brand)" : "var(--bg-elevated)",
-                color: activeTab === "blueprint" ? "white" : "var(--text-muted)",
-              }}
+              Categories
+              <span className="rounded-sm border border-stone-800/15 bg-stone-100/80 px-1.5 py-0.5 font-mono text-[9px] tabular-nums text-stone-700">
+                {categories.length}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("blueprint")}
+              className={cn(
+                "relative flex min-h-[3.25rem] flex-1 items-center justify-center gap-2 border-stone-800/15 px-4 py-3 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] transition-colors sm:flex-1 sm:border-r",
+                activeTab === "blueprint"
+                  ? "bg-[#faf8f5] text-stone-900 after:absolute after:bottom-0 after:left-3 after:right-3 after:h-[3px] after:bg-teal-800 after:content-[''] sm:after:left-4 sm:after:right-4"
+                  : "text-stone-600 hover:bg-[#f2efe9] hover:text-stone-900",
+              )}
             >
-              {blueprintCount}
-            </span>
-          </button>
-          <button
-            onClick={() => setActiveTab("export")}
-            className="rounded-xl px-4 py-3 font-semibold text-sm transition-all relative"
-            style={{
-              background: activeTab === "export" ? "white" : "transparent",
-              color: activeTab === "export" ? "var(--brand)" : "var(--text-secondary)",
-            }}
-          >
-            Export
-          </button>
-        </div>
+              Blueprints
+              <span className="rounded-sm border border-stone-800/15 bg-stone-100/80 px-1.5 py-0.5 font-mono text-[9px] tabular-nums text-stone-700">
+                {blueprintCount}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("export")}
+              className={cn(
+                "relative flex min-h-[3.25rem] flex-[1.2] items-center justify-center gap-2 px-4 py-3 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] transition-colors sm:flex-none sm:px-8",
+                activeTab === "export"
+                  ? "bg-[#faf8f5] text-stone-900 after:absolute after:bottom-0 after:left-3 after:right-3 after:h-[3px] after:bg-teal-800 after:content-[''] sm:after:left-6 sm:after:right-6"
+                  : "text-stone-600 hover:bg-[#f2efe9] hover:text-stone-900",
+              )}
+            >
+              Ledger export
+            </button>
+          </nav>
+        </header>
 
-        {/* Filters Bar */}
+        {/* Categories */}
         {activeTab === "categories" && (
           <>
-            <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center">
-              <div className="flex-1 relative">
-                <Search
-                  className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
-                  style={{ color: "var(--text-muted)" }}
-                />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search..."
-                  className="input-premium w-full pl-10 pr-4 py-3 text-sm"
-                />
-              </div>
+            <div className="mb-8 rounded-sm border border-stone-800/15 bg-[#faf8f5]/90 p-4 shadow-sm">
+              <p className="mb-3 font-mono text-[10px] font-medium uppercase tracking-[0.28em] text-stone-500">
+                Catalogue filters
+              </p>
+              <div className="flex flex-col gap-3 md:flex-row md:items-center">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-500" aria-hidden />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search instruments…"
+                    className="w-full rounded-sm border border-stone-800/20 bg-white/80 py-2.5 pl-10 pr-4 text-sm text-stone-800 placeholder:text-stone-400 focus:border-teal-800/35 focus:outline-none focus:ring-1 focus:ring-teal-800/20"
+                  />
+                </div>
 
-              <select
-                value={filterGoal}
-                onChange={(e) => setFilterGoal(e.target.value)}
-                className="input-premium px-4 py-3 text-sm"
-              >
-                <option value="all">All Goals</option>
-                <option value="backlinks">Backlinks</option>
-                <option value="leads">Leads</option>
-                <option value="traffic">Traffic</option>
-                <option value="engagement">Engagement</option>
-              </select>
-
-              <label className="flex items-center gap-2 px-4 py-2 text-sm cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={showArchived}
-                  onChange={(e) => setShowArchived(e.target.checked)}
-                  className="premium-check"
-                  style={{ accentColor: "var(--brand)" }}
-                />
-                <span style={{ color: "var(--text-secondary)" }}>Archived</span>
-              </label>
-
-              <Link to="/projects/new">
-                <button
-                  className="btn-primary flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold"
+                <select
+                  value={filterGoal}
+                  onChange={(e) => setFilterGoal(e.target.value)}
+                  className="rounded-sm border border-stone-800/20 bg-white/80 px-3 py-2.5 text-sm text-stone-800 focus:border-teal-800/35 focus:outline-none focus:ring-1 focus:ring-teal-800/20 md:min-w-[11rem]"
                 >
-                  <Plus className="w-4 h-4" />
-                  New Project
-                </button>
-              </Link>
+                  <option value="all">All Goals</option>
+                  <option value="backlinks">Backlinks</option>
+                  <option value="leads">Leads</option>
+                  <option value="traffic">Traffic</option>
+                  <option value="engagement">Engagement</option>
+                </select>
+
+                <label className="flex cursor-pointer items-center gap-2 px-2 py-2 text-sm text-stone-700">
+                  <input
+                    type="checkbox"
+                    checked={showArchived}
+                    onChange={(e) => setShowArchived(e.target.checked)}
+                    className="h-3.5 w-3.5 rounded-sm border-stone-600 text-teal-900 focus:ring-teal-800/30"
+                  />
+                  Archived
+                </label>
+
+                <Link to="/projects/new" className="md:ml-auto">
+                  <button
+                    type="button"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-sm border border-stone-800/25 bg-stone-900 px-4 py-2.5 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-[#f5f2ef] shadow-sm transition-colors hover:bg-stone-800 md:w-auto"
+                  >
+                    <Plus className="h-4 w-4" />
+                    New project
+                  </button>
+                </Link>
+              </div>
             </div>
 
-            {/* Empty State */}
             {tools.length === 0 && (
-              <div className="text-center py-20">
-                <div
-                  className="w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center"
-                  style={{ background: "rgba(124, 92, 252, 0.15)" }}
-                >
-                  <Loader2 className="w-10 h-10 animate-spin" style={{ color: "var(--brand)" }} />
+              <div className="rounded-sm border border-dashed border-stone-800/25 bg-[#f5f2ef]/60 py-20 text-center">
+                <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border border-stone-800/15 bg-[#ebe8e4]">
+                  <Loader2 className="h-8 w-8 animate-spin text-teal-900/70" aria-hidden />
                 </div>
-                <h3 className="text-2xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>
-                  Generating your Ai Auto Traffic assets...
-                </h3>
-                <p className="mb-6" style={{ color: "var(--text-secondary)" }}>
-                  AI is discovering 12 premium business asset ideas for this opportunity category
+                <h3 className="font-serif text-2xl text-stone-900">Generating instruments…</h3>
+                <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-stone-600">
+                  Discovery is running for this project. Refresh shortly, or return to your desk.
                 </p>
               </div>
             )}
 
-            {/* Category Groups */}
-            <div className="space-y-6">
+            <div className="space-y-10">
               {categories.map((category) => (
                 <div key={category}>
-                  <h2
-                    className="text-lg font-bold mb-4"
-                    style={{ color: "var(--text-primary)" }}
-                  >
+                  <h2 className="mb-5 flex items-baseline gap-3 font-serif text-xl font-semibold text-stone-900">
                     {category}
-                    <span className="ml-3 text-base font-normal" style={{ color: "var(--text-muted)" }}>
-                      {groupedByCategory[category].length}
+                    <span className="font-mono text-[10px] font-medium uppercase tracking-widest text-stone-500">
+                      {groupedByCategory[category].length} on file
                     </span>
                   </h2>
 
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                     {groupedByCategory[category].map((tool) => (
                       <button
                         key={tool.id}
+                        type="button"
                         onClick={() => openBuildPanel(tool)}
-                        className="premium-card p-5 text-left transition-all group"
+                        className="group rounded-sm border border-stone-800/15 bg-[#faf8f5] p-5 text-left shadow-sm transition-all hover:border-stone-800/35 hover:shadow-md"
                       >
                         <div className="flex items-start gap-4">
-                          {/* Icon */}
-                          <div
-                            className="icon-tile h-12 w-12 flex-shrink-0"
-                          >
-                            {getToolIcon(tool.name)}
-                          </div>
+                          <div className="icon-tile h-12 w-12 shrink-0">{getToolIcon(tool.name)}</div>
 
-                          {/* Content */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between gap-3 mb-2">
-                              <h3 className="font-bold text-base" style={{ color: "var(--text-primary)" }}>
-                                {tool.name}
-                              </h3>
-                              <ChevronRight
-                                className="w-5 h-5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                                style={{ color: "var(--text-muted)" }}
-                              />
+                          <div className="min-w-0 flex-1">
+                            <div className="mb-2 flex items-start justify-between gap-3">
+                              <h3 className="font-serif text-base font-semibold text-stone-900">{tool.name}</h3>
+                              <ChevronRight className="h-5 w-5 shrink-0 text-stone-400 opacity-0 transition-opacity group-hover:opacity-100" />
                             </div>
 
-                            <p className="text-sm mb-3 line-clamp-2" style={{ color: "var(--text-muted)" }}>
-                              {tool.description}
-                            </p>
+                            <p className="mb-3 line-clamp-2 text-sm leading-relaxed text-stone-600">{tool.description}</p>
 
-                            <div className="flex items-center gap-4 flex-wrap">
-                              {/* Score Badge */}
+                            <div className="flex flex-wrap items-center gap-4">
                               <div
-                                className="px-3 py-1 rounded-full text-sm font-bold"
+                                className="rounded-sm border px-2.5 py-1 font-mono text-xs font-semibold tabular-nums"
                                 style={{
-                                  background: `${getScoreColor(tool.overall_score)}20`,
+                                  borderColor: `${getScoreColor(tool.overall_score)}55`,
+                                  background: `${getScoreColor(tool.overall_score)}12`,
                                   color: getScoreColor(tool.overall_score),
                                 }}
                               >
                                 {tool.overall_score} /100
                               </div>
 
-                              {/* Metrics */}
-                              <div className="flex items-center gap-3 text-xs">
+                              <div className="flex flex-wrap items-center gap-3 text-xs text-stone-600">
                                 <div className="flex items-center gap-1.5">
                                   <div
-                                    className="w-2 h-2 rounded-full"
+                                    className="h-1.5 w-1.5 rounded-full"
                                     style={{ background: getScoreColor(tool.traffic_score) }}
                                   />
-                                  <span style={{ color: "var(--text-secondary)" }}>
-                                    Traffic: <strong>{getRatingLabel(tool.traffic_score)}</strong>
+                                  <span>
+                                    Traffic:{" "}
+                                    <strong className="text-stone-800">{getRatingLabel(tool.traffic_score)}</strong>
                                   </span>
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                   <div
-                                    className="w-2 h-2 rounded-full"
+                                    className="h-1.5 w-1.5 rounded-full"
                                     style={{ background: getScoreColor(tool.backlink_score) }}
                                   />
-                                  <span style={{ color: "var(--text-secondary)" }}>
-                                    Link score: <strong>{getRatingLabel(tool.backlink_score)}</strong>
+                                  <span>
+                                    Link score:{" "}
+                                    <strong className="text-stone-800">{getRatingLabel(tool.backlink_score)}</strong>
                                   </span>
                                 </div>
                               </div>
                             </div>
 
-                            <div className="flex items-center gap-1.5 mt-3 text-xs">
+                            <div className="mt-3 flex items-center gap-1.5 text-xs text-stone-600">
                               <div
-                                className="w-2 h-2 rounded-full"
+                                className="h-1.5 w-1.5 rounded-full"
                                 style={{ background: getScoreColor(tool.monetization_score) }}
                               />
-                              <span style={{ color: "var(--text-secondary)" }}>
-                                Monetization: <strong>{getRatingLabel(tool.monetization_score)}</strong>
+                              <span>
+                                Monetization:{" "}
+                                <strong className="text-stone-800">{getRatingLabel(tool.monetization_score)}</strong>
                               </span>
                             </div>
                           </div>
                         </div>
 
-                        {/* Category Tag */}
-                        <div className="mt-4 pt-3" style={{ borderTop: "1px solid var(--border)" }}>
-                          <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                        <div className="mt-4 border-t border-stone-800/10 pt-3">
+                          <span className="font-mono text-[10px] uppercase tracking-widest text-stone-500">
                             {category}
                           </span>
                         </div>
@@ -1006,180 +1259,145 @@ ${format}`;
           </>
         )}
 
-        {/* Blueprint Tab */}
+        {/* Blueprints — paper folios */}
         {activeTab === "blueprint" && (
-          <div className="space-y-4">
-            <p className="text-sm mb-4" style={{ color: "var(--text-muted)" }}>
-              Assets with generated strategy blueprints ({blueprintCount})
-            </p>
-            <div className="space-y-6">
-              {tools.filter(t => t.blueprint).map((tool) => {
-                // Parse blueprint - handle both JSON format and legacy text format
-                let blueprint: any = {};
-                try {
-                  // Try JSON parse first (new format)
-                  blueprint = JSON.parse(tool.blueprint as string);
-                } catch (e) {
-                  // Fall back to parsing legacy text format
-                  // Format: "Field Name: value\nAnother Field: value"
-                  const text = tool.blueprint as string;
-                  const lines = text.split('\n');
-                  
-                  blueprint = {};
-                  let currentField = '';
-                  let currentValue = '';
-                  
-                  for (const line of lines) {
-                    const colonIndex = line.indexOf(':');
-                    if (colonIndex !== -1) {
-                      // Save previous field if exists
-                      if (currentField) {
-                        const key = currentField.toLowerCase().replace(/\s+/g, '_');
-                        blueprint[key] = currentValue.trim();
-                      }
-                      
-                      // Start new field
-                      currentField = line.substring(0, colonIndex).trim();
-                      currentValue = line.substring(colonIndex + 1).trim();
-                    } else if (line.trim()) {
-                      // Continuation of previous field
-                      currentValue += ' ' + line.trim();
-                    }
-                  }
-                  
-                  // Save last field
-                  if (currentField) {
-                    const key = currentField.toLowerCase().replace(/\s+/g, '_');
-                    blueprint[key] = currentValue.trim();
-                  }
-                  
-                  // Parse comma-separated keywords into array
-                  if (blueprint.target_keywords && typeof blueprint.target_keywords === 'string') {
-                    blueprint.target_keywords = blueprint.target_keywords.split(',').map((k: string) => k.trim());
-                  }
-                }
-                
-                const purpose = blueprint.purpose || tool.description || "";
-                const monetization = blueprint.monetization_strategy || "";
-                const cta = blueprint.call_to_action || blueprint.cta_text || "";
-                const keywords = Array.isArray(blueprint.target_keywords) ? blueprint.target_keywords : [];
+          <div className="space-y-6">
+            <div className="flex flex-wrap items-end justify-between gap-4 border-b border-dashed border-stone-800/20 pb-6">
+              <div>
+                <p className="font-mono text-[10px] font-medium uppercase tracking-[0.32em] text-stone-600">
+                  Folio index
+                </p>
+                <h2 className="mt-2 font-serif text-2xl font-semibold text-stone-900">Strategy blueprints</h2>
+                <p className="mt-1 text-sm text-stone-600">
+                  {blueprintCount} folio{blueprintCount === 1 ? "" : "s"} with completed strategy manuscripts.
+                </p>
+              </div>
+            </div>
+            <div className="space-y-8">
+              {tools
+                .filter((t) => t.blueprint)
+                .map((tool) => {
+                  const blueprint = parseToolBlueprintJson(tool.blueprint as string);
+                  const purpose = (blueprint.purpose as string) || tool.description || "";
+                  const monetization = (blueprint.monetization_strategy as string) || "";
+                  const cta = (blueprint.call_to_action as string) || (blueprint.cta_text as string) || "";
+                  const keywords = Array.isArray(blueprint.target_keywords)
+                    ? (blueprint.target_keywords as string[])
+                    : [];
 
-                return (
-                  <div key={tool.id} className="glass-card p-6">
-                    <div className="flex items-start justify-between mb-6">
-                      <div>
-                        <h3 className="text-xl font-bold mb-1" style={{ color: "var(--text-primary)" }}>
-                          {tool.name}
-                        </h3>
-                        <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-                          {tool.category}
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => openBuildPanel(tool)}
-                        className="px-4 py-2 rounded-lg text-sm font-medium border transition-all hover:bg-orange-50"
-                        style={{ 
-                          borderColor: "#F97316",
-                          color: "#F97316",
-                        }}
-                      >
-                        View Full Blueprint
-                      </button>
-                    </div>
-
-                    <div className="grid gap-6">
-                      {/* Purpose */}
-                      <div>
-                        <h4 className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: "var(--text-muted)" }}>
-                          PURPOSE
-                        </h4>
-                        <p className="text-sm leading-relaxed" style={{ color: "var(--text-primary)" }}>
-                          {purpose}
-                        </p>
-                      </div>
-
-                      {/* Keywords */}
-                      <div>
-                        <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: "var(--text-muted)" }}>
-                          KEYWORDS
-                        </h4>
+                  return (
+                    <article
+                      key={tool.id}
+                      className="rounded-sm border border-stone-800/20 bg-[#faf8f5] p-6 shadow-[0_2px_0_rgba(41,37,36,0.06),inset_0_1px_0_rgba(255,255,255,0.65)]"
+                    >
+                      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+                        <div className="min-w-0">
+                          <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.22em] text-teal-900/80">
+                            {tool.category}
+                          </p>
+                          <h3 className="mt-2 font-serif text-xl font-semibold tracking-tight text-stone-900 sm:text-2xl">
+                            {tool.name}
+                          </h3>
+                        </div>
                         <div className="flex flex-wrap gap-2">
-                          {keywords.length > 0 ? (
-                            keywords.map((keyword: string, i: number) => (
-                              <span
-                                key={i}
-                                className="px-3 py-1.5 rounded-lg text-sm border"
-                                style={{ 
-                                  borderColor: "var(--border)",
-                                  color: "var(--text-primary)",
-                                  background: "var(--bg-elevated)"
-                                }}
-                              >
-                                {keyword}
-                              </span>
-                            ))
-                          ) : tool.keywords ? (
-                            tool.keywords.split(",").map((keyword, i) => (
-                              <span
-                                key={i}
-                                className="px-3 py-1.5 rounded-lg text-sm border"
-                                style={{ 
-                                  borderColor: "var(--border)",
-                                  color: "var(--text-primary)",
-                                  background: "var(--bg-elevated)"
-                                }}
-                              >
-                                {keyword.trim()}
-                              </span>
-                            ))
-                          ) : null}
+                          <Link
+                            to={`/blueprints/${tool.id}`}
+                            className="inline-flex items-center justify-center rounded-sm border border-teal-900/35 bg-teal-950/[0.06] px-3 py-2 font-mono text-[10px] font-semibold uppercase tracking-widest text-teal-950 transition-colors hover:border-teal-900/55 hover:bg-teal-950/10"
+                          >
+                            Open dossier
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => openBuildPanel(tool)}
+                            className="rounded-sm border border-stone-800/25 bg-stone-900 px-3 py-2 font-mono text-[10px] font-semibold uppercase tracking-widest text-[#f5f2ef] transition-colors hover:bg-stone-800"
+                          >
+                            Build &amp; ship
+                          </button>
                         </div>
                       </div>
 
-                      <div className="grid md:grid-cols-2 gap-6">
-                        {/* Monetization */}
-                        <div>
-                          <h4 className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: "var(--text-muted)" }}>
-                            MONETIZATION
+                      <div className="grid gap-6 border-t border-dashed border-stone-800/20 pt-6">
+                        <div className="border-l-2 border-teal-800/45 pl-4">
+                          <h4 className="mb-2 font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-stone-600">
+                            Purpose
                           </h4>
-                          <p className="text-sm leading-relaxed" style={{ color: "var(--text-primary)" }}>
-                            {monetization}
-                          </p>
+                          <p className="text-sm leading-relaxed text-stone-800">{purpose}</p>
                         </div>
 
-                        {/* Call to Action */}
-                        <div>
-                          <h4 className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: "var(--text-muted)" }}>
-                            CALL TO ACTION
+                        <div className="border-l-2 border-teal-800/45 pl-4">
+                          <h4 className="mb-3 font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-stone-600">
+                            Keywords
                           </h4>
-                          <p className="text-sm font-semibold" style={{ color: "#F97316" }}>
-                            {cta}
-                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {keywords.length > 0
+                              ? keywords.map((keyword: string, i: number) => (
+                                  <span
+                                    key={i}
+                                    className="border border-dashed border-stone-500/40 bg-[#f3f0eb] px-2.5 py-1 font-mono text-xs text-stone-800"
+                                  >
+                                    {keyword}
+                                  </span>
+                                ))
+                              : tool.keywords
+                                ? tool.keywords.split(",").map((keyword, i) => (
+                                    <span
+                                      key={i}
+                                      className="border border-dashed border-stone-500/40 bg-[#f3f0eb] px-2.5 py-1 font-mono text-xs text-stone-800"
+                                    >
+                                      {keyword.trim()}
+                                    </span>
+                                  ))
+                                : null}
+                          </div>
+                        </div>
+
+                        <div className="grid gap-6 md:grid-cols-2">
+                          <div className="border-l-2 border-teal-800/45 pl-4">
+                            <h4 className="mb-2 font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-stone-600">
+                              Monetization
+                            </h4>
+                            <p className="text-sm leading-relaxed text-stone-800">{monetization}</p>
+                          </div>
+                          <div className="border-l-2 border-teal-800/45 pl-4">
+                            <h4 className="mb-2 font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-stone-600">
+                              Call to action
+                            </h4>
+                            <p className="text-sm font-medium leading-relaxed text-stone-900">{cta}</p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                );
-              })}
+                    </article>
+                  );
+                })}
+              {blueprintCount === 0 && (
+                <div className="rounded-sm border border-dashed border-stone-800/25 bg-[#faf8f5]/70 px-6 py-14 text-center">
+                  <p className="font-mono text-[10px] font-medium uppercase tracking-[0.28em] text-stone-600">
+                    Empty folio
+                  </p>
+                  <p className="mt-3 font-serif text-xl text-stone-900">No blueprints filed yet</p>
+                  <p className="mx-auto mt-2 max-w-md text-sm text-stone-600">
+                    Open an instrument from Categories and generate a blueprint to see it here.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         )}
 
-        {/* Export Tab */}
+        {/* Ledger export */}
         {activeTab === "export" && (
-          <div className="text-center py-12">
-            <h3 className="text-xl font-bold mb-4" style={{ color: "var(--text-primary)" }}>
-              Export Project Data
-            </h3>
-            <p className="mb-6" style={{ color: "var(--text-muted)" }}>
-              Download all your tools and their metrics
+          <div className="rounded-sm border border-stone-800/20 bg-[#faf8f5] px-8 py-14 text-center shadow-sm">
+            <p className="font-mono text-[10px] font-medium uppercase tracking-[0.3em] text-stone-600">Ledger</p>
+            <h3 className="mt-3 font-serif text-2xl font-semibold text-stone-900">Export project data</h3>
+            <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-stone-600">
+              Download every instrument row and score column as a single CSV.
             </p>
             <button
+              type="button"
               onClick={exportCSV}
-              className="px-6 py-3 rounded-lg font-semibold text-white"
-              style={{ background: "var(--brand)" }}
+              className="mt-8 inline-flex items-center justify-center gap-2 rounded-sm border border-stone-800/25 bg-stone-900 px-8 py-3.5 font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-[#f5f2ef] shadow-md transition-colors hover:bg-stone-800"
             >
-              <Download className="w-5 h-5 inline mr-2" />
+              <Download className="h-4 w-4" />
               Download CSV
             </button>
           </div>
@@ -1198,378 +1416,112 @@ ${format}`;
             }}
           />
           <div
-            className="fixed top-0 right-0 h-full w-[480px] z-50 overflow-y-auto shadow-2xl animate-slide-in-right"
-            style={{ background: "var(--bg-elevated)", borderLeft: "1px solid var(--border)" }}
+            className="fixed top-0 right-0 z-50 h-full w-[min(100vw,520px)] max-w-[520px] overflow-y-auto border-l border-zinc-800 bg-zinc-950 text-zinc-200 shadow-2xl animate-slide-in-right"
           >
             {/* Panel Header */}
-            <div className="p-6" style={{ borderBottom: "1px solid var(--border)" }}>
-              <div className="flex items-start justify-between mb-2">
-                <div>
-                  <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>{selectedTool.category}</p>
-                  <h2 className="text-xl font-bold" style={{ color: "var(--text-primary)" }}>{selectedTool.name}</h2>
-                  <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>{selectedTool.description}</p>
+            <div className="border-b border-zinc-800 p-6">
+              <div className="mb-2 flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-mono text-[10px] uppercase tracking-widest text-cyan-500/80">
+                    {selectedTool.category}
+                  </p>
+                  <h2 className="mt-1 text-xl font-semibold tracking-tight text-white">{selectedTool.name}</h2>
+                  <p className="mt-2 text-sm leading-relaxed text-zinc-400">{selectedTool.description}</p>
                 </div>
                 <button
+                  type="button"
                   onClick={() => {
                     setPanelOpen(false);
                     setBuildMode(null);
                     setBuildStep(null);
                   }}
-                  className="p-2 rounded-lg transition-all hover:bg-white/10"
+                  className="shrink-0 rounded-lg border border-zinc-700 p-2 text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-white"
+                  aria-label="Close panel"
                 >
-                  <X className="w-5 h-5" style={{ color: "var(--text-secondary)" }} />
+                  <X className="h-5 w-5" />
                 </button>
               </div>
 
               {/* Tabs */}
-              <div className="tab-pill mt-5 flex gap-1">
+              <div className="mt-5 flex overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900/80">
                 <button
+                  type="button"
                   onClick={() => {
                     setPanelTab("blueprint");
                     setBuildMode(null);
                     setBuildStep(null);
                   }}
-                  className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all ${
+                  className={cn(
+                    "flex flex-1 items-center justify-center gap-2 py-2.5 text-xs font-semibold uppercase tracking-wide transition-colors",
                     panelTab === "blueprint"
-                      ? "bg-white text-[var(--brand)] shadow-sm"
-                      : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-                  }`}
+                      ? "bg-zinc-100 text-zinc-950"
+                      : "text-zinc-500 hover:bg-zinc-800/80 hover:text-zinc-200",
+                  )}
                 >
                   <FileText className="h-4 w-4" />
                   Blueprint
                 </button>
                 <button
+                  type="button"
                   onClick={() => {
                     setPanelTab("variations");
                     setBuildMode(null);
                     setBuildStep(null);
                   }}
-                  className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all ${
+                  className={cn(
+                    "flex flex-1 items-center justify-center gap-2 border-x border-zinc-800 py-2.5 text-xs font-semibold uppercase tracking-wide transition-colors",
                     panelTab === "variations"
-                      ? "bg-white text-[var(--brand)] shadow-sm"
-                      : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-                  }`}
+                      ? "bg-zinc-100 text-zinc-950"
+                      : "text-zinc-500 hover:bg-zinc-800/80 hover:text-zinc-200",
+                  )}
                 >
                   <TrendingUp className="h-4 w-4" />
                   Variations
                 </button>
                 <button
+                  type="button"
                   onClick={() => {
                     setPanelTab("landing");
                     setBuildMode(null);
                     setBuildStep(null);
                   }}
-                  className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all ${
+                  className={cn(
+                    "flex flex-1 items-center justify-center gap-2 py-2.5 text-xs font-semibold uppercase tracking-wide transition-colors",
                     panelTab === "landing"
-                      ? "bg-white text-[var(--brand)] shadow-sm"
-                      : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-                  }`}
+                      ? "bg-zinc-100 text-zinc-950"
+                      : "text-zinc-500 hover:bg-zinc-800/80 hover:text-zinc-200",
+                  )}
                 >
                   <Code2 className="h-4 w-4" />
-                  Landing Page
+                  Landing
                 </button>
               </div>
             </div>
 
             {/* Panel Content */}
-            <div className="p-6 space-y-6">
+            <div className="space-y-6 p-6">
               {panelTab === "blueprint" && selectedTool.blueprint && (
                 <>
-                  {(() => {
-                    let blueprint: any = {};
-                    
-                    try {
-                      // Try JSON parse first (new format)
-                      blueprint = JSON.parse(selectedTool.blueprint);
-                    } catch (e) {
-                      // Fall back to parsing legacy text format
-                      const text = selectedTool.blueprint as string;
-                      const lines = text.split('\n');
-                      
-                      blueprint = {};
-                      let currentField = '';
-                      let currentValue = '';
-                      
-                      for (const line of lines) {
-                        const colonIndex = line.indexOf(':');
-                        if (colonIndex !== -1) {
-                          // Save previous field if exists
-                          if (currentField) {
-                            const key = currentField.toLowerCase().replace(/\s+/g, '_');
-                            blueprint[key] = currentValue.trim();
-                          }
-                          
-                          // Start new field
-                          currentField = line.substring(0, colonIndex).trim();
-                          currentValue = line.substring(colonIndex + 1).trim();
-                        } else if (line.trim()) {
-                          // Continuation of previous field
-                          currentValue += ' ' + line.trim();
-                        }
-                      }
-                      
-                      // Save last field
-                      if (currentField) {
-                        const key = currentField.toLowerCase().replace(/\s+/g, '_');
-                        blueprint[key] = currentValue.trim();
-                      }
-                      
-                      // Parse comma-separated values into arrays
-                      if (blueprint.target_keywords && typeof blueprint.target_keywords === 'string') {
-                        blueprint.target_keywords = blueprint.target_keywords.split(',').map((k: string) => k.trim());
-                      }
-                      if (blueprint.inputs_required && typeof blueprint.inputs_required === 'string') {
-                        blueprint.inputs_required = blueprint.inputs_required.split(',').map((k: string) => k.trim());
-                      }
-                      if (blueprint.internal_linking_suggestions && typeof blueprint.internal_linking_suggestions === 'string') {
-                        blueprint.internal_links = blueprint.internal_linking_suggestions.split(',').map((k: string) => k.trim());
-                      }
-                    }
+                  <BlueprintManuscriptPanelBody selectedTool={selectedTool} />
 
-                    const purpose = blueprint.purpose || selectedTool.description || "";
-                    const strategySections = [
-                      { title: "Market Opportunity", value: blueprint.market_opportunity },
-                      { title: "SEO Opportunity", value: blueprint.seo_opportunity },
-                      { title: "Traffic Acquisition Strategy", value: blueprint.traffic_acquisition_strategy },
-                      { title: "Conversion Psychology", value: blueprint.conversion_psychology },
-                      { title: "Authority Positioning", value: blueprint.authority_positioning },
-                      { title: "Competitor Advantage", value: blueprint.competitor_advantage },
-                    ].filter((section) => section.value);
-                    const audiencePainPoints = Array.isArray(blueprint.audience_pain_points) ? blueprint.audience_pain_points : [];
-                    const monetizationRoadmap = Array.isArray(blueprint.monetization_roadmap) ? blueprint.monetization_roadmap : [];
-                    const eeatStructure = Array.isArray(blueprint.eeat_structure) ? blueprint.eeat_structure : [];
-                    const keywords = Array.isArray(blueprint.target_keywords) ? blueprint.target_keywords : [];
-                    const inputFields = Array.isArray(blueprint.inputs_required) ? blueprint.inputs_required : [];
-                    const output = blueprint.output_type || "";
-                    const calculationLogic = blueprint.calculation_logic || "";
-                    const monetization = blueprint.monetization_strategy || "";
-                    const internalLinks = Array.isArray(blueprint.internal_links) ? blueprint.internal_links : [];
-                    const cta = blueprint.call_to_action || blueprint.cta_text || "";
-                    const features = Array.isArray(blueprint.features) ? blueprint.features : [];
-
-                    return (
-                      <>
-                        {/* Purpose */}
-                        <div>
-                          <h4 className="text-sm font-bold mb-2" style={{ color: "var(--text-primary)" }}>
-                            Purpose
-                          </h4>
-                          <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-                            {purpose}
-                          </p>
-                        </div>
-
-                        {strategySections.map((section) => (
-                          <div key={section.title}>
-                            <h4 className="text-sm font-bold mb-2" style={{ color: "var(--text-primary)" }}>
-                              {section.title}
-                            </h4>
-                            <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-                              {section.value}
-                            </p>
-                          </div>
-                        ))}
-
-                        {audiencePainPoints.length > 0 && (
-                          <div>
-                            <h4 className="text-sm font-bold mb-2" style={{ color: "var(--text-primary)" }}>
-                              Audience Pain Points
-                            </h4>
-                            <div className="space-y-1">
-                              {audiencePainPoints.map((point: string, i: number) => (
-                                <div key={i} className="flex items-start gap-2 text-sm" style={{ color: "var(--text-secondary)" }}>
-                                  <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-500" />
-                                  <span>{point}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Target Keywords */}
-                        <div>
-                          <h4 className="text-sm font-bold mb-2" style={{ color: "var(--text-primary)" }}>
-                            Target Keywords
-                          </h4>
-                          {keywords.length > 0 ? (
-                            <div className="space-y-1">
-                              {keywords.map((keyword: string, i: number) => (
-                                <div key={i} className="text-sm" style={{ color: "var(--text-secondary)" }}>
-                                  {keyword}
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <p className="text-sm italic" style={{ color: "var(--text-muted)" }}>Not specified</p>
-                          )}
-                        </div>
-
-                        {/* Inputs Required */}
-                        <div>
-                          <h4 className="text-sm font-bold mb-2" style={{ color: "var(--text-primary)" }}>
-                            Inputs Required
-                          </h4>
-                          {inputFields.length > 0 ? (
-                            <div className="space-y-1">
-                              {inputFields.map((field: any, i: number) => {
-                                const label = typeof field === 'string' ? field : (field.label || field);
-                                return (
-                                  <div key={i} className="text-sm" style={{ color: "var(--text-secondary)" }}>
-                                    {label}
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          ) : (
-                            <p className="text-sm italic" style={{ color: "var(--text-muted)" }}>Not specified</p>
-                          )}
-                        </div>
-
-                        {/* Output Type */}
-                        <div>
-                          <h4 className="text-sm font-bold mb-2" style={{ color: "var(--text-primary)" }}>
-                            Output Type
-                          </h4>
-                          {output ? (
-                            <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-                              {output}
-                            </p>
-                          ) : (
-                            <p className="text-sm italic" style={{ color: "var(--text-muted)" }}>Not specified</p>
-                          )}
-                        </div>
-
-                        {/* Business Logic */}
-                        <div>
-                          <h4 className="text-sm font-bold mb-2" style={{ color: "var(--text-primary)" }}>
-                            Business Logic
-                          </h4>
-                          {calculationLogic ? (
-                            <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: "var(--text-secondary)" }}>
-                              {calculationLogic}
-                            </p>
-                          ) : (
-                            <p className="text-sm italic" style={{ color: "var(--text-muted)" }}>Not specified</p>
-                          )}
-                        </div>
-
-                        {/* Features */}
-                        {features.length > 0 && (
-                          <div>
-                            <h4 className="text-sm font-bold mb-2" style={{ color: "var(--text-primary)" }}>
-                              Features
-                            </h4>
-                            <div className="space-y-1">
-                              {features.map((feature: string, i: number) => (
-                                <div key={i} className="flex items-start gap-2 text-sm" style={{ color: "var(--text-secondary)" }}>
-                                  <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-500" />
-                                  <span>{feature}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Monetization Strategy */}
-                        <div>
-                          <h4 className="text-sm font-bold mb-2" style={{ color: "var(--text-primary)" }}>
-                            Monetization Strategy
-                          </h4>
-                          {monetization ? (
-                            <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-                              {monetization}
-                            </p>
-                          ) : (
-                            <p className="text-sm italic" style={{ color: "var(--text-muted)" }}>Not specified</p>
-                          )}
-                        </div>
-
-                        {monetizationRoadmap.length > 0 && (
-                          <div>
-                            <h4 className="text-sm font-bold mb-2" style={{ color: "var(--text-primary)" }}>
-                              Monetization Roadmap
-                            </h4>
-                            <div className="space-y-1">
-                              {monetizationRoadmap.map((item: string, i: number) => (
-                                <div key={i} className="text-sm" style={{ color: "var(--text-secondary)" }}>
-                                  {i + 1}. {item}
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {eeatStructure.length > 0 && (
-                          <div>
-                            <h4 className="text-sm font-bold mb-2" style={{ color: "var(--text-primary)" }}>
-                              EEAT Structure
-                            </h4>
-                            <div className="space-y-1">
-                              {eeatStructure.map((item: string, i: number) => (
-                                <div key={i} className="flex items-start gap-2 text-sm" style={{ color: "var(--text-secondary)" }}>
-                                  <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-500" />
-                                  <span>{item}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Internal Linking */}
-                        <div>
-                          <h4 className="text-sm font-bold mb-2" style={{ color: "var(--text-primary)" }}>
-                            Internal Linking Suggestions
-                          </h4>
-                          {internalLinks.length > 0 ? (
-                            <div className="space-y-1">
-                              {internalLinks.map((link: string, i: number) => (
-                                <div key={i} className="text-sm" style={{ color: "var(--text-secondary)" }}>
-                                  {link}
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <p className="text-sm italic" style={{ color: "var(--text-muted)" }}>Not specified</p>
-                          )}
-                        </div>
-
-                        {/* Call to Action */}
-                        <div>
-                          <h4 className="text-sm font-bold mb-2" style={{ color: "var(--text-primary)" }}>
-                            Call to Action
-                          </h4>
-                          {cta ? (
-                            <p className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
-                              {cta}
-                            </p>
-                          ) : (
-                            <p className="text-sm italic" style={{ color: "var(--text-muted)" }}>Not specified</p>
-                          )}
-                        </div>
-                      </>
-                    );
-                  })()}
-
-                  <div className="space-y-4 rounded-2xl border border-[var(--border)] bg-[var(--bg-overlay)] p-4">
+                  <div className="space-y-4 rounded-xl border border-zinc-800 bg-zinc-900/60 p-4">
                     <div className="flex items-center gap-2">
-                      <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-                        Visual theme
-                      </h4>
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-500">Visual theme</h4>
                       {savingPanelTheme && (
-                        <Loader2 className="h-4 w-4 animate-spin" style={{ color: "var(--brand)" }} aria-hidden />
+                        <Loader2 className="h-4 w-4 animate-spin text-cyan-400" aria-hidden />
                       )}
                     </div>
-                    <p className="text-xs leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-                      <strong style={{ color: "var(--text-primary)" }}>
+                    <p className="text-xs leading-relaxed text-zinc-400">
+                      <strong className="text-zinc-100">
                         {VISUAL_THEMES.find((t) => t.id === panelToolTheme)?.name ?? "Modern"}
                       </strong>
-                      <span style={{ color: "var(--text-muted)" }}>
+                      <span className="text-zinc-500">
                         {" "}
                         — drives colors in generated standalone HTML and embed widget. Saves to your blueprint.
                       </span>
                     </p>
                     <div>
-                      <h4 className="mb-3 text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+                      <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-zinc-500">
                         Theme — professional styles
                       </h4>
                       <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
@@ -1589,28 +1541,21 @@ ${format}`;
                               setPanelToolTheme(theme.id);
                               void persistPanelToolTheme(theme.id);
                             }}
-                            className={`relative cursor-pointer rounded-xl border-2 p-2.5 transition-all ${
+                            className={cn(
+                              "relative cursor-pointer rounded-xl border-2 bg-zinc-950/80 p-2.5 transition-all",
                               panelToolTheme === theme.id
-                                ? "border-[var(--brand)] shadow-sm"
-                                : "border-transparent hover:border-[var(--border)]"
-                            }`}
-                            style={{ background: "var(--surface)" }}
+                                ? "border-cyan-500 shadow-[0_0_0_1px_rgba(34,211,238,0.25)]"
+                                : "border-transparent hover:border-zinc-600",
+                            )}
                           >
                             {panelToolTheme === theme.id && (
-                              <div
-                                className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full text-white shadow-sm"
-                                style={{ background: "var(--brand)" }}
-                              >
+                              <div className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-cyan-500 text-zinc-950 shadow-sm">
                                 <Check className="h-3 w-3" aria-hidden />
                               </div>
                             )}
                             <div className="mb-2 h-10 w-full rounded-lg" style={{ background: theme.swatch }} />
-                            <p className="mb-0.5 text-xs font-semibold" style={{ color: "var(--text-primary)" }}>
-                              {theme.name}
-                            </p>
-                            <p className="text-[10px] leading-snug" style={{ color: "var(--text-muted)" }}>
-                              {theme.desc}
-                            </p>
+                            <p className="mb-0.5 text-xs font-semibold text-zinc-100">{theme.name}</p>
+                            <p className="text-[10px] leading-snug text-zinc-500">{theme.desc}</p>
                           </div>
                         ))}
                       </div>
@@ -1618,38 +1563,36 @@ ${format}`;
                   </div>
 
                   {/* Build Options - Always Visible */}
-                  <div className="pt-6" style={{ borderTop: "1px solid var(--border)" }}>
-                    <h4 className="text-sm font-bold mb-3" style={{ color: "var(--text-primary)" }}>
+                  <div className="border-t border-dashed border-zinc-800 pt-6">
+                    <h4 className="mb-3 font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500">
                       Build this tool as…
                     </h4>
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                       <button
+                        type="button"
                         onClick={() => buildTool("standalone")}
                         disabled={buildStep !== null}
-                        className="premium-card group rounded-3xl p-4 text-left transition-all hover:-translate-y-0.5 hover:border-[var(--brand)] hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
+                        className="group rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 text-left transition-all hover:border-cyan-700/50 hover:bg-zinc-900 disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl border border-[var(--border)] bg-white text-[var(--brand)] shadow-sm transition-all group-hover:bg-[var(--brand-soft)]">
+                        <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-lg border border-zinc-700 bg-zinc-950 text-cyan-400 transition-colors group-hover:border-cyan-600/50">
                           <Download className="h-5 w-5" />
                         </div>
-                        <p className="text-sm font-semibold mb-1" style={{ color: "var(--text-primary)" }}>
-                          Standalone Page
-                        </p>
-                        <p className="text-xs leading-tight" style={{ color: "var(--text-muted)" }}>
+                        <p className="mb-1 text-sm font-semibold text-zinc-100">Standalone Page</p>
+                        <p className="text-xs leading-tight text-zinc-500">
                           Single .html file — upload via FTP to your website as its own page
                         </p>
                       </button>
                       <button
+                        type="button"
                         onClick={() => buildTool("embed")}
                         disabled={buildStep !== null}
-                        className="premium-card group rounded-3xl p-4 text-left transition-all hover:-translate-y-0.5 hover:border-[var(--brand)] hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
+                        className="group rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 text-left transition-all hover:border-cyan-700/50 hover:bg-zinc-900 disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl border border-[var(--border)] bg-white text-[var(--brand)] shadow-sm transition-all group-hover:bg-[var(--brand-soft)]">
+                        <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-lg border border-zinc-700 bg-zinc-950 text-cyan-400 transition-colors group-hover:border-cyan-600/50">
                           <Code2 className="h-5 w-5" />
                         </div>
-                        <p className="text-sm font-semibold mb-1" style={{ color: "var(--text-primary)" }}>
-                          Embeddable Widget
-                        </p>
-                        <p className="text-xs leading-tight" style={{ color: "var(--text-muted)" }}>
+                        <p className="mb-1 text-sm font-semibold text-zinc-100">Embeddable Widget</p>
+                        <p className="text-xs leading-tight text-zinc-500">
                           Paste into WordPress posts, articles, or any existing page
                         </p>
                       </button>
@@ -1657,8 +1600,9 @@ ${format}`;
                   </div>
 
                   {/* Action Buttons - Always Visible */}
-                  <div className="grid grid-cols-2 gap-3 pt-6" style={{ borderTop: "1px solid var(--border)" }}>
+                  <div className="grid grid-cols-2 gap-3 border-t border-dashed border-zinc-800 pt-6">
                     <button
+                      type="button"
                       onClick={() => {
                         navigator.clipboard.writeText(selectedTool.blueprint || "");
                         showToast({
@@ -1667,14 +1611,15 @@ ${format}`;
                           message: "Blueprint copied to clipboard",
                         });
                       }}
-                      className="btn-secondary rounded-2xl px-4 py-2.5 font-medium"
+                      className="rounded-xl border border-zinc-700 bg-zinc-900/60 px-4 py-2.5 text-sm font-medium text-zinc-200 transition-colors hover:border-zinc-500 hover:bg-zinc-900"
                     >
                       Copy Blueprint
                     </button>
                     <button
+                      type="button"
                       onClick={generateBlueprint}
                       disabled={buildStep !== null}
-                      className="btn-primary rounded-2xl px-4 py-2.5 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="rounded-xl border border-cyan-700/50 bg-cyan-950/50 px-4 py-2.5 text-sm font-medium text-cyan-100 transition-colors hover:bg-cyan-950/80 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       Regenerate
                     </button>
@@ -1682,75 +1627,89 @@ ${format}`;
 
                   {/* Build Status */}
                   {buildStep && (
-                    <div className="pt-6 w-full px-6 py-4 rounded-2xl font-semibold text-white transition-all flex items-center justify-center gap-2" style={{ background: buildStep === "done" ? "#10B981" : "linear-gradient(135deg, #635BFF, #4F46E5)", boxShadow: "0 12px 28px var(--brand-glow)", borderTop: "1px solid var(--border)" }}>
-                      {buildStep !== "done" && <Loader2 className="w-5 h-5 animate-spin" />}
-                      {buildStep === "analyzing" && "Regenerating blueprint..."}
-                      {buildStep === "logic" && "Building business logic..."}
+                    <div
+                      className={cn(
+                        "flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-800 px-6 py-4 font-mono text-xs font-semibold uppercase tracking-widest text-white",
+                        buildStep === "done"
+                          ? "border-emerald-800/80 bg-emerald-950/80 text-emerald-100"
+                          : "bg-zinc-900 text-cyan-100",
+                      )}
+                    >
+                      {buildStep !== "done" && <Loader2 className="h-5 w-5 shrink-0 animate-spin text-cyan-400" />}
+                      {buildStep === "analyzing" && "Regenerating blueprint…"}
+                      {buildStep === "logic" && "Building business logic…"}
                       {buildStep === "styling" &&
-                        `Applying ${VISUAL_THEMES.find((t) => t.id === panelToolTheme)?.name ?? "Modern"} theme...`}
-                      {buildStep === "embed" && "Preparing embed code..."}
-                      {buildStep === "done" && (buildMode === "standalone" ? "Standalone page ready!" : "Embeddable widget ready!")}
+                        `Applying ${VISUAL_THEMES.find((t) => t.id === panelToolTheme)?.name ?? "Modern"} theme…`}
+                      {buildStep === "embed" && "Preparing embed code…"}
+                      {buildStep === "done" &&
+                        (buildMode === "standalone" ? "Standalone page ready." : "Embeddable widget ready.")}
                     </div>
                   )}
 
                   {/* Download/Copy Actions - Shown after successful build */}
                   {selectedTool.html_content && !buildStep && buildMode !== null && (
-                    <div className="pt-6 space-y-3" style={{ borderTop: "1px solid var(--border)" }}>
-                      {/* Success Message */}
-                      <div className="px-4 py-3 rounded-2xl text-center font-medium" style={{ background: "#DCFCE7", border: "1px solid #86EFAC", color: "#15803D" }}>
-                        Business asset built successfully!
+                    <div className="space-y-3 border-t border-dashed border-zinc-800 pt-6">
+                      <div className="rounded-xl border border-emerald-900/50 bg-emerald-950/40 px-4 py-3 text-center text-sm font-medium text-emerald-100">
+                        Business asset built successfully.
                       </div>
 
-                      {/* Download/Copy Button based on mode */}
                       {buildMode === "standalone" ? (
                         <div className="space-y-2">
                           <button
+                            type="button"
                             onClick={downloadTool}
-                            className="w-full px-4 py-3 rounded-lg font-semibold text-white transition-all hover:opacity-90 flex items-center justify-center gap-2"
-                            style={{ background: "#111827" }}
+                            className="flex w-full items-center justify-center gap-2 rounded-lg border border-zinc-700 bg-zinc-100 px-4 py-3 font-semibold text-zinc-950 transition-colors hover:bg-white"
                           >
-                            <Download className="w-4 h-4" />
+                            <Download className="h-4 w-4" />
                             Download .html File
                           </button>
-                          <p className="text-xs text-center" style={{ color: "var(--text-muted)" }}>
+                          <p className="text-center text-xs text-zinc-500">
                             Upload via FTP — works as a standalone page on any web host
                           </p>
                         </div>
                       ) : buildMode === "embed" ? (
                         <div className="space-y-2">
                           <button
+                            type="button"
                             onClick={copyEmbedCode}
-                            className="w-full px-4 py-3 rounded-lg font-semibold text-white transition-all hover:opacity-90 flex items-center justify-center gap-2"
-                            style={{ background: "#111827" }}
+                            className="flex w-full items-center justify-center gap-2 rounded-lg border border-zinc-700 bg-zinc-100 px-4 py-3 font-semibold text-zinc-950 transition-colors hover:bg-white"
                           >
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                              />
                             </svg>
                             Copy Embed Code
                           </button>
-                          <p className="text-xs text-center" style={{ color: "var(--text-muted)" }}>
+                          <p className="text-center text-xs text-zinc-500">
                             Paste into WordPress, blog posts, or any page with custom HTML
                           </p>
                         </div>
                       ) : null}
 
-                      {/* Copy All for Content Wrapper */}
                       <button
+                        type="button"
                         onClick={copyAllForContentWrapper}
-                        className="w-full px-4 py-3 rounded-lg font-semibold text-white transition-all hover:brightness-110 flex items-center justify-center gap-2"
-                        style={{ background: "linear-gradient(135deg, #7C5CFC, #5A3FD4)" }}
+                        className="flex w-full items-center justify-center gap-2 rounded-lg border border-cyan-800/60 bg-cyan-950/50 px-4 py-3 text-sm font-semibold text-cyan-50 transition-colors hover:bg-cyan-950/80"
                       >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                          />
                         </svg>
                         Copy All for Content Wrapper
                       </button>
 
-                      {/* Build Different Format Link */}
                       <button
+                        type="button"
                         onClick={() => setBuildMode(null)}
-                        className="w-full px-4 py-2 text-sm transition-all hover:opacity-70 flex items-center justify-center gap-2"
-                        style={{ color: "var(--text-muted)", background: "transparent" }}
+                        className="flex w-full items-center justify-center gap-2 px-4 py-2 text-sm text-zinc-500 transition-colors hover:text-zinc-300"
                       >
                         ← Build a different format
                       </button>
@@ -1760,15 +1719,9 @@ ${format}`;
               )}
 
               {panelTab === "variations" && (
-                <div className="space-y-5">
-                  <div
-                    className="rounded-[22px] border border-[var(--border)] p-5 shadow-[0_12px_40px_rgba(15,23,42,0.06)] sm:p-6"
-                    style={{ background: "var(--bg-soft, #f3f4f6)" }}
-                  >
-                    <p
-                      className="mb-5 text-[11px] font-bold uppercase tracking-[0.18em]"
-                      style={{ color: "var(--text-muted)" }}
-                    >
+                <div className="space-y-5 text-zinc-200">
+                  <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 sm:p-6">
+                    <p className="mb-5 font-mono text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-500">
                       Configure variations
                     </p>
 
@@ -1783,17 +1736,12 @@ ${format}`;
                             >
                               {variation.id}
                             </div>
-                            <h4 className="text-[15px] font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>
-                              {variation.title}
-                            </h4>
+                            <h4 className="text-[15px] font-bold tracking-tight text-zinc-100">{variation.title}</h4>
                           </div>
 
                           <div className="space-y-4">
                             <div>
-                              <div
-                                className="mb-2 flex items-center gap-1.5 text-xs font-medium"
-                                style={{ color: "var(--text-muted)" }}
-                              >
+                              <div className="mb-2 flex items-center gap-1.5 text-xs font-medium text-zinc-500">
                                 <Users className="h-3.5 w-3.5 shrink-0 opacity-80" aria-hidden />
                                 Audience
                               </div>
@@ -1801,8 +1749,7 @@ ${format}`;
                                 <select
                                   value={variation.audience}
                                   onChange={(e) => variation.setAudience(e.target.value)}
-                                  className="w-full appearance-none rounded-xl border border-[var(--border)] bg-white px-3.5 py-2.5 pr-9 text-sm font-medium outline-none transition-shadow focus:ring-2 focus:ring-[var(--brand)]/25"
-                                  style={{ color: "var(--text-primary)" }}
+                                  className="w-full appearance-none rounded-xl border border-zinc-700 bg-zinc-950 px-3.5 py-2.5 pr-9 text-sm font-medium text-zinc-100 outline-none transition-shadow focus:ring-2 focus:ring-cyan-500/30"
                                 >
                                   {audienceOptions.map((option) => (
                                     <option key={option} value={option}>
@@ -1811,18 +1758,14 @@ ${format}`;
                                   ))}
                                 </select>
                                 <ChevronDown
-                                  className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 opacity-50"
-                                  style={{ color: "var(--text-muted)" }}
+                                  className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500 opacity-70"
                                   aria-hidden
                                 />
                               </div>
                             </div>
 
                             <div>
-                              <div
-                                className="mb-2 flex items-center gap-1.5 text-xs font-medium"
-                                style={{ color: "var(--text-muted)" }}
-                              >
+                              <div className="mb-2 flex items-center gap-1.5 text-xs font-medium text-zinc-500">
                                 <DollarSign className="h-3.5 w-3.5 shrink-0 opacity-80" aria-hidden />
                                 Monetization
                               </div>
@@ -1830,8 +1773,7 @@ ${format}`;
                                 <select
                                   value={variation.monetization}
                                   onChange={(e) => variation.setMonetization(e.target.value)}
-                                  className="w-full appearance-none rounded-xl border border-[var(--border)] bg-white px-3.5 py-2.5 pr-9 text-sm font-medium outline-none transition-shadow focus:ring-2 focus:ring-[var(--brand)]/25"
-                                  style={{ color: "var(--text-primary)" }}
+                                  className="w-full appearance-none rounded-xl border border-zinc-700 bg-zinc-950 px-3.5 py-2.5 pr-9 text-sm font-medium text-zinc-100 outline-none transition-shadow focus:ring-2 focus:ring-cyan-500/30"
                                 >
                                   {monetizationOptions.map((option) => (
                                     <option key={option} value={option}>
@@ -1840,8 +1782,7 @@ ${format}`;
                                   ))}
                                 </select>
                                 <ChevronDown
-                                  className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 opacity-50"
-                                  style={{ color: "var(--text-muted)" }}
+                                  className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500 opacity-70"
                                   aria-hidden
                                 />
                               </div>
@@ -1855,8 +1796,7 @@ ${format}`;
                       type="button"
                       onClick={generateVariations}
                       disabled={generatingVariations}
-                      className="mt-8 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-bold text-white shadow-md transition-opacity hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-55"
-                      style={{ backgroundColor: "#ff6b21" }}
+                      className="mt-8 flex w-full items-center justify-center gap-2 rounded-xl border border-cyan-800/60 bg-cyan-950/60 px-4 py-3.5 text-sm font-bold text-cyan-50 shadow-md transition-colors hover:bg-cyan-950/90 disabled:cursor-not-allowed disabled:opacity-55"
                     >
                       {generatingVariations ? (
                         <>
@@ -1873,17 +1813,15 @@ ${format}`;
                   </div>
 
                   {variations && variations.length > 0 && (
-                    <div className="premium-card rounded-[28px] p-5">
+                    <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-5">
                       <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <div>
-                          <p className="text-[11px] font-bold uppercase tracking-[0.22em]" style={{ color: "var(--brand)" }}>
+                          <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-cyan-500/90">
                             AI comparison
                           </p>
-                          <h3 className="mt-1 text-lg font-bold" style={{ color: "var(--text-primary)" }}>
-                            Choose the strongest business angle
-                          </h3>
+                          <h3 className="mt-1 text-lg font-bold text-zinc-100">Choose the strongest business angle</h3>
                         </div>
-                        <span className="rounded-full border border-[var(--border)] bg-white px-3 py-1.5 text-xs font-semibold shadow-sm" style={{ color: "var(--text-muted)" }}>
+                        <span className="rounded-full border border-zinc-700 bg-zinc-950 px-3 py-1.5 text-xs font-semibold text-zinc-400">
                           Expand for full blueprint logic
                         </span>
                       </div>
@@ -1898,12 +1836,16 @@ ${format}`;
                           return (
                             <div
                               key={index}
-                              className="overflow-hidden rounded-[24px] border bg-white/80 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-white"
-                              style={{ borderColor: isExpanded ? setup.ring : "var(--border)" }}
+                              className={cn(
+                                "overflow-hidden rounded-xl border bg-zinc-950/50 shadow-sm transition-all duration-300 hover:bg-zinc-950/80",
+                                !isExpanded && "border-zinc-800",
+                              )}
+                              style={isExpanded ? { borderColor: setup.ring } : undefined}
                             >
                               <button
+                                type="button"
                                 onClick={() => setExpandedVariation(isExpanded ? null : index)}
-                                className="w-full p-4 text-left transition-all hover:bg-[var(--bg-soft)]"
+                                className="w-full p-4 text-left transition-colors hover:bg-zinc-900/80"
                               >
                                 <div className="flex items-start justify-between gap-3">
                                   <div className="flex gap-3">
@@ -1918,19 +1860,24 @@ ${format}`;
                                         <span className="rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide" style={{ background: setup.soft, color: setup.accent }}>
                                           {audience}
                                         </span>
-                                        <span className="rounded-full bg-[var(--bg-soft)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>
+                                        <span className="rounded-full bg-zinc-800/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-zinc-400">
                                           {setup.monetization}
                                         </span>
                                       </div>
-                                      <h4 className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>
+                                      <h4 className="text-sm font-bold text-zinc-100">
                                         {setup.title}: {variation.title || "Monetization Strategy"}
                                       </h4>
-                                      <p className="mt-1 line-clamp-2 text-xs leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                                      <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-zinc-500">
                                         {variation.summary || variation.purpose || "AI-generated strategy blueprint tailored to this audience and monetization path."}
                                       </p>
                                     </div>
                                   </div>
-                                  <ChevronDown className={`mt-1 h-5 w-5 shrink-0 transition-transform ${isExpanded ? "rotate-180" : ""}`} style={{ color: "var(--text-muted)" }} />
+                                  <ChevronDown
+                                    className={cn(
+                                      "mt-1 h-5 w-5 shrink-0 text-zinc-500 transition-transform",
+                                      isExpanded && "rotate-180",
+                                    )}
+                                  />
                                 </div>
                               </button>
 
@@ -1940,33 +1887,36 @@ ${format}`;
                                   ["Capture", "Lead-first"],
                                   ["Revenue", "Offer-fit"],
                                 ].map(([label, value]) => (
-                                  <div key={label} className="rounded-2xl bg-[var(--bg-soft)] p-3">
-                                    <p className="text-[10px] font-bold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>{label}</p>
-                                    <p className="mt-1 text-xs font-bold" style={{ color: "var(--text-primary)" }}>{value}</p>
+                                  <div key={label} className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-3">
+                                    <p className="text-[10px] font-bold uppercase tracking-wide text-zinc-500">{label}</p>
+                                    <p className="mt-1 text-xs font-bold text-zinc-200">{value}</p>
                                   </div>
                                 ))}
                               </div>
 
                               {isExpanded && (
-                                <div className="space-y-4 border-t border-[var(--border)] px-4 pb-4 pt-4">
-                                  <div className="rounded-2xl bg-[var(--bg-soft)] p-4">
-                                    <h5 className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide" style={{ color: "var(--text-primary)" }}>
-                                      <CheckCircle className="h-4 w-4 text-emerald-500" />
+                                <div className="space-y-4 border-t border-zinc-800 px-4 pb-4 pt-4">
+                                  <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
+                                    <h5 className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-zinc-200">
+                                      <CheckCircle className="h-4 w-4 text-cyan-500" />
                                       Strategy purpose
                                     </h5>
-                                    <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                                    <p className="text-sm leading-relaxed text-zinc-400">
                                       {variation.purpose || "Not specified"}
                                     </p>
                                   </div>
 
                                   {keywords.length > 0 && (
                                     <div>
-                                      <h5 className="mb-2 text-xs font-bold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>
+                                      <h5 className="mb-2 text-xs font-bold uppercase tracking-wide text-zinc-500">
                                         Search opportunities
                                       </h5>
                                       <div className="flex flex-wrap gap-2">
                                         {keywords.map((keyword: string, idx: number) => (
-                                          <span key={idx} className="rounded-full border border-[var(--border)] bg-white px-3 py-1.5 text-xs font-semibold" style={{ color: "var(--text-secondary)" }}>
+                                          <span
+                                            key={idx}
+                                            className="rounded border border-dashed border-zinc-600 bg-zinc-950 px-3 py-1.5 text-xs font-semibold text-zinc-300"
+                                          >
                                             {keyword}
                                           </span>
                                         ))}
@@ -1975,30 +1925,30 @@ ${format}`;
                                   )}
 
                                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                    <div className="rounded-2xl border border-[var(--border)] bg-white p-4">
-                                      <h5 className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>
+                                    <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
+                                      <h5 className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-zinc-500">
                                         <DollarSign className="h-4 w-4" style={{ color: setup.accent }} />
                                         Monetization
                                       </h5>
-                                      <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                                      <p className="text-sm leading-relaxed text-zinc-400">
                                         {variation.monetization_strategy || "Not specified"}
                                       </p>
                                     </div>
-                                    <div className="rounded-2xl border border-[var(--border)] bg-white p-4">
-                                      <h5 className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>
+                                    <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
+                                      <h5 className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-zinc-500">
                                         <Target className="h-4 w-4" style={{ color: setup.accent }} />
                                         Conversion CTA
                                       </h5>
-                                      <p className="text-sm font-semibold leading-relaxed" style={{ color: "var(--text-primary)" }}>
+                                      <p className="text-sm font-semibold leading-relaxed text-zinc-100">
                                         {variation.cta_text || variation.call_to_action || "Not specified"}
                                       </p>
                                     </div>
                                   </div>
 
                                   <button
+                                    type="button"
                                     onClick={() => useThisBlueprint(index)}
-                                    className="flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold text-white shadow-lg transition-all hover:-translate-y-0.5"
-                                    style={{ background: `linear-gradient(135deg, ${setup.accent}, #111827)` }}
+                                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-zinc-100 px-4 py-3 text-sm font-bold text-zinc-950 shadow-lg transition-colors hover:bg-white"
                                   >
                                     <CheckCircle className="h-4 w-4" />
                                     Use This Strategy Blueprint
@@ -2015,123 +1965,105 @@ ${format}`;
               )}
 
               {panelTab === "landing" && (
-                <>
-                  <div className="premium-card space-y-6 rounded-3xl p-5">
-                    {/* Header */}
-                    <div className="rounded-2xl border border-[var(--border)] bg-white/70 p-4">
-                      <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl border border-[var(--border)] bg-white text-[var(--brand)] shadow-sm">
-                        <FileText className="h-5 w-5" />
-                      </div>
-                      <h3 className="text-lg font-bold mb-2" style={{ color: "var(--text-primary)" }}>
-                        Landing Page Generator
-                      </h3>
-                      <p className="text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>
-                        Generate a complete, production-ready SaaS landing page with premium hero, interactive business asset, metrics, trust sections, monetization roadmap, FAQ, conversion CTAs, and polished footer.
+                <div className="space-y-6 rounded-xl border border-zinc-800 bg-zinc-900/40 p-5 text-zinc-200">
+                  <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-4">
+                    <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900 text-cyan-400">
+                      <FileText className="h-5 w-5" />
+                    </div>
+                    <h3 className="mb-2 text-lg font-bold text-zinc-100">Landing Page Generator</h3>
+                    <p className="text-sm leading-relaxed text-zinc-500">
+                      Generate a complete, production-ready SaaS landing page with premium hero, interactive business asset, metrics, trust sections, monetization roadmap, FAQ, conversion CTAs, and polished footer.
+                    </p>
+                  </div>
+
+                  {!landingPageHtml && !generatingLanding && (
+                    <button
+                      type="button"
+                      onClick={generateLandingPageHandler}
+                      className="flex w-full items-center justify-center gap-2 rounded-xl border border-cyan-800/60 bg-cyan-950/60 px-6 py-4 text-sm font-semibold text-cyan-50 transition-colors hover:bg-cyan-950/90"
+                    >
+                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      Generate Landing Page
+                    </button>
+                  )}
+
+                  {generatingLanding && (
+                    <div className="w-full rounded-xl px-6 py-8 text-center">
+                      <Loader2 className="mx-auto mb-4 h-8 w-8 animate-spin text-cyan-400" />
+                      <p className="mb-2 text-sm font-semibold text-zinc-100">Generating Your Landing Page</p>
+                      <p className="text-xs text-zinc-500">
+                        This may take 30-60 seconds. Creating a polished conversion page with strategic business logic...
                       </p>
                     </div>
+                  )}
 
-                    {/* Generate Button */}
-                    {!landingPageHtml && !generatingLanding && (
-                      <button
-                        onClick={generateLandingPageHandler}
-                        className="w-full px-6 py-4 rounded-xl font-semibold text-white transition-all hover:brightness-110 flex items-center justify-center gap-2"
-                        style={{
-                          background: "linear-gradient(135deg, #7C5CFC, #5A3FD4)",
-                          boxShadow: "0 0 20px var(--brand-glow)",
-                        }}
-                      >
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        Generate Landing Page
-                      </button>
-                    )}
-
-                    {/* Generating Status */}
-                    {generatingLanding && (
-                      <div className="w-full px-6 py-8 rounded-xl text-center">
-                        <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" style={{ color: "var(--brand)" }} />
-                        <p className="text-sm font-semibold mb-2" style={{ color: "var(--text-primary)" }}>
-                          Generating Your Landing Page
-                        </p>
-                        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                          This may take 30-60 seconds. Creating a polished conversion page with strategic business logic...
-                        </p>
+                  {landingPageHtml && !generatingLanding && (
+                    <>
+                      <div className="rounded-xl border border-emerald-900/50 bg-emerald-950/40 px-4 py-3 text-center text-sm font-medium text-emerald-100">
+                        Landing page built successfully.
                       </div>
-                    )}
 
-                    {/* Success & Actions */}
-                    {landingPageHtml && !generatingLanding && (
-                      <>
-                        <div className="px-4 py-3 rounded-2xl text-center font-medium" style={{ background: "#DCFCE7", border: "1px solid #86EFAC", color: "#15803D" }}>
-                          Landing page built successfully!
+                      <div className="flex flex-col gap-3">
+                        <div className="space-y-2">
+                          <button
+                            type="button"
+                            onClick={downloadLandingPage}
+                            className="flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-zinc-100 px-4 py-3 font-semibold text-zinc-950 transition-colors hover:bg-white"
+                          >
+                            <Download className="h-4 w-4" />
+                            Download HTML file
+                          </button>
+                          <p className="text-center text-xs text-zinc-500">
+                            Upload via FTP — works as a standalone page on any web host
+                          </p>
                         </div>
-
-                        <div className="flex flex-col gap-3">
-                          <div className="space-y-2">
-                            <button
-                              type="button"
-                              onClick={downloadLandingPage}
-                              className="btn-primary flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 font-semibold"
-                            >
-                              <Download className="w-4 h-4" />
-                              Download HTML file
-                            </button>
-                            <p className="text-xs text-center" style={{ color: "var(--text-muted)" }}>
-                              Upload via FTP — works as a standalone page on any web host
-                            </p>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={copyLandingPageCode}
-                            className="btn-secondary flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 font-semibold"
-                          >
-                            <Code2 className="w-4 h-4" />
-                            Copy code
-                          </button>
-                          <button
-                            type="button"
-                            onClick={goBackFromLandingPanel}
-                            className="flex w-full items-center justify-center gap-2 rounded-2xl border px-4 py-3 text-sm font-semibold transition-all hover:brightness-95"
-                            style={{
-                              borderColor: "var(--border)",
-                              color: "var(--text-primary)",
-                              background: "var(--bg-overlay)",
-                            }}
-                          >
-                            <ArrowLeft className="w-4 h-4" />
-                            Back
-                          </button>
-                          <button
-                            type="button"
-                            onClick={regenerateLandingPage}
-                            className="flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold text-white transition-all hover:brightness-110"
-                            style={{
-                              background: "linear-gradient(135deg, #7C5CFC, #5A3FD4)",
-                              boxShadow: "0 0 20px var(--brand-glow)",
-                            }}
-                          >
-                            <RefreshCw className="w-4 h-4" />
-                            Regenerate
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </>
+                        <button
+                          type="button"
+                          onClick={copyLandingPageCode}
+                          className="flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 font-semibold text-zinc-100 transition-colors hover:bg-zinc-800"
+                        >
+                          <Code2 className="h-4 w-4" />
+                          Copy code
+                        </button>
+                        <button
+                          type="button"
+                          onClick={goBackFromLandingPanel}
+                          className="flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-zinc-950/60 px-4 py-3 text-sm font-semibold text-zinc-200 transition-colors hover:bg-zinc-900"
+                        >
+                          <ArrowLeft className="h-4 w-4" />
+                          Back
+                        </button>
+                        <button
+                          type="button"
+                          onClick={regenerateLandingPage}
+                          className="flex w-full items-center justify-center gap-2 rounded-xl border border-cyan-800/60 bg-cyan-950/60 px-4 py-3 text-sm font-semibold text-cyan-50 transition-colors hover:bg-cyan-950/90"
+                        >
+                          <RefreshCw className="h-4 w-4" />
+                          Regenerate
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
               )}
 
               {!selectedTool.blueprint && (
-                <div className="text-center py-8">
+                <div className="rounded-xl border border-dashed border-zinc-700 bg-zinc-900/40 py-10 text-center">
+                  <p className="mb-4 font-mono text-[10px] uppercase tracking-[0.28em] text-zinc-500">
+                    No manuscript on file
+                  </p>
                   <button
+                    type="button"
                     onClick={generateBlueprint}
                     disabled={buildStep === "analyzing"}
-                    className="btn-primary w-full rounded-2xl px-6 py-4 font-semibold disabled:opacity-50"
+                    className="mx-auto w-full max-w-sm rounded-xl border border-cyan-800/60 bg-cyan-950/50 px-6 py-4 text-sm font-semibold text-cyan-50 transition-colors hover:bg-cyan-950/80 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {buildStep === "analyzing" ? (
                       <span className="flex items-center justify-center gap-2">
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        Generating...
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        Generating…
                       </span>
                     ) : (
                       "Generate Blueprint"

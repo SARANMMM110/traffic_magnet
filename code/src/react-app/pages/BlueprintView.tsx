@@ -1,7 +1,19 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import { useParams, useNavigate } from "react-router";
 import DashboardLayout from "@/react-app/components/DashboardLayout";
-import { ArrowLeft, Loader2, Check, Download, Code2, RefreshCw } from "lucide-react";
+import { cn } from "@/react-app/lib/utils";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/react-app/components/ui/tabs";
+import {
+  ArrowLeft,
+  Loader2,
+  Check,
+  Download,
+  Code2,
+  RefreshCw,
+  Sparkles,
+  Palette,
+  LayoutTemplate,
+} from "lucide-react";
 import { useToast } from "@/react-app/components/Toast";
 import { VISUAL_THEMES, normalizeVisualThemeId } from "@/react-app/lib/visualThemes";
 
@@ -30,6 +42,28 @@ interface Project {
 }
 
 type BuildStep = "analyzing" | "logic" | "styling" | "embed" | "done";
+
+/** Editorial manuscript block — not a dashboard “spec card”. */
+function DossierSection({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="border-t border-stone-900/15 pt-10 first:border-t-0 first:pt-0">
+      <h2 className="mb-4 font-mono text-[10px] font-bold uppercase tracking-[0.32em] text-stone-900">{title}</h2>
+      <div className="border-l-[3px] border-amber-900/55 pl-6 text-[15px] leading-[1.75] text-stone-800">{children}</div>
+    </section>
+  );
+}
+
+function formatBlueprintHeading(raw: string): string {
+  const trimmed = raw.trim();
+  if (/^EEAT\b/i.test(trimmed)) {
+    const rest = trimmed.replace(/^EEAT\s+/i, "");
+    return rest ? `EEAT · ${formatBlueprintHeading(rest)}` : "EEAT";
+  }
+  return trimmed
+    .toLowerCase()
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
 export default function BlueprintView() {
   const { id } = useParams();
@@ -113,10 +147,7 @@ export default function BlueprintView() {
   };
 
   const buildTool = async (action: "standalone" | "embed") => {
-    console.log("🔥 buildTool called", { tool: !!tool, buildStep, action });
-    
     if (!tool) {
-      console.log("❌ BLOCKED: tool is null");
       return;
     }
     
@@ -316,11 +347,20 @@ export default function BlueprintView() {
     }
   };
 
+  const dossierShell = {
+    shellClassName:
+      "bg-[#d6d3d1] bg-[linear-gradient(165deg,rgb(214,211,209)_0%,rgb(245,242,239)_42%,rgb(200,195,190)_100%)]",
+    mainClassName: "bg-transparent",
+    innerClassName: "min-h-full p-0 lg:p-0",
+  } as const;
+
   if (loading) {
     return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center h-screen">
-          <Loader2 className="w-8 h-8 animate-spin" style={{ color: "var(--brand)" }} />
+      <DashboardLayout {...dossierShell}>
+        <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4 bg-[#d6d3d1] px-6 py-16">
+          <div className="h-px w-32 animate-pulse bg-stone-900/40" aria-hidden />
+          <Loader2 className="h-8 w-8 animate-spin text-stone-800" aria-hidden />
+          <p className="font-mono text-[10px] uppercase tracking-[0.35em] text-stone-600">Retrieving instrument…</p>
         </div>
       </DashboardLayout>
     );
@@ -409,753 +449,569 @@ export default function BlueprintView() {
     : "";
 
   return (
-    <DashboardLayout>
-      <div className="page-shell max-w-5xl">
-        {/* Header */}
-        <div className="surface-panel mb-6 p-6">
-          <button
-            onClick={() => navigate("/magnets")}
-            className="mb-4 flex items-center gap-2 text-sm font-semibold transition-colors hover:text-[var(--brand)]"
-            style={{ color: "var(--text-muted)" }}
+    <DashboardLayout {...dossierShell}>
+      <div className="relative min-h-[calc(100vh-6rem)] border-t border-stone-900/10 bg-[#d6d3d1] bg-[linear-gradient(165deg,rgb(214,211,209)_0%,rgb(245,242,239)_42%,rgb(200,195,190)_100%)]">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.45]"
+          aria-hidden
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E")`,
+          }}
+        />
+        <div className="relative mx-auto max-w-6xl px-4 pb-24 pt-8 sm:px-6 lg:px-10 lg:pt-12">
+          <Tabs
+            value={panelTab}
+            onValueChange={(v: string) => setPanelTab(v as "blueprint" | "variations" | "landing")}
+            className="flex flex-col gap-10 lg:flex-row lg:items-start lg:gap-14"
           >
-            <ArrowLeft className="w-4 h-4" />
-            Back to my projects
-          </button>
-
-          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-            <div>
-              <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>
-                {tool.category} {project && `· ${project.name}`}
-              </p>
-              <h1 className="text-3xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>
-                {tool.name}
-              </h1>
-              <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-                {tool.description}
-              </p>
+            <div className="flex shrink-0 flex-col gap-6 lg:sticky lg:top-6 lg:w-48">
+              <button
+                type="button"
+                onClick={() => navigate(tool.project_id != null ? `/projects/${tool.project_id}` : "/magnets")}
+                className="group inline-flex w-fit items-center gap-2 font-mono text-[10px] font-bold uppercase tracking-[0.28em] text-stone-600 transition-colors hover:text-stone-950"
+              >
+                <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" aria-hidden />
+                Return
+              </button>
+              <TabsList
+                variant="line"
+                className="flex h-auto w-full flex-col items-stretch gap-2 rounded-none border-0 bg-transparent p-0"
+              >
+                <TabsTrigger
+                  value="blueprint"
+                  className="flex h-auto w-full flex-none justify-start rounded-none border-2 border-transparent px-3 py-3 text-left font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-stone-500 shadow-none ring-0 after:hidden data-[state=active]:border-stone-900 data-[state=active]:bg-stone-900 data-[state=active]:text-[#f2ede4] data-[state=inactive]:hover:border-stone-500 data-[state=inactive]:hover:bg-stone-300/50"
+                >
+                  Manuscript
+                </TabsTrigger>
+                <TabsTrigger
+                  value="variations"
+                  className="flex h-auto w-full flex-none justify-start rounded-none border-2 border-transparent px-3 py-3 text-left font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-stone-500 shadow-none ring-0 after:hidden data-[state=active]:border-stone-900 data-[state=active]:bg-stone-900 data-[state=active]:text-[#f2ede4] data-[state=inactive]:hover:border-stone-500 data-[state=inactive]:hover:bg-stone-300/50"
+                >
+                  Forks
+                </TabsTrigger>
+                <TabsTrigger
+                  value="landing"
+                  className="flex h-auto w-full flex-none justify-start rounded-none border-2 border-transparent px-3 py-3 text-left font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-stone-500 shadow-none ring-0 after:hidden data-[state=active]:border-stone-900 data-[state=active]:bg-stone-900 data-[state=active]:text-[#f2ede4] data-[state=inactive]:hover:border-stone-500 data-[state=inactive]:hover:bg-stone-300/50"
+                >
+                  Ledger
+                </TabsTrigger>
+              </TabsList>
             </div>
-            <span
-              className="px-3 py-1 rounded-full text-sm font-bold"
-              style={{
-                background: `${tool.overall_score >= 80 ? '#10B981' : tool.overall_score >= 60 ? '#3B82F6' : '#F59E0B'}20`,
-                color: tool.overall_score >= 80 ? '#10B981' : tool.overall_score >= 60 ? '#3B82F6' : '#F59E0B',
-              }}
-            >
-              Score: {tool.overall_score}
-            </span>
-          </div>
-        </div>
 
-        {/* Tabs */}
-        <div className="tab-pill mb-6 flex w-fit flex-wrap gap-2">
-          <button
-            onClick={() => setPanelTab("blueprint")}
-            className="rounded-xl px-4 py-2 text-sm font-medium transition-all"
-            style={{
-              background: panelTab === "blueprint" ? "white" : "transparent",
-              color: panelTab === "blueprint" ? "var(--brand)" : "var(--text-muted)",
-            }}
-          >
-            Blueprint
-          </button>
-          <button
-            onClick={() => setPanelTab("variations")}
-            className="rounded-xl px-4 py-2 text-sm font-medium transition-all"
-            style={{
-              background: panelTab === "variations" ? "white" : "transparent",
-              color: panelTab === "variations" ? "var(--brand)" : "var(--text-muted)",
-            }}
-          >
-            <span className="flex items-center gap-1">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              Variations
-            </span>
-          </button>
-          <button
-            onClick={() => setPanelTab("landing")}
-            className="rounded-xl px-4 py-2 text-sm font-medium transition-all"
-            style={{
-              background: panelTab === "landing" ? "white" : "transparent",
-              color: panelTab === "landing" ? "var(--brand)" : "var(--text-muted)",
-            }}
-          >
-            <span className="flex items-center gap-1">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              Landing Page
-            </span>
-          </button>
-        </div>
+            <div className="min-w-0 flex-1 space-y-8">
+              <header className="space-y-4 border-b-2 border-stone-900 pb-6">
+                <p className="font-mono text-[10px] font-bold uppercase tracking-[0.38em] text-stone-500">Magnet instrument</p>
+                <h1 className="text-balance font-['Georgia','Times_New_Roman',Times,serif] text-[clamp(2rem,5vw,3.25rem)] font-normal leading-[1.06] tracking-tight text-stone-950">
+                  {tool.name}
+                </h1>
+                <p className="max-w-2xl text-[15px] leading-relaxed text-stone-700">{tool.description}</p>
+                <p className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[11px] text-stone-600">
+                  <span>{tool.category}</span>
+                  {project && (
+                    <>
+                      <span className="text-stone-400">·</span>
+                      <span>{project.name}</span>
+                    </>
+                  )}
+                  <span className="mx-1 hidden text-stone-400 sm:inline">│</span>
+                  <span>
+                    signal <span className="font-bold text-stone-900">{tool.overall_score}</span>
+                  </span>
+                  <span className="text-stone-400">·</span>
+                  <span>reach {tool.traffic_score}</span>
+                  <span className="text-stone-400">·</span>
+                  <span>links {tool.backlink_score}</span>
+                  <span className="text-stone-400">·</span>
+                  <span>yield {tool.monetization_score}</span>
+                </p>
+              </header>
 
-        {/* Content */}
-        <div className="premium-card p-8">
-          {panelTab === "blueprint" && tool.blueprint && (
-            <div className="space-y-6">
-              <div className="space-y-6 rounded-2xl border border-[var(--border)] bg-[var(--bg-overlay)] p-5">
-                {/* Visual theme (stored on blueprint) */}
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <svg className="w-4 h-4" style={{ color: "var(--text-muted)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-                    </svg>
-                    <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-                      VISUAL THEME
-                    </h4>
-                    {savingTheme && <Loader2 className="h-4 w-4 animate-spin" style={{ color: "var(--brand)" }} aria-hidden />}
+              <div className="border-2 border-stone-900 bg-[#f2ede4] shadow-[10px_10px_0_0_rgb(28,25,23)]">
+                <TabsContent value="blueprint" className="m-0 flex flex-col p-6 text-sm outline-none sm:p-10">
+                  {tool.blueprint ? (
+            <div className="flex flex-col gap-0">
+              <div className="-mx-6 border-y-2 border-[#f2ede4] bg-stone-900 px-6 py-8 text-[#ede8df] sm:-mx-10 sm:px-10">
+                <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <p className="flex items-center gap-2 font-mono text-[10px] font-bold uppercase tracking-[0.35em] text-amber-200/90">
+                      <Palette className="h-3.5 w-3.5" aria-hidden />
+                      Fabrication
+                    </p>
+                    <p className="mt-2 max-w-xl text-sm leading-relaxed text-stone-400">
+                      Active skin{" "}
+                      <strong className="text-[#f4f0e8]">
+                        {VISUAL_THEMES.find((t) => t.id === normalizeVisualThemeId(blueprint.visual_theme ?? blueprint.theme))?.name ??
+                          "Modern"}
+                      </strong>
+                      . Exports inherit this palette for standalone HTML and embed snippets.
+                    </p>
                   </div>
-                  <p className="text-sm leading-relaxed" style={{ color: "var(--text-primary)" }}>
-                    <strong>
-                      {VISUAL_THEMES.find((t) => t.id === normalizeVisualThemeId(blueprint.visual_theme ?? blueprint.theme))?.name ??
-                        "Modern"}
-                    </strong>
-                    <span style={{ color: "var(--text-muted)" }}>
-                      {" "}
-                      — used when you build a standalone page or embed widget. Change it below; it saves to your blueprint
-                      automatically.
-                    </span>
-                  </p>
+                  {savingTheme && <Loader2 className="h-5 w-5 shrink-0 animate-spin text-amber-200" aria-hidden />}
                 </div>
-
-                {/* Theme Selector */}
-                <div>
-                  <h4 className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: "var(--text-muted)" }}>
-                    THEME — PROFESSIONAL STYLES
-                  </h4>
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                    {VISUAL_THEMES.map((theme) => (
-                      <div
-                        key={theme.id}
-                        role="button"
-                        tabIndex={0}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            setSelectedTheme(theme.id);
-                            void persistVisualTheme(theme.id);
-                          }
-                        }}
-                        onClick={() => {
-                          setSelectedTheme(theme.id);
-                          void persistVisualTheme(theme.id);
-                        }}
-                        className={`relative rounded-xl p-3 cursor-pointer transition-all border-2 ${
-                          selectedTheme === theme.id ? "border-[var(--brand)] shadow-sm" : "border-transparent hover:border-[var(--border)]"
-                        }`}
-                        style={{ background: "var(--surface)" }}
-                      >
-                        {selectedTheme === theme.id && (
-                          <div
-                            className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full text-white shadow-sm"
-                            style={{ background: "var(--brand)" }}
-                          >
-                            <Check className="h-4 w-4" aria-hidden />
-                          </div>
-                        )}
-                        <div className="mb-2 h-12 w-full rounded-lg" style={{ background: theme.swatch }} />
-                        <p className="mb-0.5 text-xs font-semibold" style={{ color: "var(--text-primary)" }}>
-                          {theme.name}
-                        </p>
-                        <p className="text-[10px] leading-snug" style={{ color: "var(--text-muted)" }}>
-                          {theme.desc}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Build Options */}
-                <div>
-                  <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: "var(--text-muted)" }}>
-                    BUILD THIS TOOL AS...
-                  </h4>
-
-                  {!buildResult ? (
-                    <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          buildTool("standalone");
-                        }}
-                        disabled={buildStep !== null}
-                        className="premium-card group rounded-3xl p-4 text-left transition-all hover:-translate-y-0.5 hover:border-[var(--brand)] hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        <div className="mb-3 flex items-center gap-3">
-                          <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[var(--border)] bg-white text-[var(--brand)] shadow-sm transition-all group-hover:bg-[var(--brand-soft)]">
-                            <Download className="h-5 w-5" />
-                          </span>
-                          <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
-                            Standalone Page
-                          </p>
-                        </div>
-                        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                          Single .html file — upload via FTP to your website as its own page
-                        </p>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          buildTool("embed");
-                        }}
-                        disabled={buildStep !== null}
-                        className="premium-card group rounded-3xl p-4 text-left transition-all hover:-translate-y-0.5 hover:border-[var(--brand)] hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        <div className="mb-3 flex items-center gap-3">
-                          <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[var(--border)] bg-white text-[var(--brand)] shadow-sm transition-all group-hover:bg-[var(--brand-soft)]">
-                            <Code2 className="h-5 w-5" />
-                          </span>
-                          <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
-                            Embeddable Widget
-                          </p>
-                        </div>
-                        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                          Paste into WordPress posts, articles, or any existing page
-                        </p>
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <div
-                        className="rounded-lg px-4 py-3 text-center"
-                        style={{ background: "#DCFCE7", border: "1px solid #86EFAC", color: "#15803D" }}
-                      >
-                        {buildResult.action === "standalone" ? "Standalone page ready!" : "Embeddable widget ready!"}
-                      </div>
-
-                      {buildResult.action === "standalone" ? (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const blob = new Blob([buildResult.html], { type: "text/html" });
-                            const url = URL.createObjectURL(blob);
-                            const a = document.createElement("a");
-                            a.href = url;
-                            a.download = `${tool.name.toLowerCase().replace(/\s+/g, "-")}.html`;
-                            a.click();
-                            URL.revokeObjectURL(url);
-                            showToast({ title: "Downloaded!", type: "success" });
-                          }}
-                          className="btn-primary w-full rounded-2xl py-3 font-semibold"
-                        >
-                          Download .html File
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            navigator.clipboard
-                              .writeText(buildResult.html)
-                              .then(() => {
-                                setCopied(true);
-                                showToast({ title: "Copied to clipboard!", type: "success" });
-                                setTimeout(() => setCopied(false), 2000);
-                              })
-                              .catch(() => {
-                                showToast({ title: "Failed to copy", type: "error" });
-                              });
-                          }}
-                          className="btn-primary w-full rounded-2xl py-3 font-semibold"
-                        >
-                          {copied ? "Copied!" : "</> Copy Embed Code"}
-                        </button>
+                <p className="mb-3 font-mono text-[10px] font-bold uppercase tracking-[0.3em] text-stone-500">Swatches</p>
+                <div className="mb-10 flex flex-wrap gap-2">
+                  {VISUAL_THEMES.map((theme) => (
+                    <button
+                      key={theme.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedTheme(theme.id);
+                        void persistVisualTheme(theme.id);
+                      }}
+                      className={cn(
+                        "group flex min-w-[5.5rem] flex-col border-2 px-2 pb-2 pt-1.5 text-left transition-colors",
+                        selectedTheme === theme.id
+                          ? "border-amber-300 bg-stone-800"
+                          : "border-stone-700 bg-stone-950 hover:border-stone-500"
                       )}
-
-                      <p className="text-center text-xs" style={{ color: "var(--text-muted)" }}>
-                        {buildResult.action === "standalone"
-                          ? "Upload via FTP — works as a standalone page on any web host"
-                          : 'Paste this into a WordPress "Custom HTML" block or any page editor'}
-                      </p>
-
+                    >
+                      <div
+                        className="mb-1.5 h-8 w-full border border-stone-600"
+                        style={{ background: theme.swatch }}
+                        aria-hidden
+                      />
+                      <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-stone-400 group-hover:text-stone-200">
+                        {theme.name}
+                      </span>
+                      <span className="mt-0.5 line-clamp-2 font-mono text-[8px] leading-tight text-stone-600">{theme.desc}</span>
+                    </button>
+                  ))}
+                </div>
+                <p className="mb-3 font-mono text-[10px] font-bold uppercase tracking-[0.3em] text-stone-500">Dispatch</p>
+                {!buildResult ? (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        buildTool("standalone");
+                      }}
+                      disabled={buildStep !== null}
+                      className="border-2 border-[#f4f0e8]/25 bg-transparent px-4 py-5 text-left transition-colors hover:border-[#f4f0e8]/60 hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      <span className="flex items-center gap-3">
+                        <Download className="h-5 w-5 shrink-0 text-amber-200" aria-hidden />
+                        <span>
+                          <span className="block font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-[#f4f0e8]">
+                            Standalone
+                          </span>
+                          <span className="mt-1 block text-xs text-stone-500">Single .html — static host or FTP.</span>
+                        </span>
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        buildTool("embed");
+                      }}
+                      disabled={buildStep !== null}
+                      className="border-2 border-[#f4f0e8]/25 bg-transparent px-4 py-5 text-left transition-colors hover:border-[#f4f0e8]/60 hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      <span className="flex items-center gap-3">
+                        <Code2 className="h-5 w-5 shrink-0 text-amber-200" aria-hidden />
+                        <span>
+                          <span className="block font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-[#f4f0e8]">
+                            Embed
+                          </span>
+                          <span className="mt-1 block text-xs text-stone-500">Snippet for posts, builders, CMS HTML blocks.</span>
+                        </span>
+                      </span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <p className="border border-dashed border-amber-200/40 bg-stone-950/80 px-4 py-3 text-center font-mono text-[11px] font-bold uppercase tracking-[0.15em] text-amber-100">
+                      {buildResult.action === "standalone" ? "Standalone artifact sealed" : "Embed fragment sealed"}
+                    </p>
+                    {buildResult.action === "standalone" ? (
                       <button
                         type="button"
+                        className="w-full border-2 border-[#f4f0e8] bg-[#f4f0e8] py-3 font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-stone-900 hover:bg-white"
                         onClick={() => {
-                          const bundle = `# ${tool.name}\n\n\`\`\`html\n${buildResult.html}\n\`\`\`\n\n\`\`\`json\n${tool.blueprint}\n\`\`\``;
-                          navigator.clipboard.writeText(bundle).then(() => {
-                              showToast({ title: "Content wrapper copied!", type: "success" });
-                            }).catch(() => {
+                          const blob = new Blob([buildResult.html], { type: "text/html" });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement("a");
+                          a.href = url;
+                          a.download = `${tool.name.toLowerCase().replace(/\s+/g, "-")}.html`;
+                          a.click();
+                          URL.revokeObjectURL(url);
+                          showToast({ title: "Downloaded!", type: "success" });
+                        }}
+                      >
+                        Download .html
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="w-full border-2 border-[#f4f0e8] bg-[#f4f0e8] py-3 font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-stone-900 hover:bg-white"
+                        onClick={() => {
+                          navigator.clipboard
+                            .writeText(buildResult.html)
+                            .then(() => {
+                              setCopied(true);
+                              showToast({ title: "Copied to clipboard!", type: "success" });
+                              setTimeout(() => setCopied(false), 2000);
+                            })
+                            .catch(() => {
                               showToast({ title: "Failed to copy", type: "error" });
                             });
                         }}
-                        className="btn-secondary w-full rounded-2xl py-3 font-semibold"
                       >
-                        Copy All for Content Wrapper
+                        {copied ? "Copied" : "Copy embed"}
                       </button>
-
-                      <div className="text-center">
-                        <button
-                          type="button"
-                          onClick={() => setBuildResult(null)}
-                          className="text-sm hover:underline"
-                          style={{ color: "var(--text-muted)" }}
-                        >
-                          ← Build a different format
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Purpose */}
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <svg className="w-4 h-4" style={{ color: "var(--text-muted)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-                    PURPOSE
-                  </h4>
-                </div>
-                <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: "var(--text-primary)" }}>
-                  {purpose}
-                </p>
-              </div>
-
-              {strategySections.map((section) => (
-                <div key={section.title}>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Check className="h-4 w-4" style={{ color: "var(--text-muted)" }} />
-                    <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-                      {section.title}
-                    </h4>
+                    )}
+                    <p className="text-center font-mono text-[10px] text-stone-500">
+                      {buildResult.action === "standalone" ? "Host as a single file." : "Paste as raw HTML where allowed."}
+                    </p>
+                    <button
+                      type="button"
+                      className="w-full border-2 border-dashed border-stone-600 py-2.5 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-stone-400 hover:border-stone-400 hover:text-stone-200"
+                      onClick={() => {
+                        const bundle = `# ${tool.name}\n\n\`\`\`html\n${buildResult.html}\n\`\`\`\n\n\`\`\`json\n${tool.blueprint}\n\`\`\``;
+                        navigator.clipboard
+                          .writeText(bundle)
+                          .then(() => {
+                            showToast({ title: "Content wrapper copied!", type: "success" });
+                          })
+                          .catch(() => {
+                            showToast({ title: "Failed to copy", type: "error" });
+                          });
+                      }}
+                    >
+                      Copy bundle (wrapper)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setBuildResult(null)}
+                      className="w-full text-center font-mono text-[10px] uppercase tracking-[0.2em] text-stone-500 underline-offset-4 hover:text-amber-200 hover:underline"
+                    >
+                      Re-open dispatch
+                    </button>
                   </div>
-                  <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: "var(--text-primary)" }}>
-                    {section.value}
-                  </p>
-                </div>
-              ))}
-
-              {audiencePainPoints.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Check className="h-4 w-4" style={{ color: "var(--text-muted)" }} />
-                    <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-                      AUDIENCE PAIN POINTS
-                    </h4>
-                  </div>
-                  <div className="space-y-2">
-                    {audiencePainPoints.map((point: string, i: number) => (
-                      <div key={i} className="text-sm flex items-start gap-2" style={{ color: "var(--text-primary)" }}>
-                        <Check className="mt-0.5 h-4 w-4 flex-shrink-0" style={{ color: "#10B981" }} />
-                        <span>{point}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Target Keywords */}
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <svg className="w-4 h-4" style={{ color: "var(--text-muted)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
-                  </svg>
-                  <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-                    TARGET KEYWORDS
-                  </h4>
-                </div>
-                {keywords.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {keywords.map((keyword: string, i: number) => (
-                      <span
-                        key={i}
-                        className="px-3 py-1.5 rounded-lg text-xs"
-                        style={{
-                          background: "var(--bg-overlay)",
-                          color: "var(--text-primary)",
-                        }}
-                      >
-                        {keyword}
-                      </span>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm italic" style={{ color: "var(--text-muted)" }}>Not specified</p>
                 )}
               </div>
 
-              {/* Inputs Required */}
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <svg className="w-4 h-4" style={{ color: "var(--text-muted)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                  </svg>
-                  <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-                    INPUTS REQUIRED
-                  </h4>
-                </div>
-                <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: "var(--text-primary)" }}>
-                  {inputs || "Not specified"}
-                </p>
-              </div>
+              <div className="mt-10 space-y-10">
+                <DossierSection title="Purpose">
+                  <p className="whitespace-pre-line text-stone-700">{purpose}</p>
+                </DossierSection>
 
-              {/* Output Type */}
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <svg className="w-4 h-4" style={{ color: "var(--text-muted)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-                    OUTPUT TYPE
-                  </h4>
-                </div>
-                <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: "var(--text-primary)" }}>
-                  {output || "Not specified"}
-                </p>
-              </div>
+                {strategySections.map((section) => (
+                  <DossierSection key={section.title} title={formatBlueprintHeading(section.title)}>
+                    <p className="whitespace-pre-line text-stone-700">{section.value}</p>
+                  </DossierSection>
+                ))}
 
-              {/* Business Logic */}
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <svg className="w-4 h-4" style={{ color: "var(--text-muted)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                  </svg>
-                  <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-                    BUSINESS LOGIC
-                  </h4>
-                </div>
-                <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: "var(--text-primary)" }}>
-                  {calculationLogic || "Not specified"}
-                </p>
-              </div>
+                {audiencePainPoints.length > 0 && (
+                  <DossierSection title="Audience tension">
+                    <ul className="space-y-3">
+                      {audiencePainPoints.map((point: string, i: number) => (
+                        <li key={i} className="flex gap-3 text-stone-700">
+                          <span className="mt-2.5 h-1 w-6 shrink-0 bg-amber-900/70" aria-hidden />
+                          <span>{point}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </DossierSection>
+                )}
 
-              {/* Features */}
-              {features.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <svg className="w-4 h-4" style={{ color: "var(--text-muted)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-                      FEATURES
-                    </h4>
-                  </div>
-                  <div className="space-y-2">
-                    {features.map((feature: string, i: number) => (
-                      <div key={i} className="text-sm flex items-start gap-2" style={{ color: "var(--text-primary)" }}>
-                        <Check className="mt-0.5 h-4 w-4 flex-shrink-0" style={{ color: "#10B981" }} />
-                        <span>{feature}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Monetization Strategy */}
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <svg className="w-4 h-4" style={{ color: "var(--text-muted)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-                    MONETIZATION STRATEGY
-                  </h4>
-                </div>
-                <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: "var(--text-primary)" }}>
-                  {monetization || "Not specified"}
-                </p>
-              </div>
-
-              {monetizationRoadmap.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Check className="h-4 w-4" style={{ color: "var(--text-muted)" }} />
-                    <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-                      MONETIZATION ROADMAP
-                    </h4>
-                  </div>
-                  <div className="space-y-2">
-                    {monetizationRoadmap.map((item: string, i: number) => (
-                      <div key={i} className="text-sm" style={{ color: "var(--text-primary)" }}>
-                        {i + 1}. {item}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {eeatStructure.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Check className="h-4 w-4" style={{ color: "var(--text-muted)" }} />
-                    <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-                      EEAT STRUCTURE
-                    </h4>
-                  </div>
-                  <div className="space-y-2">
-                    {eeatStructure.map((item: string, i: number) => (
-                      <div key={i} className="text-sm flex items-start gap-2" style={{ color: "var(--text-primary)" }}>
-                        <Check className="mt-0.5 h-4 w-4 flex-shrink-0" style={{ color: "#10B981" }} />
-                        <span>{item}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Internal Linking Suggestions */}
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <svg className="w-4 h-4" style={{ color: "var(--text-muted)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                  </svg>
-                  <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-                    INTERNAL LINKING SUGGESTIONS
-                  </h4>
-                </div>
-                <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: "var(--text-primary)" }}>
-                  {linking || "Not specified"}
-                </p>
-              </div>
-
-              {/* Call to Action */}
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <svg className="w-4 h-4" style={{ color: "var(--text-muted)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
-                  </svg>
-                  <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-                    CALL TO ACTION
-                  </h4>
-                </div>
-                <p className="text-sm font-semibold" style={{ color: "#F97316" }}>
-                  {cta || "Not specified"}
-                </p>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex gap-3">
-                <button
-                  onClick={copyBlueprint}
-                  className="flex-1 px-4 py-3 rounded-lg font-semibold text-sm transition-all"
-                  style={{
-                    background: "var(--bg-overlay)",
-                    color: "var(--text-primary)",
-                    border: "1px solid var(--border)",
-                  }}
-                >
-                  Copy Blueprint
-                </button>
-                <button
-                  onClick={regenerateBlueprint}
-                  disabled={buildStep !== null}
-                  className="flex-1 px-4 py-3 rounded-lg font-semibold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{
-                    background: "var(--bg-overlay)",
-                    color: "var(--text-primary)",
-                    border: "1px solid var(--border)",
-                  }}
-                >
-                  {buildStep === "analyzing" ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Regenerating...
-                    </span>
+                <DossierSection title="Lexicon (keywords)">
+                  {keywords.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {keywords.map((keyword: string, i: number) => (
+                        <span
+                          key={i}
+                          className="border border-stone-900/80 bg-[#ebe4d8] px-2.5 py-1 font-mono text-[11px] uppercase tracking-wide text-stone-800"
+                        >
+                          {keyword}
+                        </span>
+                      ))}
+                    </div>
                   ) : (
-                    "Regenerate"
+                    <p className="font-mono text-sm italic text-stone-500">Unspecified</p>
                   )}
-                </button>
-              </div>
+                </DossierSection>
 
-              {/* Build Status */}
-              {buildStep && (
-                <div className="w-full px-6 py-4 rounded-2xl font-bold text-white transition-all" style={{ background: buildStep === "done" ? "#10B981" : "linear-gradient(135deg, #635BFF, #4F46E5)", boxShadow: buildStep === "done" ? "0 12px 28px #10B98130" : "0 12px 28px var(--brand-glow)" }}>
-                  {buildStep === "logic" && (
-                    <span className="flex items-center justify-center gap-2">
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      Building business logic...
-                    </span>
-                  )}
-                  {buildStep === "styling" && (
-                    <span className="flex items-center justify-center gap-2">
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      Applying {VISUAL_THEMES.find((t) => t.id === selectedTheme)?.name} theme...
-                    </span>
-                  )}
-                  {buildStep === "embed" && (
-                    <span className="flex items-center justify-center gap-2">
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      Preparing embed code...
-                    </span>
-                  )}
-                  {buildStep === "done" && (
-                    <span className="flex items-center justify-center gap-2">
-                      <Check className="w-5 h-5" />
-                      Business Asset Built Successfully!
-                    </span>
-                  )}
+                <DossierSection title="Inputs required">
+                  <p className="whitespace-pre-line text-stone-700">{inputs || "Unspecified"}</p>
+                </DossierSection>
+
+                <DossierSection title="Output type">
+                  <p className="whitespace-pre-line text-stone-700">{output || "Unspecified"}</p>
+                </DossierSection>
+
+                <DossierSection title="Business logic">
+                  <p className="whitespace-pre-line text-stone-700">{calculationLogic || "Unspecified"}</p>
+                </DossierSection>
+
+                {features.length > 0 && (
+                  <DossierSection title="Features">
+                    <ul className="space-y-3">
+                      {features.map((feature: string, i: number) => (
+                        <li key={i} className="flex gap-3 text-stone-700">
+                          <Check className="mt-1 h-3.5 w-3.5 shrink-0 text-amber-900" aria-hidden />
+                          <span>{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </DossierSection>
+                )}
+
+                <DossierSection title="Monetization strategy">
+                  <p className="whitespace-pre-line text-stone-700">{monetization || "Unspecified"}</p>
+                </DossierSection>
+
+                {monetizationRoadmap.length > 0 && (
+                  <DossierSection title="Monetization roadmap">
+                    <ol className="list-decimal space-y-2 pl-5 text-stone-700 marker:font-mono marker:text-xs marker:font-bold">
+                      {monetizationRoadmap.map((item: string, i: number) => (
+                        <li key={i} className="pl-1">
+                          {item}
+                        </li>
+                      ))}
+                    </ol>
+                  </DossierSection>
+                )}
+
+                {eeatStructure.length > 0 && (
+                  <DossierSection title="EEAT structure">
+                    <ul className="space-y-3">
+                      {eeatStructure.map((item: string, i: number) => (
+                        <li key={i} className="flex gap-3 text-stone-700">
+                          <Check className="mt-1 h-3.5 w-3.5 shrink-0 text-amber-900/80" aria-hidden />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </DossierSection>
+                )}
+
+                <DossierSection title="Internal linking">
+                  <p className="whitespace-pre-line text-stone-700">{linking || "Unspecified"}</p>
+                </DossierSection>
+
+                <div className="border-t-2 border-stone-900/15 pt-10">
+                  <p className="mb-3 font-mono text-[10px] font-bold uppercase tracking-[0.32em] text-stone-500">Closing argument</p>
+                  <blockquote className="border-l-4 border-amber-900 pl-6 font-['Georgia','Times_New_Roman',Times,serif] text-xl italic leading-snug text-stone-900">
+                    {cta || "Unspecified"}
+                  </blockquote>
                 </div>
-              )}
-            </div>
-          )}
 
-          {panelTab === "blueprint" && !tool.blueprint && (
-            <div className="text-center py-12">
-              <p className="mb-4" style={{ color: "var(--text-muted)" }}>
-                No blueprint generated yet.
+                <div className="flex flex-col gap-3 border-t border-dashed border-stone-900/25 pt-8 sm:flex-row">
+                  <button
+                    type="button"
+                    onClick={copyBlueprint}
+                    className="flex-1 border-2 border-stone-900 bg-transparent py-3 font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-stone-900 transition-colors hover:bg-stone-900 hover:text-[#f2ede4]"
+                  >
+                    Copy manuscript
+                  </button>
+                  <button
+                    type="button"
+                    onClick={regenerateBlueprint}
+                    disabled={buildStep !== null}
+                    className="flex-1 border-2 border-stone-900 bg-stone-900 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-[#f2ede4] transition-colors hover:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    {buildStep === "analyzing" ? (
+                      <span className="inline-flex items-center justify-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                        Revising…
+                      </span>
+                    ) : (
+                      "Regenerate"
+                    )}
+                  </button>
+                </div>
+
+                {buildStep && (
+                  <div
+                    className={cn(
+                      "border-2 border-dashed px-4 py-4 text-center font-mono text-[10px] font-bold uppercase tracking-[0.2em]",
+                      buildStep === "done"
+                        ? "border-emerald-800 bg-emerald-950/10 text-emerald-900"
+                        : "border-stone-900 bg-stone-900 text-amber-100"
+                    )}
+                  >
+                    {buildStep === "analyzing" && (
+                      <span className="inline-flex items-center justify-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                        Drafting manuscript…
+                      </span>
+                    )}
+                    {buildStep === "logic" && (
+                      <span className="inline-flex items-center justify-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                        Compiling logic…
+                      </span>
+                    )}
+                    {buildStep === "styling" && (
+                      <span className="inline-flex items-center justify-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                        Inking {VISUAL_THEMES.find((t) => t.id === selectedTheme)?.name ?? "theme"}…
+                      </span>
+                    )}
+                    {buildStep === "embed" && (
+                      <span className="inline-flex items-center justify-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                        Binding embed…
+                      </span>
+                    )}
+                    {buildStep === "done" && (
+                      <span className="inline-flex items-center justify-center gap-2">
+                        <Check className="h-4 w-4 shrink-0" aria-hidden />
+                        Pass complete
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-6 border-2 border-dashed border-stone-900/25 px-6 py-16 text-center">
+              <p className="font-mono text-[10px] font-bold uppercase tracking-[0.35em] text-stone-500">Empty folio</p>
+              <p className="font-['Georgia','Times_New_Roman',Times,serif] text-2xl text-stone-900">No manuscript on file</p>
+              <p className="max-w-md text-sm leading-relaxed text-stone-600">
+                Run a first pass to lock narrative, economics, and distribution angles—then export HTML or embed from the fabrication strip.
               </p>
               <button
+                type="button"
                 onClick={generateBlueprint}
                 disabled={buildStep !== null}
-                className="btn-primary rounded-2xl px-6 py-3 font-semibold disabled:opacity-50"
+                className="border-2 border-stone-900 bg-stone-900 px-10 py-3 font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-[#f2ede4] transition-colors hover:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {buildStep === "analyzing" ? (
-                  <span className="flex items-center gap-2">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Generating Blueprint...
+                  <span className="inline-flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                    Composing…
                   </span>
                 ) : (
-                  "Generate Blueprint"
+                  <span className="inline-flex items-center gap-2">
+                    <Sparkles className="h-4 w-4" aria-hidden />
+                    Compose manuscript
+                  </span>
                 )}
               </button>
             </div>
           )}
+          </TabsContent>
 
-          {panelTab === "variations" && (
-            <div className="premium-card overflow-hidden rounded-3xl p-0">
-              <div
-                className="p-5"
-                style={{
-                  background:
-                    "radial-gradient(circle at 16% 0%, rgba(109, 93, 251, 0.14), transparent 34%), radial-gradient(circle at 92% 18%, rgba(37, 99, 235, 0.1), transparent 30%), rgba(255,255,255,0.9)",
-                }}
+          <TabsContent value="variations" className="m-0 flex flex-col gap-8 p-6 sm:p-10">
+            <div>
+              <p className="font-mono text-[10px] font-bold uppercase tracking-[0.32em] text-stone-500">Forks</p>
+              <h2 className="mt-2 font-['Georgia','Times_New_Roman',Times,serif] text-2xl text-stone-900 sm:text-3xl">
+                Alternate angles live in the workspace
+              </h2>
+              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-stone-700">
+                Branch audiences, revenue models, acquisition plays, and blueprint upgrades in the project room—then fold the winning line back into this folio.
+              </p>
+            </div>
+            <dl className="space-y-8 border-t border-stone-900/15 pt-8">
+              {[
+                ["Audience registers", "Creators, agencies, SMBs, enterprise—mapped as separate intent lanes."],
+                ["Revenue chemistry", "Lead gen, affiliate, SaaS, services—pressure-test before you ship."],
+                ["Traffic geology", "Organic, authority content, partnerships—see which vein actually converts."],
+                ["Blueprint succession", "Promote a stronger fork to overwrite the active manuscript."],
+              ].map(([title, body]) => (
+                <div key={title}>
+                  <dt className="font-mono text-[10px] font-bold uppercase tracking-[0.28em] text-stone-900">{title}</dt>
+                  <dd className="mt-2 border-l-2 border-amber-900/60 pl-4 text-sm leading-relaxed text-stone-700">{body}</dd>
+                </div>
+              ))}
+            </dl>
+            <button
+              type="button"
+              className="w-full border-2 border-stone-900 bg-stone-900 py-3.5 font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-[#f2ede4] transition-colors hover:bg-stone-800"
+              onClick={() => (tool.project_id != null ? navigate(`/projects/${tool.project_id}`) : navigate("/magnets"))}
+            >
+              Enter workspace
+            </button>
+          </TabsContent>
+
+          <TabsContent value="landing" className="m-0 flex flex-col gap-8 p-6 sm:p-10">
+            <div>
+              <p className="font-mono text-[10px] font-bold uppercase tracking-[0.32em] text-stone-500">Ledger</p>
+              <h2 className="mt-2 font-['Georgia','Times_New_Roman',Times,serif] text-2xl text-stone-900 sm:text-3xl">
+                Landing as a bound document
+              </h2>
+              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-stone-700">
+                One long-form page: hero, interactive asset, proof, roadmap, FAQ, and conversion spine—set in the same voice as this manuscript.
+              </p>
+            </div>
+
+            {!landingPageHtml && !generatingLanding && (
+              <button
+                type="button"
+                onClick={generateLandingPageHandler}
+                className="w-full border-2 border-dashed border-stone-900/40 bg-stone-900/5 py-4 font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-stone-900 transition-colors hover:border-stone-900 hover:bg-stone-900/10"
               >
-                <div className="mb-5 flex items-start gap-3">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/80 bg-white text-[var(--brand)] shadow-sm">
-                    <Check className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/80 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--brand)] shadow-sm">
-                      AI strategy lab
-                    </div>
-                    <h3 className="text-lg font-bold tracking-[-0.02em]" style={{ color: "var(--text-primary)" }}>
-                      Premium Strategy Variations
-                    </h3>
-                    <p className="mt-1 text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>
-                      Create audience-specific monetization angles, traffic strategies, and conversion CTAs from the full project workspace.
-                    </p>
-                  </div>
-                </div>
+                <span className="inline-flex items-center justify-center gap-2">
+                  <LayoutTemplate className="h-4 w-4" aria-hidden />
+                  Generate ledger page
+                </span>
+              </button>
+            )}
 
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  {[
-                    ["Audience Angle", "Compare creators, agencies, businesses, and buyer-intent segments."],
-                    ["Revenue Model", "Test lead generation, affiliate, SaaS, consulting, and product paths."],
-                    ["Traffic Strategy", "Preview organic search, authority content, and conversion journeys."],
-                    ["Blueprint Upgrade", "Apply the strongest generated strategy as the active blueprint."],
-                  ].map(([title, description]) => (
-                    <div key={title} className="rounded-2xl border border-white/80 bg-white/75 p-4 shadow-sm">
-                      <p className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>{title}</p>
-                      <p className="mt-1 text-xs leading-relaxed" style={{ color: "var(--text-muted)" }}>{description}</p>
-                    </div>
-                  ))}
-                </div>
-
-                <button
-                  onClick={() => navigate(`/projects/${tool?.project_id}`)}
-                  className="btn-primary mt-5 flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold"
-                >
-                  Open AI Strategy Configurator
-                </button>
+            {generatingLanding && (
+              <div className="border-2 border-dashed border-stone-900/30 px-6 py-12 text-center">
+                <Loader2 className="mx-auto mb-4 h-8 w-8 animate-spin text-stone-800" aria-hidden />
+                <p className="font-mono text-[10px] font-bold uppercase tracking-[0.25em] text-stone-600">Typesetting…</p>
+                <p className="mt-2 text-xs text-stone-600">Roughly half a minute while layout, copy, and modules align.</p>
               </div>
-            </div>
-          )}
+            )}
 
-          {panelTab === "landing" && (
-            <div className="space-y-6">
-              {/* Header */}
-              <div>
-                <h3 className="text-lg font-bold mb-2" style={{ color: "var(--text-primary)" }}>
-                  Landing Page Generator
-                </h3>
-                <p className="text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>
-                  Generate a production-ready SaaS landing page with a premium hero, interactive business asset, trust sections, monetization roadmap, FAQ, conversion CTAs, and polished footer.
+            {landingPageHtml && !generatingLanding && (
+              <div className="space-y-4 border-t border-stone-900/15 pt-8">
+                <p className="border border-stone-900/20 bg-[#ebe4d8] px-3 py-2 text-center font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-stone-800">
+                  Ledger proof approved
                 </p>
-              </div>
-
-              {/* Generate Button */}
-              {!landingPageHtml && !generatingLanding && (
-                <button
-                  onClick={generateLandingPageHandler}
-                  className="btn-primary flex w-full items-center justify-center gap-2 rounded-2xl px-6 py-4 font-semibold"
-                >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  Generate Landing Page
-                </button>
-              )}
-
-              {/* Generating Status */}
-              {generatingLanding && (
-                <div className="w-full px-6 py-8 rounded-xl text-center">
-                  <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" style={{ color: "var(--brand)" }} />
-                  <p className="text-sm font-semibold mb-2" style={{ color: "var(--text-primary)" }}>
-                    Generating Your Landing Page
-                  </p>
-                  <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                    This may take 30-60 seconds. Creating a polished conversion page with strategic business logic...
-                  </p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={downloadLandingPage}
+                    className="border-2 border-stone-900 bg-stone-900 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-[#f2ede4] hover:bg-stone-800"
+                  >
+                    <span className="inline-flex items-center justify-center gap-2">
+                      <Download className="h-4 w-4" aria-hidden />
+                      Download .html
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={copyLandingPageHTML}
+                    className="border-2 border-stone-900 bg-transparent py-3 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-stone-900 hover:bg-stone-900/5"
+                  >
+                    <span className="inline-flex items-center justify-center gap-2">
+                      <Code2 className="h-4 w-4" aria-hidden />
+                      Copy markup
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={goBackFromLanding}
+                    className="border-2 border-dashed border-stone-900/35 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-stone-700 hover:border-stone-900/60 sm:col-span-2"
+                  >
+                    <span className="inline-flex items-center justify-center gap-2">
+                      <ArrowLeft className="h-4 w-4" aria-hidden />
+                      Leave ledger
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={regenerateLandingPage}
+                    className="border-2 border-stone-900 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-stone-900 hover:bg-stone-900/5 sm:col-span-2"
+                  >
+                    <span className="inline-flex items-center justify-center gap-2">
+                      <RefreshCw className="h-4 w-4" aria-hidden />
+                      Reset & regenerate
+                    </span>
+                  </button>
                 </div>
-              )}
-
-              {/* Success & Actions */}
-              {landingPageHtml && !generatingLanding && (
-                <>
-                  <div className="px-4 py-3 rounded-lg text-center font-medium" style={{ background: "#DCFCE7", border: "1px solid #86EFAC", color: "#15803D" }}>
-                    Landing page generated successfully!
-                  </div>
-
-                  <div className="flex flex-col gap-3">
-                    <button
-                      type="button"
-                      onClick={downloadLandingPage}
-                      className="btn-primary flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 font-semibold"
-                    >
-                      <Download className="w-4 h-4" />
-                      Download HTML file
-                    </button>
-                    <button
-                      type="button"
-                      onClick={copyLandingPageHTML}
-                      className="btn-secondary flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 font-semibold"
-                    >
-                      <Code2 className="w-4 h-4" />
-                      Copy code
-                    </button>
-                    <button
-                      type="button"
-                      onClick={goBackFromLanding}
-                      className="flex w-full items-center justify-center gap-2 rounded-2xl border px-4 py-3 text-sm font-semibold transition-all hover:brightness-95"
-                      style={{
-                        borderColor: "var(--border)",
-                        color: "var(--text-primary)",
-                        background: "var(--bg-overlay)",
-                      }}
-                    >
-                      <ArrowLeft className="w-4 h-4" />
-                      Back
-                    </button>
-                    <button
-                      type="button"
-                      onClick={regenerateLandingPage}
-                      className="flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold text-white transition-all hover:brightness-110"
-                      style={{
-                        background: "var(--brand)",
-                      }}
-                    >
-                      <RefreshCw className="w-4 h-4" />
-                      Regenerate
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
+              </div>
+            )}
+          </TabsContent>
+                </div>
+              </div>
+          </Tabs>
         </div>
       </div>
     </DashboardLayout>
