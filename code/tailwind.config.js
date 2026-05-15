@@ -7,9 +7,6 @@ export default {
   ],
   theme: {
     extend: {
-      fontFamily: {
-        tm: ["Manrope", "Inter", "system-ui", "sans-serif"],
-      },
       colors: {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
@@ -77,15 +74,10 @@ export default {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
-        "tm-bar": {
-          "0%, 100%": { transform: "scaleY(0.35)" },
-          "50%": { transform: "scaleY(1)" },
-        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        "tm-bar": "tm-bar 2.8s ease-in-out infinite",
       },
     },
   },
