@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router";
 import DashboardLayout from "@/react-app/components/DashboardLayout";
+import { faviconUrl } from "@/react-app/lib/publishingSites";
 import { useToast } from "@/react-app/components/Toast";
 import { useBlobHtmlPreview } from "@/react-app/lib/useBlobHtmlPreview";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/react-app/components/ui/card";
@@ -39,6 +41,7 @@ import {
   MessageCircleQuestion,
   Gauge,
   Library,
+  Globe,
 } from "lucide-react";
 
 interface HowItWorksStep {
@@ -62,6 +65,14 @@ interface ContentPackage {
   meta_title: string;
   meta_description: string;
   cta_block: string | null;
+}
+
+interface WordPressDestinationSummary {
+  id: number;
+  siteName: string;
+  domain: string;
+  siteUrl: string;
+  publishingAccess: boolean;
 }
 
 interface Campaign {
@@ -92,6 +103,26 @@ interface Campaign {
 
 export default function ContentWrapper() {
   const { showToast } = useToast();
+  const [wpDestinations, setWpDestinations] = useState<WordPressDestinationSummary[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/wordpress/sites", { credentials: "include" });
+        if (!res.ok || cancelled) return;
+        const data = await res.json();
+        const list = (data.sites ?? []) as WordPressDestinationSummary[];
+        if (!cancelled) setWpDestinations(Array.isArray(list) ? list : []);
+      } catch {
+        if (!cancelled) setWpDestinations([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const [activeTab, setActiveTab] = useState<"generate" | "saved">("generate");
   const [blueprint, setBlueprint] = useState("");
   const [targetKeyword, setTargetKeyword] = useState("");
@@ -901,6 +932,49 @@ export default function ContentWrapper() {
 
             <TabsContent value="generate" className="mt-0 space-y-10 animate-fade-in-up outline-none">
               <div className="space-y-6">
+                <div className="flex flex-col gap-3 rounded-2xl border border-border/70 bg-gradient-to-r from-violet-500/[0.06] via-transparent to-sky-500/[0.04] px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-background/80 text-muted-foreground">
+                      <Globe className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        WordPress publishing
+                      </p>
+                      <p className="mt-0.5 text-sm text-muted-foreground">
+                        {wpDestinations.length === 0
+                          ? "Connect a site in Publishing Hub to unlock direct deploy for wrapped HTML, landing pages, and SEO assets."
+                          : `${wpDestinations.length} connected destination${wpDestinations.length === 1 ? "" : "s"} — publish queue targets Content Wrapper output.`}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+                    {wpDestinations.slice(0, 4).map((s: WordPressDestinationSummary) => (
+                      <span
+                        key={s.id}
+                        className="inline-flex items-center gap-2 rounded-xl border border-border/60 bg-background/90 px-2.5 py-1.5 text-xs font-medium text-foreground shadow-sm"
+                      >
+                        <img
+                          src={faviconUrl(s.domain)}
+                          alt=""
+                          className="h-4 w-4 rounded"
+                        />
+                        <span className="max-w-[140px] truncate">{s.siteName}</span>
+                        {!s.publishingAccess && (
+                          <span className="text-[10px] text-amber-600">limited</span>
+                        )}
+                      </span>
+                    ))}
+                    <Link
+                      to="/wordpress"
+                      className="inline-flex items-center gap-1 rounded-xl border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-muted/60"
+                    >
+                      Publishing Hub
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </Link>
+                  </div>
+                </div>
+
                   <div className="grid gap-6 lg:grid-cols-2">
                     <Card className="border-border/80 shadow-md shadow-slate-900/[0.04]">
                       <CardHeader className="border-b border-border/60 bg-gradient-to-br from-white to-muted/30">

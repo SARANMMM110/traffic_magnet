@@ -8,6 +8,12 @@ import {
   MOCHA_SESSION_TOKEN_COOKIE_NAME,
 } from "@getmocha/users-service/backend";
 import { discoverToolIdeas, generateBlueprint, generateToolHTML, generateSEOContent, generateContentWrapper, regenerateBlueprintFromBlueprint, generateLandingPage, generateVariation, resolveVisualThemeKey } from "./services/openai";
+import { testWordPressApplicationPassword } from "./services/wordpressRest";
+import {
+  encryptApplicationPassword,
+  decryptApplicationPassword,
+  getWordPressCredentialSecret,
+} from "./services/wordpressCrypto";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -1418,6 +1424,292 @@ app.delete("/api/content-campaigns/:id", authMiddleware, async (c) => {
   ).bind(campaignId).run();
 
   return c.json({ success: true });
+});
+
+function mapWordPressSiteRow(row: Record<string, unknown>) {
+  return {
+    id: row.id as number,
+    siteName: row.site_name as string,
+    siteUrl: row.site_url as string,
+    domain: row.domain as string,
+    username: row.username as string,
+    wpUserId: row.wp_user_id as number | null,
+    wpDisplayName: row.wp_display_name as string | null,
+    wpVersion: row.wp_version as string | null,
+    restOk: Boolean(row.rest_ok),
+    publishingAccess: Boolean(row.publishing_access),
+    connectionHealth: row.connection_health as string,
+    publishingFrequency: ["manual", "daily", "weekly", "automated"].includes(
+      String(row.publishing_frequency),
+    )
+      ? (row.publishing_frequency as "manual" | "daily" | "weekly" | "automated")
+      : "manual",
+    seoSyncStatus: row.seo_sync_status as string,
+    lastPublishAt: row.last_publish_at as string | null,
+    lastVerifiedAt: row.last_verified_at as string | null,
+    assetsDeployed: Number(row.assets_deployed) || 0,
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  };
+}
+
+// Test WordPress credentials (no persistence)
+app.post("/api/wordpress/test", authMiddleware, async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  const siteUrl = typeof body.siteUrl === "string" ? body.siteUrl.trim() : "";
+  const username = typeof body.username === "string" ? body.username.trim() : "";
+  const applicationPassword =
+    typeof body.applicationPassword === "string" ? body.applicationPassword : "";
+  if (!siteUrl || !username || !applicationPassword) {
+    return c.json(
+      { ok: false, code: "INVALID_URL", message: "Site URL, username, and application password are required" },
+      400,
+    );
+  }
+  const result = await testWordPressApplicationPassword({
+    siteUrl,
+    username,
+    applicationPassword,
+  });
+  return c.json(result);
+});
+
+// List connected WordPress sites (no secrets)
+app.get("/api/wordpress/sites", authMiddleware, async (c) => {
+  const user = c.get("user")!;
+  try {
+    const rows = await c.env.DB.prepare(
+      `SELECT id, site_name, site_url, domain, username, wp_user_id, wp_display_name, wp_version,
+              rest_ok, publishing_access, connection_health, publishing_frequency, seo_sync_status,
+              last_publish_at, last_verified_at, assets_deployed, created_at, updated_at
+       FROM wordpress_sites WHERE user_id = ? ORDER BY id DESC`
+    )
+      .bind(user.id)
+      .all();
+    return c.json({ sites: (rows.results ?? []).map((r) => mapWordPressSiteRow(r as Record<string, unknown>)) });
+  } catch (e) {
+    console.error("wordpress_sites list:", e);
+    return c.json({ sites: [], error: "Publishing database not ready. Apply D1 migration 0001_wordpress_sites.sql." }, 200);
+  }
+});
+
+// Connect + save site
+app.post("/api/wordpress/sites", authMiddleware, async (c) => {
+  const user = c.get("user")!;
+  const body = await c.req.json().catch(() => ({}));
+  const siteName = typeof body.siteName === "string" ? body.siteName.trim() : "";
+  const siteUrl = typeof body.siteUrl === "string" ? body.siteUrl.trim() : "";
+  const username = typeof body.username === "string" ? body.username.trim() : "";
+  const applicationPassword =
+    typeof body.applicationPassword === "string" ? body.applicationPassword : "";
+  const publishingFrequency =
+    typeof body.publishingFrequency === "string" ? body.publishingFrequency : "manual";
+
+  if (!siteUrl || !username || !applicationPassword) {
+    return c.json(
+      { ok: false, code: "INVALID_URL", message: "Site URL, username, and application password are required" },
+      400,
+    );
+  }
+
+  let secret: string;
+  try {
+    secret = getWordPressCredentialSecret(c.env as { WORDPRESS_CREDENTIALS_SECRET?: string; MOCHA_USERS_SERVICE_API_KEY?: string });
+  } catch (e) {
+    return c.json(
+      { ok: false, code: "UNKNOWN", message: (e as Error).message || "Credential encryption is not configured" },
+      503,
+    );
+  }
+
+  const test = await testWordPressApplicationPassword({ siteUrl, username, applicationPassword });
+  if (!test.ok) {
+    return c.json(test, 422);
+  }
+  if (!test.publishingAccess) {
+    return c.json(
+      {
+        ok: false,
+        code: "NO_PUBLISH_CAPABILITY",
+        message:
+          "This WordPress user cannot publish posts. Use an Administrator or Editor account, or enable the right capabilities.",
+      },
+      422,
+    );
+  }
+
+  let encrypted: string;
+  try {
+    encrypted = await encryptApplicationPassword(applicationPassword, secret);
+  } catch (e) {
+    console.error("wp encrypt:", e);
+    return c.json({ ok: false, code: "UNKNOWN", message: "Could not encrypt credentials" }, 500);
+  }
+
+  const displayName = siteName.trim() || test.wpUser.name || test.domain;
+  const now = new Date().toISOString();
+
+  try {
+    const result = await c.env.DB.prepare(
+      `INSERT INTO wordpress_sites (
+        user_id, site_name, site_url, domain, username, credentials_encrypted,
+        wp_user_id, wp_display_name, wp_version, rest_ok, publishing_access,
+        connection_health, publishing_frequency, seo_sync_status, last_verified_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, 'healthy', ?, 'synced', ?, ?)`
+    )
+      .bind(
+        user.id,
+        displayName,
+        test.baseUrl,
+        test.domain,
+        username,
+        encrypted,
+        test.wpUser.id,
+        test.wpUser.name,
+        test.wpVersion,
+        1,
+        ["manual", "daily", "weekly", "automated"].includes(publishingFrequency) ? publishingFrequency : "manual",
+        now,
+        now,
+      )
+      .run();
+
+    const id = result.meta.last_row_id;
+    const row = await c.env.DB.prepare(
+      `SELECT id, site_name, site_url, domain, username, wp_user_id, wp_display_name, wp_version,
+              rest_ok, publishing_access, connection_health, publishing_frequency, seo_sync_status,
+              last_publish_at, last_verified_at, assets_deployed, created_at, updated_at
+       FROM wordpress_sites WHERE id = ? AND user_id = ?`
+    )
+      .bind(id, user.id)
+      .first();
+
+    return c.json({ ok: true, site: mapWordPressSiteRow(row as Record<string, unknown>) });
+  } catch (e) {
+    console.error("wordpress_sites insert:", e);
+    return c.json(
+      {
+        ok: false,
+        code: "UNKNOWN",
+        message:
+          "Could not save site. Ensure the D1 migration has been applied (wordpress_sites table).",
+      },
+      500,
+    );
+  }
+});
+
+// Re-verify stored credentials
+app.post("/api/wordpress/sites/:id/verify", authMiddleware, async (c) => {
+  const user = c.get("user")!;
+  const id = c.req.param("id");
+  let secret: string;
+  try {
+    secret = getWordPressCredentialSecret(c.env as { WORDPRESS_CREDENTIALS_SECRET?: string; MOCHA_USERS_SERVICE_API_KEY?: string });
+  } catch (e) {
+    return c.json({ ok: false, message: (e as Error).message }, 503);
+  }
+
+  const row = await c.env.DB.prepare(
+    "SELECT site_url, username, credentials_encrypted FROM wordpress_sites WHERE id = ? AND user_id = ?"
+  )
+    .bind(id, user.id)
+    .first();
+
+  if (!row) return c.json({ error: "Site not found" }, 404);
+
+  let password: string;
+  try {
+    password = await decryptApplicationPassword(row.credentials_encrypted as string, secret);
+  } catch (e) {
+    console.error("wp decrypt:", e);
+    return c.json({ ok: false, message: "Could not read stored credentials" }, 500);
+  }
+
+  const test = await testWordPressApplicationPassword({
+    siteUrl: row.site_url as string,
+    username: row.username as string,
+    applicationPassword: password,
+  });
+
+  const now = new Date().toISOString();
+  if (test.ok) {
+    await c.env.DB.prepare(
+      `UPDATE wordpress_sites SET
+        wp_user_id = ?, wp_display_name = ?, wp_version = ?, rest_ok = 1, publishing_access = ?,
+        connection_health = 'healthy', last_verified_at = ?, seo_sync_status = 'synced', updated_at = ?
+       WHERE id = ? AND user_id = ?`
+    )
+      .bind(
+        test.wpUser.id,
+        test.wpUser.name,
+        test.wpVersion,
+        test.publishingAccess ? 1 : 0,
+        now,
+        now,
+        id,
+        user.id,
+      )
+      .run();
+  } else {
+    await c.env.DB.prepare(
+      `UPDATE wordpress_sites SET connection_health = 'offline', rest_ok = 0, last_verified_at = ?, updated_at = ?
+       WHERE id = ? AND user_id = ?`
+    )
+      .bind(now, now, id, user.id)
+      .run();
+  }
+
+  return c.json(test.ok ? { ...test, ok: true } : test);
+});
+
+app.delete("/api/wordpress/sites/:id", authMiddleware, async (c) => {
+  const user = c.get("user")!;
+  const id = c.req.param("id");
+  await c.env.DB.prepare("DELETE FROM wordpress_sites WHERE id = ? AND user_id = ?")
+    .bind(id, user.id)
+    .run();
+  return c.json({ success: true });
+});
+
+app.patch("/api/wordpress/sites/:id", authMiddleware, async (c) => {
+  const user = c.get("user")!;
+  const id = c.req.param("id");
+  const body = await c.req.json().catch(() => ({}));
+  const siteName = typeof body.siteName === "string" ? body.siteName.trim() : undefined;
+  const publishingFrequency =
+    typeof body.publishingFrequency === "string" ? body.publishingFrequency : undefined;
+
+  const row = await c.env.DB.prepare("SELECT id FROM wordpress_sites WHERE id = ? AND user_id = ?")
+    .bind(id, user.id)
+    .first();
+  if (!row) return c.json({ error: "Site not found" }, 404);
+
+  const now = new Date().toISOString();
+  if (siteName !== undefined) {
+    if (!siteName) return c.json({ error: "Site name cannot be empty" }, 400);
+    await c.env.DB.prepare("UPDATE wordpress_sites SET site_name = ?, updated_at = ? WHERE id = ? AND user_id = ?")
+      .bind(siteName, now, id, user.id)
+      .run();
+  }
+  if (publishingFrequency !== undefined && ["manual", "daily", "weekly", "automated"].includes(publishingFrequency)) {
+    await c.env.DB.prepare(
+      "UPDATE wordpress_sites SET publishing_frequency = ?, updated_at = ? WHERE id = ? AND user_id = ?"
+    )
+      .bind(publishingFrequency, now, id, user.id)
+      .run();
+  }
+
+  const updated = await c.env.DB.prepare(
+    `SELECT id, site_name, site_url, domain, username, wp_user_id, wp_display_name, wp_version,
+            rest_ok, publishing_access, connection_health, publishing_frequency, seo_sync_status,
+            last_publish_at, last_verified_at, assets_deployed, created_at, updated_at
+     FROM wordpress_sites WHERE id = ? AND user_id = ?`
+  )
+    .bind(id, user.id)
+    .first();
+
+  return c.json({ site: mapWordPressSiteRow(updated as Record<string, unknown>) });
 });
 
 export default app;

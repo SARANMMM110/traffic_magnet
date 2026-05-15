@@ -12,6 +12,7 @@ import {
   Zap,
   TrendingUp,
   LogOut,
+  Globe,
 } from "lucide-react";
 import { useAuth } from "@getmocha/users-service/react";
 
@@ -42,6 +43,10 @@ const NAV_GROUPS: NavGroup[] = [
       { to: "/magnets", icon: FolderKanban, label: "My tools" },
       { to: "/content", icon: FileText, label: "Content Studio" },
     ],
+  },
+  {
+    title: "Publish",
+    items: [{ to: "/wordpress", icon: Globe, label: "WordPress Sites" }],
   },
   {
     title: "Resources",
