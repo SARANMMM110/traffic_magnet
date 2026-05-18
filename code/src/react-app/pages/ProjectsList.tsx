@@ -4,7 +4,7 @@ import { Button } from "@/react-app/components/ui/button";
 import { Input } from "@/react-app/components/ui/input";
 import DashboardLayout from "@/react-app/components/DashboardLayout";
 import { useToast } from "@/react-app/components/Toast";
-import { ConfirmModal } from "@/react-app/components/ConfirmModal";
+import ConfirmModal from "@/react-app/components/ConfirmModal";
 import { useEffect, useState } from "react";
 import { Plus, Search, FolderOpen, ArrowRight, Calendar, Archive, Trash2 } from "lucide-react";
 

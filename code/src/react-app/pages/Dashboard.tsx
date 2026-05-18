@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/react-app/components/ui/select";
 import { useToast } from "@/react-app/components/Toast";
-import { ConfirmModal } from "@/react-app/components/ConfirmModal";
+import ConfirmModal from "@/react-app/components/ConfirmModal";
 import {
   Archive,
   ArrowRight,

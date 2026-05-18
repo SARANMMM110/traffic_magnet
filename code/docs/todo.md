@@ -1,5 +1,13 @@
 # Todo
 
+## AI Assistant Studio - Core Infrastructure
+- #75: Build Create Assistant multi-step flow UI
+- #76: Implement assistant API endpoints and database operations
+- #79: Build assistant deployment system (HTML injection)
+- #80: Create analytics and insights engine
+- #81: Integrate with Audience Growth Engine
+- #82: Build live conversation interface and preview
+
 ## Complete Product Identity Redesign - Phase 1: Navigation & Shell
 - #50: Redesign DashboardLayout shell with workspace-oriented architecture
 - #51: Create new icon system and visual language (premium spacing, glassmorphism, gradients)

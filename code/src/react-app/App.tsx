@@ -17,6 +17,8 @@ import HelpFAQ from "@/react-app/pages/HelpFAQ";
 import SettingsPage from "@/react-app/pages/SettingsPage";
 import UpgradePage from "@/react-app/pages/UpgradePage";
 import WordPress from "@/react-app/pages/WordPress";
+import AudienceGrowthEngine from "@/react-app/pages/AudienceGrowthEngine";
+import AIAssistantStudio from "@/react-app/pages/AIAssistantStudio";
 import Login from "@/react-app/pages/Login";
 import Signup from "@/react-app/pages/Signup";
 import Onboarding from "@/react-app/pages/Onboarding";
@@ -156,6 +158,22 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <WordPress />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/audience-growth"
+            element={
+              <ProtectedRoute>
+                <AudienceGrowthEngine />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/ai-assistant-studio"
+            element={
+              <ProtectedRoute>
+                <AIAssistantStudio />
               </ProtectedRoute>
             }
           />

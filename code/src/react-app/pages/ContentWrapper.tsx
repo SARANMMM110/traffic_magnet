@@ -1,9 +1,11 @@
-import { useState, useEffect } from "react";
-import { Link } from "react-router";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { Link, useNavigate } from "react-router";
 import DashboardLayout from "@/react-app/components/DashboardLayout";
 import { faviconUrl } from "@/react-app/lib/publishingSites";
 import { useToast } from "@/react-app/components/Toast";
 import { useBlobHtmlPreview } from "@/react-app/lib/useBlobHtmlPreview";
+import { injectAudienceWidgetIntoHtml } from "@/react-app/lib/audienceWidget";
+import { writePipelineDeploy } from "@/react-app/lib/pipelineDeploy";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/react-app/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/react-app/components/ui/tabs";
 import { Badge } from "@/react-app/components/ui/badge";
@@ -22,6 +24,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/react-app/components/ui/select";
+import { Switch } from "@/react-app/components/ui/switch";
+import { Label } from "@/react-app/components/ui/label";
 import {
   FileText,
   Loader2,
@@ -42,6 +46,11 @@ import {
   Gauge,
   Library,
   Globe,
+  Radar,
+  Workflow,
+  UserPlus,
+  MonitorPlay,
+  Send,
 } from "lucide-react";
 
 interface HowItWorksStep {
@@ -101,8 +110,17 @@ interface Campaign {
   full_page_html: string | null;
 }
 
+interface AudienceFlowOption {
+  id: number;
+  name: string;
+  status: string;
+  captureMethod: string;
+  publicId: string;
+}
+
 export default function ContentWrapper() {
   const { showToast } = useToast();
+  const navigate = useNavigate();
   const [wpDestinations, setWpDestinations] = useState<WordPressDestinationSummary[]>([]);
 
   useEffect(() => {
@@ -141,9 +159,115 @@ export default function ContentWrapper() {
   const [generatedHtml, setGeneratedHtml] = useState("");
   const [isGeneratingHtml, setIsGeneratingHtml] = useState(false);
 
-  const fullPagePreviewUrl = useBlobHtmlPreview(
-    fullPageGenerated && generatedHtml ? generatedHtml : null
-  );
+  const [appOrigin, setAppOrigin] = useState("");
+  const [audienceFlows, setAudienceFlows] = useState<AudienceFlowOption[]>([]);
+  const [audienceFlowsLoading, setAudienceFlowsLoading] = useState(false);
+  const [audienceCaptureEnabled, setAudienceCaptureEnabled] = useState(false);
+  const [selectedAudienceFlowPublicId, setSelectedAudienceFlowPublicId] = useState("");
+  const [gatePreviewMode, setGatePreviewMode] = useState(false);
+
+  useEffect(() => {
+    setAppOrigin(typeof window !== "undefined" ? window.location.origin : "");
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setAudienceFlowsLoading(true);
+      try {
+        const res = await fetch("/api/audience/flows", { credentials: "include" });
+        if (!res.ok || cancelled) return;
+        const data = await res.json();
+        const raw = (data.flows ?? []) as Record<string, unknown>[];
+        const list: AudienceFlowOption[] = raw.map((x) => ({
+          id: x.id as number,
+          name: String(x.name || "Flow"),
+          status: String(x.status || "draft"),
+          captureMethod: String(x.captureMethod || "email"),
+          publicId: String(x.publicId || ""),
+        }));
+        if (!cancelled) setAudienceFlows(list);
+      } catch {
+        if (!cancelled) setAudienceFlows([]);
+      } finally {
+        if (!cancelled) setAudienceFlowsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    const live = audienceFlows.filter((f: AudienceFlowOption) => f.status === "live");
+    if (audienceCaptureEnabled && !selectedAudienceFlowPublicId && live.length === 1) {
+      setSelectedAudienceFlowPublicId(live[0].publicId);
+    }
+  }, [audienceFlows, audienceCaptureEnabled, selectedAudienceFlowPublicId]);
+
+  const audienceAssetKey = useMemo(() => {
+    const base = (targetKeyword || contentPackage?.page_h1 || "landing").replace(/\s+/g, "-").slice(0, 120);
+    return `content-wrapper:${base}`;
+  }, [targetKeyword, contentPackage?.page_h1]);
+
+  const previewHtmlForIframe = useMemo(() => {
+    if (!fullPageGenerated || !generatedHtml) return null;
+    if (gatePreviewMode && audienceCaptureEnabled && selectedAudienceFlowPublicId && appOrigin) {
+      return injectAudienceWidgetIntoHtml(generatedHtml, appOrigin, selectedAudienceFlowPublicId, audienceAssetKey);
+    }
+    return generatedHtml;
+  }, [
+    fullPageGenerated,
+    generatedHtml,
+    gatePreviewMode,
+    audienceCaptureEnabled,
+    selectedAudienceFlowPublicId,
+    appOrigin,
+    audienceAssetKey,
+  ]);
+
+  const fullPagePreviewUrl = useBlobHtmlPreview(previewHtmlForIframe);
+
+  const getExportHtml = useCallback(() => {
+    if (!generatedHtml) return "";
+    if (audienceCaptureEnabled && selectedAudienceFlowPublicId && appOrigin) {
+      return injectAudienceWidgetIntoHtml(generatedHtml, appOrigin, selectedAudienceFlowPublicId, audienceAssetKey);
+    }
+    return generatedHtml;
+  }, [generatedHtml, audienceCaptureEnabled, selectedAudienceFlowPublicId, appOrigin, audienceAssetKey]);
+
+  const handlePipelinePublish = useCallback(() => {
+    if (audienceCaptureEnabled && !selectedAudienceFlowPublicId) {
+      showToast({
+        type: "error",
+        title: "Select a capture flow",
+        message: "Choose a live flow or create one in Audience Growth Engine.",
+      });
+      return;
+    }
+    writePipelineDeploy({
+      html: getExportHtml(),
+      source: "content-wrapper",
+      audienceFlowPublicId: audienceCaptureEnabled ? selectedAudienceFlowPublicId : null,
+      audienceAssetKey,
+      pageTitle: contentPackage?.page_h1 || targetKeyword || undefined,
+    });
+    navigate("/wordpress");
+    showToast({
+      type: "success",
+      title: "Deploy package ready",
+      message: "Publishing Hub received your HTML. Use the banner there to copy or continue.",
+    });
+  }, [
+    audienceCaptureEnabled,
+    selectedAudienceFlowPublicId,
+    getExportHtml,
+    audienceAssetKey,
+    contentPackage?.page_h1,
+    targetKeyword,
+    navigate,
+    showToast,
+  ]);
 
   const [ctaGoal, setCtaGoal] = useState("");
   const [ctaUrl, setCtaUrl] = useState("");
@@ -746,20 +870,45 @@ export default function ContentWrapper() {
 
   const handleDownloadHtml = () => {
     if (!generatedHtml) return;
-    const blob = new Blob([generatedHtml], { type: "text/html" });
+    if (audienceCaptureEnabled && !selectedAudienceFlowPublicId) {
+      showToast({
+        type: "error",
+        title: "Select a capture flow",
+        message: "Pick a live flow before exporting with Audience capture enabled.",
+      });
+      return;
+    }
+    const html = getExportHtml();
+    const blob = new Blob([html], { type: "text/html" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
     a.download = `${targetKeyword.replace(/\s+/g, "-")}-page.html`;
     a.click();
     URL.revokeObjectURL(url);
-    showToast({ type: "success", title: "Downloaded!", message: "HTML file saved" });
+    showToast({
+      type: "success",
+      title: "Downloaded!",
+      message: audienceCaptureEnabled ? "HTML includes Audience Growth widget." : "HTML file saved",
+    });
   };
 
   const handleCopyHtml = () => {
     if (!generatedHtml) return;
-    navigator.clipboard.writeText(generatedHtml);
-    showToast({ type: "success", title: "Copied!", message: "HTML copied to clipboard" });
+    if (audienceCaptureEnabled && !selectedAudienceFlowPublicId) {
+      showToast({
+        type: "error",
+        title: "Select a capture flow",
+        message: "Pick a live flow before copying with Audience capture enabled.",
+      });
+      return;
+    }
+    navigator.clipboard.writeText(getExportHtml());
+    showToast({
+      type: "success",
+      title: "Copied!",
+      message: audienceCaptureEnabled ? "Clipboard includes Audience widget snippet." : "HTML copied to clipboard",
+    });
   };
 
   const handleDeleteCampaign = async (id: number) => {
@@ -965,6 +1114,13 @@ export default function ContentWrapper() {
                         )}
                       </span>
                     ))}
+                    <Link
+                      to="/audience-growth"
+                      className="inline-flex items-center gap-1 rounded-xl border border-violet-200/70 bg-violet-50/50 px-3 py-1.5 text-xs font-semibold text-violet-900 transition hover:bg-violet-100/60"
+                    >
+                      <Radar className="h-3.5 w-3.5" />
+                      Audience Engine
+                    </Link>
                     <Link
                       to="/wordpress"
                       className="inline-flex items-center gap-1 rounded-xl border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-muted/60"
@@ -1348,7 +1504,185 @@ export default function ContentWrapper() {
                           )}
                         </Button>
                       ) : (
-                        <div className="space-y-4">
+                        <div className="space-y-5">
+                          <div className="rounded-2xl border border-border/80 bg-gradient-to-br from-slate-50/90 via-white to-violet-50/25 p-5 shadow-sm">
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                              <div>
+                                <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                                  Deploy pipeline
+                                </p>
+                                <h3 className="mt-1 text-base font-semibold text-foreground">Asset → Audience → Publish → Analytics</h3>
+                                <p className="mt-1 max-w-xl text-sm text-muted-foreground">
+                                  Attach a live capture flow, preview the real gate in the iframe, then hand off deploy-ready HTML to
+                                  Publishing Hub with attribution preserved.
+                                </p>
+                              </div>
+                              <Badge variant="outline" className="shrink-0 border-emerald-200/80 bg-emerald-50/70 text-emerald-900">
+                                Live wiring
+                              </Badge>
+                            </div>
+
+                            <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                              {[
+                                { step: "1", title: "Asset", desc: "HTML ready", ok: true, Icon: Layers },
+                                {
+                                  step: "2",
+                                  title: "Audience",
+                                  desc: audienceCaptureEnabled ? "Capture on" : "Optional",
+                                  ok: audienceCaptureEnabled && !!selectedAudienceFlowPublicId,
+                                  Icon: UserPlus,
+                                },
+                                {
+                                  step: "3",
+                                  title: "Preview",
+                                  desc: gatePreviewMode ? "Gate + page" : "Base page",
+                                  ok: true,
+                                  Icon: MonitorPlay,
+                                },
+                                {
+                                  step: "4",
+                                  title: "Publish",
+                                  desc: wpDestinations.length ? "Hub reachable" : "Connect a site",
+                                  ok: wpDestinations.length > 0,
+                                  Icon: Send,
+                                },
+                              ].map(({ step, title, desc, ok, Icon }) => (
+                                <div
+                                  key={step}
+                                  className={`rounded-xl border px-3 py-3 ${
+                                    ok ? "border-emerald-200/80 bg-white shadow-sm" : "border-border/60 bg-muted/15"
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-900 text-[10px] font-bold text-white">
+                                      {step}
+                                    </span>
+                                    <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+                                    <p className="text-sm font-semibold text-foreground">{title}</p>
+                                  </div>
+                                  <p className="mt-2 text-xs text-muted-foreground">{desc}</p>
+                                </div>
+                              ))}
+                            </div>
+
+                            <div className="mt-6 grid gap-5 border-t border-border/50 pt-6 lg:grid-cols-2">
+                              <div className="space-y-4">
+                                <div className="flex items-center justify-between gap-3 rounded-xl border border-border/70 bg-white/85 px-4 py-3">
+                                  <div>
+                                    <Label htmlFor="cw-audience-cap" className="text-sm font-semibold text-foreground">
+                                      Enable audience capture
+                                    </Label>
+                                    <p className="text-xs text-muted-foreground">
+                                      Injects the production widget before <span className="font-mono">&lt;/body&gt;</span> on export.
+                                    </p>
+                                  </div>
+                                  <Switch
+                                    id="cw-audience-cap"
+                                    checked={audienceCaptureEnabled}
+                                    onCheckedChange={(v) => {
+                                      setAudienceCaptureEnabled(v);
+                                      if (v) setGatePreviewMode(true);
+                                    }}
+                                  />
+                                </div>
+                                {audienceCaptureEnabled && (
+                                  <div className="space-y-2">
+                                    <Label className="text-sm font-semibold">Capture flow</Label>
+                                    {audienceFlows.length > 0 ? (
+                                      <Select
+                                        value={selectedAudienceFlowPublicId || undefined}
+                                        onValueChange={setSelectedAudienceFlowPublicId}
+                                        disabled={audienceFlowsLoading}
+                                      >
+                                        <SelectTrigger className="h-11 rounded-xl bg-white">
+                                          <SelectValue
+                                            placeholder={audienceFlowsLoading ? "Loading flows…" : "Select a live flow"}
+                                          />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          {audienceFlows.map((f) => (
+                                            <SelectItem key={f.publicId} value={f.publicId} disabled={f.status !== "live"}>
+                                              {f.name} · {f.captureMethod}
+                                              {f.status !== "live" ? ` (${f.status})` : ""}
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                    ) : null}
+                                    {audienceFlows.length === 0 && !audienceFlowsLoading && (
+                                      <p className="text-xs text-muted-foreground">
+                                        No flows yet.{" "}
+                                        <Link
+                                          to="/audience-growth"
+                                          className="font-semibold text-foreground underline-offset-2 hover:underline"
+                                        >
+                                          Audience Growth Engine
+                                        </Link>{" "}
+                                        creates them.
+                                      </p>
+                                    )}
+                                  </div>
+                                )}
+                                <div className="flex flex-wrap gap-2">
+                                  <Button
+                                    type="button"
+                                    variant={!gatePreviewMode ? "default" : "outline"}
+                                    size="sm"
+                                    className="gap-2 rounded-xl"
+                                    onClick={() => setGatePreviewMode(false)}
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                    Page only
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    variant={gatePreviewMode ? "default" : "outline"}
+                                    size="sm"
+                                    className="gap-2 rounded-xl"
+                                    disabled={!audienceCaptureEnabled || !selectedAudienceFlowPublicId}
+                                    onClick={() => setGatePreviewMode(true)}
+                                  >
+                                    <MonitorPlay className="h-4 w-4" />
+                                    Preview gate
+                                  </Button>
+                                </div>
+                                <p className="text-[11px] leading-relaxed text-muted-foreground">
+                                  Preview loads the same <span className="font-mono text-xs">widget.js</span> as production (blur overlay,
+                                  email form, or Google unlock per flow). OAuth may require a top-level window depending on browser
+                                  sandbox rules.
+                                </p>
+                              </div>
+                              <div className="flex flex-col justify-between gap-3 rounded-xl border border-border/70 bg-white/90 p-4">
+                                <div className="flex items-start gap-3">
+                                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white">
+                                    <Workflow className="h-5 w-5" />
+                                  </div>
+                                  <div>
+                                    <p className="text-sm font-semibold text-foreground">Publishing handoff</p>
+                                    <p className="mt-1 text-xs text-muted-foreground">
+                                      Packages HTML for WordPress: paste into a Custom HTML block, template, or your deployment tool.
+                                      Analytics continue to aggregate under your asset key{" "}
+                                      <span className="font-mono text-[10px] text-foreground/80">{audienceAssetKey}</span>.
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="flex flex-col gap-2 sm:flex-row">
+                                  <Button
+                                    type="button"
+                                    className="flex-1 gap-2 rounded-xl bg-slate-900 text-white hover:bg-slate-900/90"
+                                    onClick={handlePipelinePublish}
+                                  >
+                                    <Send className="h-4 w-4" />
+                                    Publish
+                                  </Button>
+                                  <Button type="button" variant="outline" className="flex-1 rounded-xl" asChild>
+                                    <Link to="/audience-growth">Analytics</Link>
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
                           <div className="flex flex-col gap-2 sm:flex-row">
                             <Button
                               size="lg"
@@ -1366,14 +1700,25 @@ export default function ContentWrapper() {
 
                           {fullPagePreviewUrl && (
                             <div className="overflow-hidden rounded-2xl border border-border shadow-inner">
-                              <div className="flex items-center gap-2 border-b border-border bg-muted/50 px-4 py-2.5">
-                                <Eye className="h-4 w-4 text-muted-foreground" />
-                                <span className="text-xs font-semibold text-muted-foreground">Live preview</span>
+                              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-muted/50 px-4 py-2.5">
+                                <div className="flex items-center gap-2">
+                                  <Eye className="h-4 w-4 text-muted-foreground" />
+                                  <span className="text-xs font-semibold text-muted-foreground">
+                                    {gatePreviewMode && audienceCaptureEnabled && selectedAudienceFlowPublicId
+                                      ? "Live preview · audience gate on"
+                                      : "Live preview · base page"}
+                                  </span>
+                                </div>
+                                {gatePreviewMode && audienceCaptureEnabled && selectedAudienceFlowPublicId && (
+                                  <Badge variant="secondary" className="font-mono text-[10px]">
+                                    flow {selectedAudienceFlowPublicId.slice(0, 8)}…
+                                  </Badge>
+                                )}
                               </div>
                               <iframe
                                 src={fullPagePreviewUrl}
-                                title="HTML preview"
-                                sandbox="allow-scripts"
+                                title="Content wrapper HTML preview"
+                                sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"
                                 className="h-[min(640px,70vh)] w-full border-none bg-white"
                               />
                             </div>
