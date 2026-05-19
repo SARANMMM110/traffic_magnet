@@ -26,7 +26,7 @@ const proofPoints = [
 ];
 
 const metrics = [
-  { value: "12", label: "premium assets per category" },
+  { value: "12", label: "business assets per category" },
   { value: "16", label: "online business niches" },
   { value: "3x", label: "publish-ready formats" },
 ];
@@ -52,7 +52,7 @@ const workflow = [
 const featureCards = [
   {
     title: "Opportunity discovery",
-    text: "Uncover premium business asset ideas your customers are already searching for, then prioritize them by traffic and revenue potential.",
+    text: "Uncover high-value business asset ideas your customers are already searching for, then prioritize them by traffic and revenue potential.",
     icon: Search,
   },
   {
@@ -83,7 +83,7 @@ const featureCards = [
 ];
 
 const customerOutcomes = [
-  "Launch premium business assets, lead magnets, revenue engines, and SEO systems without starting from a blank page.",
+  "Launch professional business assets, lead magnets, revenue engines, and SEO systems without starting from a blank page.",
   "Create assets that educate visitors before asking them to book, buy, subscribe, apply, or share.",
   "Build a compounding library of authority pages instead of relying only on ads or social posts.",
 ];
@@ -149,7 +149,7 @@ export default function Landing() {
               </div>
 
               <h1 className="max-w-3xl text-5xl font-extrabold leading-[1.02] tracking-[-0.055em] md:text-6xl lg:text-7xl">
-                Build premium AI business assets that attract, convert, and monetize.
+                Build professional AI business assets that attract, convert, and monetize.
               </h1>
 
               <p className="mt-6 max-w-2xl text-base leading-8 md:text-lg" style={{ color: "var(--text-secondary)" }}>

@@ -15,17 +15,10 @@ import {
   getWordPressCredentialSecret,
 } from "./services/wordpressCrypto";
 import { registerAudienceEngineRoutes } from "./audience/audienceRoutes";
-import {
-  startConversation,
-  addMessage,
-  getConversationHistory,
-  updateConversationStatus,
-  captureLeadInfo,
-  recordConversion,
-  recordSatisfactionScore,
-  trackEvent,
-  getAssistantAnalytics,
-} from "./services/conversationTracker";
+import { registerAssistantRoutes } from "./assistant/assistantRoutes";
+import { registerGrowthPipelineRoutes } from "./growth/growthPipelineRoutes";
+import { assetRegistryRoutes } from "./routes/assetRegistry";
+import { publishedAssetsRoutes, publicAssetRoutes } from "./routes/publishedAssets";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -513,6 +506,27 @@ app.get("/api/projects/:id", authMiddleware, async (c) => {
   console.log("[GET /api/projects/:id] Returning tools with blueprint strings");
 
   return c.json({ project, tools: tools.results });
+});
+
+// Get all tools for user
+app.get("/api/tools/with-blueprints", authMiddleware, async (c) => {
+  const user = c.get("user")!;
+
+  const tools = await c.env.DB.prepare(
+    "SELECT t.*, p.name as project_name FROM tools t JOIN projects p ON t.project_id = p.id WHERE t.user_id = ? AND t.blueprint IS NOT NULL ORDER BY t.created_at DESC"
+  ).bind(user.id).all();
+
+  return c.json({ tools: tools.results || [] });
+});
+
+app.get("/api/tools", authMiddleware, async (c) => {
+  const user = c.get("user")!;
+
+  const tools = await c.env.DB.prepare(
+    "SELECT t.id, t.name, t.category, t.overall_score, t.created_at, p.name as project_name FROM tools t JOIN projects p ON t.project_id = p.id WHERE t.user_id = ? ORDER BY t.created_at DESC"
+  ).bind(user.id).all();
+
+  return c.json({ tools: tools.results || [] });
 });
 
 // Get single tool
@@ -1725,261 +1739,17 @@ app.patch("/api/wordpress/sites/:id", authMiddleware, async (c) => {
 });
 
 registerAudienceEngineRoutes(app as never);
+registerAssistantRoutes(app as never);
+registerGrowthPipelineRoutes(app as never);
 
-// ============================================================================
-// AI ASSISTANT CONVERSATION TRACKING ENDPOINTS
-// ============================================================================
+// Asset Registry Routes (authenticated)
+app.use("/api/assets/*", authMiddleware);
+app.route("/api/assets", assetRegistryRoutes);
 
-// Start a new conversation
-app.post("/api/assistants/:id/conversations", async (c) => {
-  const assistantId = parseInt(c.req.param("id"));
-  const body = await c.req.json().catch(() => ({}));
+// Published assets routes (authenticated)
+app.route("/api/published", publishedAssetsRoutes);
 
-  try {
-    const result = await startConversation(c.env.DB, assistantId, {
-      userId: body.userId,
-      visitorSessionHash: body.sessionHash,
-      currentPage: body.currentPage,
-      referringSource: body.referringSource,
-      metaJson: body.meta,
-    });
-
-    return c.json({
-      conversationId: result.conversationId,
-      openingMessage: result.openingMessage,
-      systemPrompt: result.systemPrompt,
-    });
-  } catch (error: any) {
-    console.error("Error starting conversation:", error);
-    return c.json({ error: error.message || "Failed to start conversation" }, 500);
-  }
-});
-
-// Add message to conversation
-app.post("/api/conversations/:id/messages", async (c) => {
-  const conversationId = parseInt(c.req.param("id"));
-  const body = await c.req.json().catch(() => ({}));
-
-  if (!body.role || !body.content || !body.assistantId) {
-    return c.json({ error: "Missing required fields: role, content, assistantId" }, 400);
-  }
-
-  try {
-    const messageId = await addMessage(
-      c.env.DB,
-      conversationId,
-      body.assistantId,
-      body.role,
-      body.content,
-      body.messageType,
-      body.attachmentData,
-      body.responseTimeMs
-    );
-
-    return c.json({ messageId, success: true });
-  } catch (error: any) {
-    console.error("Error adding message:", error);
-    return c.json({ error: error.message || "Failed to add message" }, 500);
-  }
-});
-
-// Get conversation history
-app.get("/api/conversations/:id/messages", async (c) => {
-  const conversationId = parseInt(c.req.param("id"));
-  const limit = parseInt(c.req.query("limit") || "50");
-
-  try {
-    const messages = await getConversationHistory(c.env.DB, conversationId, limit);
-    return c.json({ messages });
-  } catch (error: any) {
-    console.error("Error getting conversation history:", error);
-    return c.json({ error: error.message || "Failed to get messages" }, 500);
-  }
-});
-
-// Update conversation status
-app.patch("/api/conversations/:id/status", async (c) => {
-  const conversationId = parseInt(c.req.param("id"));
-  const body = await c.req.json().catch(() => ({}));
-
-  if (!body.status || !['active', 'completed', 'abandoned', 'converted'].includes(body.status)) {
-    return c.json({ error: "Invalid status. Must be: active, completed, abandoned, or converted" }, 400);
-  }
-
-  try {
-    await updateConversationStatus(c.env.DB, conversationId, body.status);
-    return c.json({ success: true });
-  } catch (error: any) {
-    console.error("Error updating conversation status:", error);
-    return c.json({ error: error.message || "Failed to update status" }, 500);
-  }
-});
-
-// Capture lead information
-app.post("/api/conversations/:id/lead", async (c) => {
-  const conversationId = parseInt(c.req.param("id"));
-  const body = await c.req.json().catch(() => ({}));
-
-  if (!body.email || !body.assistantId) {
-    return c.json({ error: "Missing required fields: email, assistantId" }, 400);
-  }
-
-  try {
-    await captureLeadInfo(
-      c.env.DB,
-      conversationId,
-      body.assistantId,
-      body.email,
-      body.name,
-      body.userId
-    );
-    return c.json({ success: true });
-  } catch (error: any) {
-    console.error("Error capturing lead:", error);
-    return c.json({ error: error.message || "Failed to capture lead" }, 500);
-  }
-});
-
-// Record conversion
-app.post("/api/conversations/:id/conversion", async (c) => {
-  const conversationId = parseInt(c.req.param("id"));
-  const body = await c.req.json().catch(() => ({}));
-
-  if (!body.conversionType || !body.assistantId) {
-    return c.json({ error: "Missing required fields: conversionType, assistantId" }, 400);
-  }
-
-  try {
-    await recordConversion(
-      c.env.DB,
-      conversationId,
-      body.assistantId,
-      body.conversionType,
-      body.conversionValue,
-      body.userId
-    );
-    return c.json({ success: true });
-  } catch (error: any) {
-    console.error("Error recording conversion:", error);
-    return c.json({ error: error.message || "Failed to record conversion" }, 500);
-  }
-});
-
-// Record satisfaction score
-app.post("/api/conversations/:id/satisfaction", async (c) => {
-  const conversationId = parseInt(c.req.param("id"));
-  const body = await c.req.json().catch(() => ({}));
-
-  if (typeof body.score !== 'number' || !body.assistantId) {
-    return c.json({ error: "Missing required fields: score (number), assistantId" }, 400);
-  }
-
-  if (body.score < 1 || body.score > 5) {
-    return c.json({ error: "Score must be between 1 and 5" }, 400);
-  }
-
-  try {
-    await recordSatisfactionScore(
-      c.env.DB,
-      conversationId,
-      body.assistantId,
-      body.score,
-      body.userId
-    );
-    return c.json({ success: true });
-  } catch (error: any) {
-    console.error("Error recording satisfaction:", error);
-    return c.json({ error: error.message || "Failed to record satisfaction" }, 500);
-  }
-});
-
-// Track custom analytics event
-app.post("/api/assistants/:id/events", async (c) => {
-  const assistantId = parseInt(c.req.param("id"));
-  const body = await c.req.json().catch(() => ({}));
-
-  if (!body.eventType) {
-    return c.json({ error: "Missing required field: eventType" }, 400);
-  }
-
-  try {
-    await trackEvent(
-      c.env.DB,
-      assistantId,
-      body.conversationId || null,
-      body.userId,
-      body.eventType,
-      body.eventCategory,
-      body.eventValue,
-      body.eventMeta,
-      body.sessionHash
-    );
-    return c.json({ success: true });
-  } catch (error: any) {
-    console.error("Error tracking event:", error);
-    return c.json({ error: error.message || "Failed to track event" }, 500);
-  }
-});
-
-// Get assistant analytics
-app.get("/api/assistants/:id/analytics", authMiddleware, async (c) => {
-  const user = c.get("user")!;
-  const assistantId = parseInt(c.req.param("id"));
-  const timeRange = (c.req.query("timeRange") || "week") as 'day' | 'week' | 'month' | 'all';
-
-  // Verify ownership
-  const assistant = await c.env.DB
-    .prepare("SELECT id FROM ai_assistants WHERE id = ? AND user_id = ?")
-    .bind(assistantId, user.id)
-    .first();
-
-  if (!assistant) {
-    return c.json({ error: "Assistant not found" }, 404);
-  }
-
-  try {
-    const analytics = await getAssistantAnalytics(c.env.DB, assistantId, timeRange);
-    return c.json({ analytics });
-  } catch (error: any) {
-    console.error("Error getting analytics:", error);
-    return c.json({ error: error.message || "Failed to get analytics" }, 500);
-  }
-});
-
-// Get assistant conversations list
-app.get("/api/assistants/:id/conversations", authMiddleware, async (c) => {
-  const user = c.get("user")!;
-  const assistantId = parseInt(c.req.param("id"));
-  const limit = parseInt(c.req.query("limit") || "50");
-  const status = c.req.query("status");
-
-  // Verify ownership
-  const assistant = await c.env.DB
-    .prepare("SELECT id FROM ai_assistants WHERE id = ? AND user_id = ?")
-    .bind(assistantId, user.id)
-    .first();
-
-  if (!assistant) {
-    return c.json({ error: "Assistant not found" }, 404);
-  }
-
-  try {
-    let query = `
-      SELECT * FROM ai_conversations
-      WHERE assistant_id = ?
-      ${status ? 'AND conversation_status = ?' : ''}
-      ORDER BY started_at DESC
-      LIMIT ?
-    `;
-
-    const params = status ? [assistantId, status, limit] : [assistantId, limit];
-    const result = await c.env.DB.prepare(query).bind(...params).all();
-
-    return c.json({ conversations: result.results });
-  } catch (error: any) {
-    console.error("Error getting conversations:", error);
-    return c.json({ error: error.message || "Failed to get conversations" }, 500);
-  }
-});
+// Public asset delivery routes
+app.route("/p", publicAssetRoutes);
 
 export default app;

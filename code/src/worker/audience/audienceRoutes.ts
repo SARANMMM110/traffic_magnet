@@ -284,6 +284,132 @@ export function registerAudienceEngineRoutes(app: Hono<{ Bindings: Bindings }>) 
     }
   });
 
+  // PUBLIC: Get flow configuration (for widget initialization)
+  app.get("/api/audience/flows/:publicId/config", async (c) => {
+    const publicId = c.req.param("publicId");
+    const d1 = c.env.DB as D1Like;
+
+    try {
+      const flow = await getFlowByPublicId(d1, publicId);
+      if (!flow || flow.status !== "live") {
+        return jsonCors({ error: "Flow not found" }, 404);
+      }
+
+      const config = parseJson<Record<string, unknown>>(String(flow.config_json || "{}"), {});
+
+      return jsonCors({
+        config: {
+          flowId: flow.id,
+          flowPublicId: publicId,
+          captureMethod: flow.capture_method,
+          triggerType: config.triggerType || "timed",
+          triggerValue: config.triggerValue || 3000,
+          unlockMessage: config.unlockMessage || "Sign in to continue",
+          ctaText: config.ctaText || "Continue",
+          position: config.position || "center",
+          theme: config.theme || "light",
+        },
+      });
+    } catch (e) {
+      console.error("flow config:", e);
+      return jsonCors({ error: "server" }, 500);
+    }
+  });
+
+  // PUBLIC: Email capture endpoint (called by widget)
+  app.post("/api/audience/capture/email", async (c) => {
+    const d1 = c.env.DB as D1Like;
+    const body = await c.req.json();
+    const { email, flowId, assetId } = body;
+
+    if (!email || !flowId) {
+      return jsonCors({ error: "Missing required fields" }, 400);
+    }
+
+    try {
+      const flow = await getFlowByPublicId(d1, flowId);
+      if (!flow || flow.status !== "live") {
+        return jsonCors({ error: "Flow not found" }, 404);
+      }
+
+      const ownerId = flow.user_id as number;
+      const flowDbId = flow.id as number;
+      const now = new Date().toISOString();
+
+      await d1
+        .prepare(
+          `INSERT INTO subscribers (owner_user_id, email, provider, source_asset_key, capture_flow_id, engagement_score, conversion_time, updated_at)
+           VALUES (?, ?, 'email', ?, ?, 5, ?, ?)
+           ON CONFLICT(owner_user_id, email) DO UPDATE SET
+             engagement_score = subscribers.engagement_score + 3,
+             capture_flow_id = excluded.capture_flow_id,
+             source_asset_key = excluded.source_asset_key,
+             updated_at = excluded.updated_at`,
+        )
+        .bind(ownerId, email, assetId || "", flowDbId, now, now)
+        .run();
+
+      const sub = await d1
+        .prepare("SELECT id FROM subscribers WHERE owner_user_id = ? AND email = ? LIMIT 1")
+        .bind(ownerId, email)
+        .first<{ id: number }>();
+
+      const subscriberId = sub?.id;
+      if (subscriberId) {
+        await d1
+          .prepare(
+            `INSERT INTO subscriber_unlock_history (subscriber_id, capture_flow_id, asset_key, unlock_method, created_at)
+             VALUES (?, ?, ?, 'email', datetime('now'))`,
+          )
+          .bind(subscriberId, flowDbId, assetId || "")
+          .run();
+
+        await recordEvent(d1, ownerId, "email_captured", {
+          captureFlowId: flowDbId,
+          subscriberId,
+          assetKey: assetId || "",
+        });
+      }
+
+      return jsonCors({ ok: true, subscriberId });
+    } catch (e) {
+      console.error("email capture:", e);
+      return jsonCors({ error: "server" }, 500);
+    }
+  });
+
+  // PUBLIC: Track events (called by widget)
+  app.post("/api/audience/track", async (c) => {
+    const d1 = c.env.DB as D1Like;
+    const body = await c.req.json();
+    const { assetId, flowId, eventType, data } = body;
+
+    if (!eventType || !EVENT_TYPES.has(eventType)) {
+      return jsonCors({ error: "Invalid event type" }, 400);
+    }
+
+    try {
+      const flow = await getFlowByPublicId(d1, flowId);
+      if (!flow) {
+        return jsonCors({ error: "Flow not found" }, 404);
+      }
+
+      const ownerId = flow.user_id as number;
+      const flowDbId = flow.id as number;
+
+      await recordEvent(d1, ownerId, eventType, {
+        captureFlowId: flowDbId,
+        assetKey: assetId || "",
+        meta: data || {},
+      });
+
+      return jsonCors({ ok: true });
+    } catch (e) {
+      console.error("track event:", e);
+      return jsonCors({ error: "server" }, 500);
+    }
+  });
+
   app.post("/api/audience/public/session/verify", async (c) => {
     let secret: string;
     try {
@@ -297,6 +423,60 @@ export function registerAudienceEngineRoutes(app: Hono<{ Bindings: Bindings }>) 
     const claims = await audienceVerifyJwt(secret, token);
     if (!claims) return jsonCors({ ok: false }, 401);
     return jsonCors({ ok: true, subscriberId: claims.sub, flowPublicId: claims.fid, assetKey: claims.aid ?? null });
+  });
+
+  // Deploy flow to asset - authenticated endpoint
+  app.post("/api/audience/flows/:id/deploy", authMiddleware, async (c) => {
+    const user = c.get("user") as MochaUser;
+    const flowId = Number(c.req.param("id"));
+    const d1 = c.env.DB as D1Like;
+    
+    const body = await c.req.json().catch(() => ({}));
+    const assetId = typeof body.assetId === "string" ? body.assetId : "";
+    const assetType = typeof body.assetType === "string" ? body.assetType : "";
+    
+    if (!assetId || !assetType) {
+      return c.json({ error: "Missing assetId or assetType" }, 400);
+    }
+
+    try {
+      // Verify flow belongs to user
+      const flow = await d1
+        .prepare("SELECT id, public_id FROM capture_flows WHERE id = ? AND user_id = ? LIMIT 1")
+        .bind(flowId, user.id)
+        .first<{ id: number; public_id: string }>();
+
+      if (!flow) {
+        return c.json({ error: "Flow not found" }, 404);
+      }
+
+      // Parse asset ID to get numeric ID
+      const numericId = assetId.split("-")[1];
+      const assetNumericId = Number(numericId);
+
+      // Create deployment record
+      const now = new Date().toISOString();
+      await d1
+        .prepare(
+          `INSERT INTO capture_flow_deployments (flow_id, asset_id, asset_type, asset_key, deployment_type, is_active, deployment_config, deployed_at, created_at, updated_at)
+           VALUES (?, ?, ?, ?, 'auto', 1, '{}', ?, ?, ?)`
+        )
+        .bind(flowId, assetNumericId, assetType, assetId, now, now, now)
+        .run();
+
+      return c.json({ 
+        success: true, 
+        deployment: {
+          flowId,
+          assetId,
+          assetType,
+          publicId: flow.public_id,
+        }
+      });
+    } catch (error) {
+      console.error("Flow deployment error:", error);
+      return c.json({ error: "Failed to deploy flow" }, 500);
+    }
   });
 
   app.get("/api/audience/oauth/google/start", async (c) => {

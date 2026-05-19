@@ -85,18 +85,18 @@ function ToastItem({ toast, onClose }: ToastItemProps) {
       <div className="flex items-start gap-3">
         <div className="flex-shrink-0">{getIcon()}</div>
         <div className="flex-1 min-w-0">
-          <p className="font-bold text-white text-sm mb-0.5">{toast.title}</p>
+          <p className="font-bold text-slate-900 text-sm mb-0.5">{toast.title}</p>
           {toast.message && (
-            <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+            <p className="text-xs text-slate-600">
               {toast.message}
             </p>
           )}
         </div>
         <button
           onClick={onClose}
-          className="flex-shrink-0 p-1 hover:bg-white/5 rounded transition-colors"
+          className="flex-shrink-0 p-1 hover:bg-slate-100 rounded transition-colors"
         >
-          <X className="w-4 h-4" style={{ color: "var(--text-muted)" }} />
+          <X className="w-4 h-4 text-slate-500" />
         </button>
       </div>
 

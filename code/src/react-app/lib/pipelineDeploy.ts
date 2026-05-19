@@ -1,10 +1,19 @@
 export const PIPELINE_DEPLOY_STORAGE_KEY = "magnet_pipeline_deploy_v1";
 
+/** Unified growth deployment handoff payload (Content Wrapper → WordPress / export) */
 export type PipelineDeployPayload = {
   html: string;
-  source: "content-wrapper";
+  source: "content-wrapper" | "growth-pipeline" | "tool" | "landing";
+  growthDeploymentId?: number | null;
+  growthDeploymentPublicId?: string | null;
   audienceFlowPublicId: string | null;
   audienceAssetKey: string;
+  assistantPublicId?: string | null;
+  assistantAssetKey?: string;
+  analyticsEnabled?: boolean;
+  conversionTrackingEnabled?: boolean;
+  publishTarget?: string;
+  wordpressSiteId?: number | null;
   pageTitle?: string;
   savedAt: number;
 };

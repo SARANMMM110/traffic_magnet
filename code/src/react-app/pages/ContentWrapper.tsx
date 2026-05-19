@@ -4,7 +4,7 @@ import DashboardLayout from "@/react-app/components/DashboardLayout";
 import { faviconUrl } from "@/react-app/lib/publishingSites";
 import { useToast } from "@/react-app/components/Toast";
 import { useBlobHtmlPreview } from "@/react-app/lib/useBlobHtmlPreview";
-import { injectAudienceWidgetIntoHtml } from "@/react-app/lib/audienceWidget";
+import { injectGrowthStackIntoHtml } from "@/react-app/lib/growthPipelineInject";
 import { writePipelineDeploy } from "@/react-app/lib/pipelineDeploy";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/react-app/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/react-app/components/ui/tabs";
@@ -118,6 +118,12 @@ interface AudienceFlowOption {
   publicId: string;
 }
 
+interface AssistantOption {
+  publicId: string;
+  name: string;
+  status: string;
+}
+
 export default function ContentWrapper() {
   const { showToast } = useToast();
   const navigate = useNavigate();
@@ -165,6 +171,10 @@ export default function ContentWrapper() {
   const [audienceCaptureEnabled, setAudienceCaptureEnabled] = useState(false);
   const [selectedAudienceFlowPublicId, setSelectedAudienceFlowPublicId] = useState("");
   const [gatePreviewMode, setGatePreviewMode] = useState(false);
+  const [assistants, setAssistants] = useState<AssistantOption[]>([]);
+  const [assistantCaptureEnabled, setAssistantCaptureEnabled] = useState(false);
+  const [selectedAssistantPublicId, setSelectedAssistantPublicId] = useState("");
+  const [conversionTrackingEnabled, setConversionTrackingEnabled] = useState(true);
 
   useEffect(() => {
     setAppOrigin(typeof window !== "undefined" ? window.location.origin : "");
@@ -199,6 +209,28 @@ export default function ContentWrapper() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/assistants", { credentials: "include" });
+        if (!res.ok || cancelled) return;
+        const data = await res.json();
+        const list = (data.assistants ?? []).map((a: Record<string, unknown>) => ({
+          publicId: String(a.publicId || ""),
+          name: String(a.name || "Assistant"),
+          status: String(a.status || "draft"),
+        }));
+        if (!cancelled) setAssistants(list);
+      } catch {
+        if (!cancelled) setAssistants([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
     const live = audienceFlows.filter((f: AudienceFlowOption) => f.status === "live");
     if (audienceCaptureEnabled && !selectedAudienceFlowPublicId && live.length === 1) {
       setSelectedAudienceFlowPublicId(live[0].publicId);
@@ -210,31 +242,46 @@ export default function ContentWrapper() {
     return `content-wrapper:${base}`;
   }, [targetKeyword, contentPackage?.page_h1]);
 
+  const buildGrowthHtml = useCallback(
+    (html: string, deploymentPublicId?: string | null) => {
+      if (!appOrigin || !html) return html;
+      const needsStack =
+        (audienceCaptureEnabled && selectedAudienceFlowPublicId) ||
+        (assistantCaptureEnabled && selectedAssistantPublicId) ||
+        conversionTrackingEnabled;
+      if (!needsStack) return html;
+      return injectGrowthStackIntoHtml(html, {
+        origin: appOrigin,
+        assetKey: audienceAssetKey,
+        audienceFlowPublicId: audienceCaptureEnabled ? selectedAudienceFlowPublicId : null,
+        assistantPublicId: assistantCaptureEnabled ? selectedAssistantPublicId : null,
+        analyticsEnabled: conversionTrackingEnabled,
+        deploymentPublicId: deploymentPublicId || null,
+      });
+    },
+    [
+      appOrigin,
+      audienceAssetKey,
+      audienceCaptureEnabled,
+      selectedAudienceFlowPublicId,
+      assistantCaptureEnabled,
+      selectedAssistantPublicId,
+      conversionTrackingEnabled,
+    ],
+  );
+
   const previewHtmlForIframe = useMemo(() => {
     if (!fullPageGenerated || !generatedHtml) return null;
-    if (gatePreviewMode && audienceCaptureEnabled && selectedAudienceFlowPublicId && appOrigin) {
-      return injectAudienceWidgetIntoHtml(generatedHtml, appOrigin, selectedAudienceFlowPublicId, audienceAssetKey);
-    }
+    if (gatePreviewMode) return buildGrowthHtml(generatedHtml);
     return generatedHtml;
-  }, [
-    fullPageGenerated,
-    generatedHtml,
-    gatePreviewMode,
-    audienceCaptureEnabled,
-    selectedAudienceFlowPublicId,
-    appOrigin,
-    audienceAssetKey,
-  ]);
+  }, [fullPageGenerated, generatedHtml, gatePreviewMode, buildGrowthHtml]);
 
   const fullPagePreviewUrl = useBlobHtmlPreview(previewHtmlForIframe);
 
   const getExportHtml = useCallback(() => {
     if (!generatedHtml) return "";
-    if (audienceCaptureEnabled && selectedAudienceFlowPublicId && appOrigin) {
-      return injectAudienceWidgetIntoHtml(generatedHtml, appOrigin, selectedAudienceFlowPublicId, audienceAssetKey);
-    }
-    return generatedHtml;
-  }, [generatedHtml, audienceCaptureEnabled, selectedAudienceFlowPublicId, appOrigin, audienceAssetKey]);
+    return buildGrowthHtml(generatedHtml);
+  }, [generatedHtml, buildGrowthHtml]);
 
   const handlePipelinePublish = useCallback(() => {
     if (audienceCaptureEnabled && !selectedAudienceFlowPublicId) {
@@ -250,6 +297,11 @@ export default function ContentWrapper() {
       source: "content-wrapper",
       audienceFlowPublicId: audienceCaptureEnabled ? selectedAudienceFlowPublicId : null,
       audienceAssetKey,
+      assistantPublicId: assistantCaptureEnabled ? selectedAssistantPublicId : null,
+      assistantAssetKey: audienceAssetKey,
+      analyticsEnabled: conversionTrackingEnabled,
+      conversionTrackingEnabled,
+      publishTarget: "wordpress",
       pageTitle: contentPackage?.page_h1 || targetKeyword || undefined,
     });
     navigate("/wordpress");
@@ -1511,10 +1563,16 @@ export default function ContentWrapper() {
                                 <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                                   Deploy pipeline
                                 </p>
-                                <h3 className="mt-1 text-base font-semibold text-foreground">Asset → Audience → Publish → Analytics</h3>
+                                <h3 className="mt-1 text-base font-semibold text-foreground">
+                                  Asset → Audience → AI Assistant → Publish → Analytics
+                                </h3>
                                 <p className="mt-1 max-w-xl text-sm text-muted-foreground">
-                                  Attach a live capture flow, preview the real gate in the iframe, then hand off deploy-ready HTML to
-                                  Publishing Hub with attribution preserved.
+                                  Unified growth stack: capture, AI assistant, and conversion tracking auto-inject on export. Hand off
+                                  to Publishing Hub or the{" "}
+                                  <Link to="/growth-pipeline" className="font-semibold text-violet-700 underline-offset-2 hover:underline">
+                                    Growth Pipeline
+                                  </Link>
+                                  .
                                 </p>
                               </div>
                               <Badge variant="outline" className="shrink-0 border-emerald-200/80 bg-emerald-50/70 text-emerald-900">
@@ -1522,7 +1580,7 @@ export default function ContentWrapper() {
                               </Badge>
                             </div>
 
-                            <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                            <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
                               {[
                                 { step: "1", title: "Asset", desc: "HTML ready", ok: true, Icon: Layers },
                                 {
@@ -1534,17 +1592,24 @@ export default function ContentWrapper() {
                                 },
                                 {
                                   step: "3",
-                                  title: "Preview",
-                                  desc: gatePreviewMode ? "Gate + page" : "Base page",
-                                  ok: true,
-                                  Icon: MonitorPlay,
+                                  title: "Assistant",
+                                  desc: assistantCaptureEnabled ? "AI on" : "Optional",
+                                  ok: assistantCaptureEnabled && !!selectedAssistantPublicId,
+                                  Icon: Sparkles,
                                 },
                                 {
                                   step: "4",
                                   title: "Publish",
-                                  desc: wpDestinations.length ? "Hub reachable" : "Connect a site",
+                                  desc: wpDestinations.length ? "Hub ready" : "Connect site",
                                   ok: wpDestinations.length > 0,
                                   Icon: Send,
+                                },
+                                {
+                                  step: "5",
+                                  title: "Analytics",
+                                  desc: conversionTrackingEnabled ? "Tracking on" : "Off",
+                                  ok: conversionTrackingEnabled,
+                                  Icon: Gauge,
                                 },
                               ].map(({ step, title, desc, ok, Icon }) => (
                                 <div
@@ -1639,15 +1704,57 @@ export default function ContentWrapper() {
                                     variant={gatePreviewMode ? "default" : "outline"}
                                     size="sm"
                                     className="gap-2 rounded-xl"
-                                    disabled={!audienceCaptureEnabled || !selectedAudienceFlowPublicId}
+                                    disabled={
+                                      !audienceCaptureEnabled &&
+                                      !assistantCaptureEnabled &&
+                                      !conversionTrackingEnabled
+                                    }
                                     onClick={() => setGatePreviewMode(true)}
                                   >
                                     <MonitorPlay className="h-4 w-4" />
-                                    Preview gate
+                                    Preview stack
                                   </Button>
                                 </div>
+                                <div className="flex items-center justify-between gap-3 rounded-xl border border-border/70 bg-white/85 px-4 py-3 mt-2">
+                                  <Label htmlFor="cw-assistant-cap" className="text-sm font-semibold">
+                                    Enable AI assistant
+                                  </Label>
+                                  <Switch
+                                    id="cw-assistant-cap"
+                                    checked={assistantCaptureEnabled}
+                                    onCheckedChange={setAssistantCaptureEnabled}
+                                  />
+                                </div>
+                                {assistantCaptureEnabled && assistants.length > 0 && (
+                                  <Select value={selectedAssistantPublicId || undefined} onValueChange={setSelectedAssistantPublicId}>
+                                    <SelectTrigger className="h-11 rounded-xl bg-white">
+                                      <SelectValue placeholder="Select assistant" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {assistants.filter((a) => a.status === "active").map((a) => (
+                                        <SelectItem key={a.publicId} value={a.publicId}>
+                                          {a.name}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                )}
+                                <div className="flex items-center justify-between gap-3 rounded-xl border border-border/70 bg-white/85 px-4 py-3">
+                                  <Label htmlFor="cw-conv-track" className="text-sm font-semibold">
+                                    Conversion tracking
+                                  </Label>
+                                  <Switch
+                                    id="cw-conv-track"
+                                    checked={conversionTrackingEnabled}
+                                    onCheckedChange={setConversionTrackingEnabled}
+                                  />
+                                </div>
                                 <p className="text-[11px] leading-relaxed text-muted-foreground">
-                                  Preview loads the same <span className="font-mono text-xs">widget.js</span> as production (blur overlay,
+                                  Preview loads production widgets (audience + assistant + analytics).{" "}
+                                  <Link to="/growth-pipeline" className="font-semibold underline">
+                                    Growth Pipeline
+                                  </Link>
+                                  . Legacy: <span className="font-mono text-xs">widget.js</span> (blur overlay,
                                   email form, or Google unlock per flow). OAuth may require a top-level window depending on browser
                                   sandbox rules.
                                 </p>

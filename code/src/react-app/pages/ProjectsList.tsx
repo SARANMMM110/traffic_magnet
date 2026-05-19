@@ -1,290 +1,274 @@
 import { Link } from "react-router";
-import { Card } from "@/react-app/components/ui/card";
-import { Button } from "@/react-app/components/ui/button";
-import { Input } from "@/react-app/components/ui/input";
 import DashboardLayout from "@/react-app/components/DashboardLayout";
-import { useToast } from "@/react-app/components/Toast";
-import ConfirmModal from "@/react-app/components/ConfirmModal";
 import { useEffect, useState } from "react";
-import { Plus, Search, FolderOpen, ArrowRight, Calendar, Archive, Trash2 } from "lucide-react";
+import { Plus, Search, Archive } from "lucide-react";
 
-interface Project {
+interface Tool {
   id: number;
+  project_id: number;
+  project_name: string;
   name: string;
-  niche: string;
-  goal: string;
-  audience: string;
-  tool_count: number;
+  description: string;
+  category: string;
+  keywords: string;
+  traffic_score: number;
+  backlink_score: number;
+  monetization_score: number;
+  overall_score: number;
+  reasoning: string;
+  blueprint: string | null;
+  html_content: string | null;
+  landing_page_html: string | null;
   created_at: string;
-  updated_at: string;
+}
+
+function parseToolBlueprintJson(raw: string): Record<string, unknown> {
+  let blueprint: Record<string, unknown> = {};
+  try {
+    blueprint = JSON.parse(raw) as Record<string, unknown>;
+  } catch {
+    const lines = raw.split("\n");
+    let currentField = "";
+    let currentValue = "";
+    for (const line of lines) {
+      const colonIndex = line.indexOf(":");
+      if (colonIndex !== -1) {
+        if (currentField) {
+          const key = currentField.toLowerCase().replace(/\s+/g, "_");
+          blueprint[key] = currentValue.trim();
+        }
+        currentField = line.substring(0, colonIndex).trim();
+        currentValue = line.substring(colonIndex + 1).trim();
+      } else if (line.trim()) {
+        currentValue += ` ${line.trim()}`;
+      }
+    }
+    if (currentField) {
+      const key = currentField.toLowerCase().replace(/\s+/g, "_");
+      blueprint[key] = currentValue.trim();
+    }
+    const tk = blueprint.target_keywords;
+    if (typeof tk === "string") {
+      blueprint.target_keywords = tk.split(",").map((k: string) => k.trim());
+    }
+  }
+  return blueprint;
 }
 
 export default function ProjectsList() {
-  const { showToast } = useToast();
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
+  const [tools, setTools] = useState<Tool[]>([]);
+  const [filteredTools, setFilteredTools] = useState<Tool[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [hoveredProject, setHoveredProject] = useState<number | null>(null);
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
+  const [goalFilter, setGoalFilter] = useState("all");
 
   useEffect(() => {
-    loadProjects();
+    loadTools();
   }, []);
 
-  const loadProjects = () => {
-    fetch("/api/projects", { credentials: "include" })
-      .then((res) => res.json())
-      .then((data) => {
-        setProjects(data.projects);
-        setFilteredProjects(data.projects);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error("Failed to load projects:", error);
-        setLoading(false);
-      });
+  const loadTools = async () => {
+    try {
+      const response = await fetch("/api/tools/with-blueprints", { credentials: "include" });
+      if (response.ok) {
+        const data = await response.json();
+        setTools(data.tools || []);
+        setFilteredTools(data.tools || []);
+      }
+    } catch (error) {
+      console.error("Failed to load tools:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    if (searchTerm === "") {
-      setFilteredProjects(projects);
-    } else {
-      const filtered = projects.filter(
-        (project) =>
-          project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          project.niche.toLowerCase().includes(searchTerm.toLowerCase())
+    let filtered = tools;
+
+    // Filter by search
+    if (searchTerm) {
+      filtered = filtered.filter(
+        (tool) =>
+          tool.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          tool.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          tool.category.toLowerCase().includes(searchTerm.toLowerCase())
       );
-      setFilteredProjects(filtered);
     }
-  }, [searchTerm, projects]);
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
-
-  const handleArchiveProject = async (e: React.MouseEvent, project: Project) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    try {
-      const response = await fetch(`/api/projects/${project.id}/archive`, {
-        method: "POST",
-        credentials: "include",
-      });
-
-      if (response.ok) {
-        showToast({
-          type: "success",
-          title: "Project archived",
-          message: `${project.name} has been archived`,
-        });
-        loadProjects();
-      } else {
-        throw new Error("Archive failed");
-      }
-    } catch (error) {
-      console.error("Failed to archive project:", error);
-      showToast({
-        type: "error",
-        title: "Archive failed",
-        message: "Could not archive project",
+    // Filter by goal
+    if (goalFilter !== "all") {
+      filtered = filtered.filter((tool) => {
+        const blueprint = tool.blueprint ? parseToolBlueprintJson(tool.blueprint) : {};
+        const purpose = ((blueprint.purpose as string) || "").toLowerCase();
+        
+        switch (goalFilter) {
+          case "backlinks":
+            return purpose.includes("backlink") || purpose.includes("link building");
+          case "leads":
+            return purpose.includes("lead") || purpose.includes("email") || purpose.includes("contact");
+          case "traffic":
+            return purpose.includes("traffic") || purpose.includes("visitor") || purpose.includes("seo");
+          case "engagement":
+            return purpose.includes("engagement") || purpose.includes("conversion") || purpose.includes("retention");
+          default:
+            return true;
+        }
       });
     }
-  };
 
-  const handleDeleteClick = (e: React.MouseEvent, project: Project) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setProjectToDelete(project);
-    setDeleteModalOpen(true);
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (!projectToDelete) return;
-
-    try {
-      const response = await fetch(`/api/projects/${projectToDelete.id}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-
-      if (response.ok) {
-        showToast({
-          type: "success",
-          title: "Project deleted",
-          message: `${projectToDelete.name} has been permanently deleted`,
-        });
-        setDeleteModalOpen(false);
-        setProjectToDelete(null);
-        loadProjects();
-      } else {
-        throw new Error("Delete failed");
-      }
-    } catch (error) {
-      console.error("Failed to delete project:", error);
-      showToast({
-        type: "error",
-        title: "Delete failed",
-        message: "Could not delete project",
-      });
-    }
-  };
+    setFilteredTools(filtered);
+  }, [searchTerm, goalFilter, tools]);
 
   return (
     <DashboardLayout>
-      <div className="page-shell max-w-7xl space-y-8">
-        {/* Header */}
-        <div className="surface-panel flex flex-col gap-5 p-6 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-1">
-            <div className="section-eyebrow">Workspace</div>
-            <h1 className="text-4xl font-bold">My Projects</h1>
-            <p className="text-muted-foreground">
-              Manage all your traffic tool projects
-            </p>
+      <div className="min-h-screen bg-slate-50 px-8 py-6">
+        <div className="mx-auto max-w-7xl">
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-sm font-semibold uppercase tracking-wider text-slate-500">YOUR PROJECTS</h1>
           </div>
-          <Link to="/projects/new">
-            <Button size="lg" className="gap-2">
-              <Plus className="w-5 h-5" />
-              New Project
-            </Button>
-          </Link>
-        </div>
 
-        {/* Search */}
-        <Card className="p-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Search projects by name or niche..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </Card>
+          {/* Filters Bar */}
+          <div className="mb-6 flex items-center gap-3">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-10 pr-4 text-sm focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
+              />
+            </div>
 
-        {/* Projects Grid */}
-        {loading ? (
-          <div className="text-center py-12 text-muted-foreground">
-            Loading projects...
-          </div>
-        ) : filteredProjects.length === 0 ? (
-          <Card className="p-12 text-center">
-            <FolderOpen className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-xl font-semibold mb-2">
-              {searchTerm ? "No projects found" : "No projects yet"}
-            </h3>
-            <p className="text-muted-foreground mb-6">
-              {searchTerm
-                ? "Try a different search term"
-                : "Create your first project to get started building traffic tools"}
-            </p>
-            {!searchTerm && (
-              <Link to="/projects/new">
-                <Button>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create First Project
-                </Button>
-              </Link>
-            )}
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProjects.map((project) => (
-              <Link
-                key={project.id}
-                to={`/projects/${project.id}`}
-                onMouseEnter={() => setHoveredProject(project.id)}
-                onMouseLeave={() => setHoveredProject(null)}
+            <select
+              value={goalFilter}
+              onChange={(e) => setGoalFilter(e.target.value)}
+              className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
+            >
+              <option value="all">All Goals</option>
+              <option value="backlinks">Drive Backlinks</option>
+              <option value="leads">Generate Leads</option>
+              <option value="traffic">Increase Traffic</option>
+              <option value="engagement">Improve Engagement</option>
+            </select>
+
+            <button
+              type="button"
+              className="flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              <Archive className="h-4 w-4" />
+              Archived
+            </button>
+
+            <Link to="/projects/new">
+              <button
+                type="button"
+                className="flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700"
               >
-                <Card className="p-6 space-y-4 transition-all h-full relative">
-                  <div className="space-y-2">
-                    <div className="flex items-start justify-between">
-                      <h3 className="font-semibold text-lg line-clamp-2">
-                        {project.name}
-                      </h3>
-                      <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-                        {hoveredProject === project.id && (
-                          <>
-                            <button
-                              onClick={(e) => handleArchiveProject(e, project)}
-                              className="p-1.5 rounded-md hover:bg-amber-500/20 transition-all"
-                              title="Archive project"
+                <Plus className="h-4 w-4" />
+                New Project
+              </button>
+            </Link>
+          </div>
+
+          {/* Tools List */}
+          {loading ? (
+            <div className="py-12 text-center text-slate-600">Loading...</div>
+          ) : filteredTools.length === 0 ? (
+            <div className="rounded-xl border border-slate-200 bg-white p-12 text-center">
+              <h3 className="mb-2 text-lg font-semibold text-slate-900">No blueprints found</h3>
+              <p className="text-sm text-slate-600">Generate blueprints for your tools to see them here.</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {filteredTools.map((tool) => {
+                const blueprint = tool.blueprint ? parseToolBlueprintJson(tool.blueprint) : {};
+                const purpose = (blueprint.purpose as string) || tool.description || "";
+                const monetization = (blueprint.monetization_strategy as string) || "";
+                const cta = (blueprint.call_to_action as string) || (blueprint.cta_text as string) || "";
+                const keywords = Array.isArray(blueprint.target_keywords)
+                  ? (blueprint.target_keywords as string[])
+                  : [];
+
+                return (
+                  <div
+                    key={tool.id}
+                    className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
+                  >
+                    {/* Title */}
+                    <div className="mb-4">
+                      <h2 className="text-xl font-bold text-slate-900">{tool.name}</h2>
+                      <p className="text-sm text-violet-600">{tool.category}</p>
+                    </div>
+
+                    {/* Two Column Layout */}
+                    <div className="mb-4 grid grid-cols-1 gap-6 lg:grid-cols-2">
+                      {/* Left: Purpose */}
+                      <div>
+                        <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                          PURPOSE
+                        </div>
+                        <p className="text-sm leading-relaxed text-slate-900">{purpose}</p>
+                      </div>
+
+                      {/* Right: Keywords */}
+                      <div>
+                        <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                          KEYWORDS
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {keywords.map((keyword: string, i: number) => (
+                            <span
+                              key={i}
+                              className="rounded bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700"
                             >
-                              <Archive className="w-4 h-4 text-amber-500" />
-                            </button>
-                            <button
-                              onClick={(e) => handleDeleteClick(e, project)}
-                              className="p-1.5 rounded-md hover:bg-red-500/20 transition-all"
-                              title="Delete project"
-                            >
-                              <Trash2 className="w-4 h-4 text-red-500" />
-                            </button>
-                          </>
-                        )}
-                        <ArrowRight className="w-5 h-5 text-muted-foreground" />
+                              {keyword}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     </div>
-                    <div className="inline-block rounded-full bg-[var(--brand-soft)] px-3 py-1 text-xs font-semibold text-[var(--brand)]">
-                      {project.niche}
+
+                    {/* Bottom Row */}
+                    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                      {/* Left: Monetization */}
+                      {monetization && (
+                        <div>
+                          <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                            MONETIZATION
+                          </div>
+                          <p className="text-sm leading-relaxed text-slate-900">{monetization}</p>
+                        </div>
+                      )}
+
+                      {/* Right: Call to Action */}
+                      {cta && (
+                        <div>
+                          <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                            CALL TO ACTION
+                          </div>
+                          <p className="text-sm font-medium leading-relaxed text-orange-600">{cta}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* View Blueprint Button */}
+                    <div className="mt-6 flex justify-end">
+                      <Link to={`/blueprints/${tool.id}`}>
+                        <button
+                          type="button"
+                          className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-white hover:bg-orange-600"
+                        >
+                          View Full Blueprint
+                        </button>
+                      </Link>
                     </div>
                   </div>
-
-                  {project.goal && (
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {project.goal}
-                    </p>
-                  )}
-
-                  <div className="flex items-center justify-between pt-2 border-t">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Calendar className="w-4 h-4" />
-                      {formatDate(project.updated_at)}
-                    </div>
-                    <div className="text-right">
-                      <p className="text-2xl font-bold text-primary">
-                        {project.tool_count || 0}
-                      </p>
-                      <p className="text-xs text-muted-foreground">tools</p>
-                    </div>
-                  </div>
-                </Card>
-              </Link>
-            ))}
-          </div>
-        )}
-
-        {/* Results count */}
-        {!loading && filteredProjects.length > 0 && (
-          <p className="text-sm text-muted-foreground text-center">
-            Showing {filteredProjects.length} of {projects.length}{" "}
-            {projects.length === 1 ? "project" : "projects"}
-          </p>
-        )}
-
-        {/* Delete Confirmation Modal */}
-        {deleteModalOpen && projectToDelete && (
-          <ConfirmModal
-            isOpen={deleteModalOpen}
-            onClose={() => {
-              setDeleteModalOpen(false);
-              setProjectToDelete(null);
-            }}
-            onConfirm={handleDeleteConfirm}
-            title="Delete Project"
-            description={`Are you sure you want to delete "${projectToDelete.name}"? This will permanently delete all ${projectToDelete.tool_count} tools in this project. This action cannot be undone.`}
-            confirmLabel="Delete Project"
-            confirmVariant="danger"
-          />
-        )}
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
     </DashboardLayout>
   );

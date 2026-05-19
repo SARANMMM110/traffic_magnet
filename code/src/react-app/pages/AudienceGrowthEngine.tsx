@@ -410,12 +410,13 @@ export default function AudienceGrowthEngine() {
       <CaptureFlowBuilderPanel
         open={builderOpen}
         onOpenChange={setBuilderOpen}
-        onDeploy={({ publicId }: { publicId: string }) => {
+        onDeploy={() => {
           showToast({
             type: "success",
-            title: "Capture flow live",
-            message: `Public ID ${publicId}. Attach it from Content Wrapper → Deploy pipeline after generating HTML.`,
+            title: "Capture flow deployed",
+            message: `Flow is now live. You can attach it to your assets and start capturing subscribers.`,
           });
+          void loadAudience();
         }}
       />
 

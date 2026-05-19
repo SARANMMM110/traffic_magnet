@@ -429,7 +429,17 @@ export default function WordPress() {
                     )}
                     {pipelineHandoff.audienceFlowPublicId && (
                       <span className="mt-1 block text-[11px] font-medium text-violet-800">
-                        Includes Audience Growth capture · flow {pipelineHandoff.audienceFlowPublicId.slice(0, 8)}…
+                        Audience capture · flow {pipelineHandoff.audienceFlowPublicId.slice(0, 8)}…
+                      </span>
+                    )}
+                    {pipelineHandoff.assistantPublicId && (
+                      <span className="mt-1 block text-[11px] font-medium text-indigo-800">
+                        AI Assistant · {pipelineHandoff.assistantPublicId.slice(0, 8)}…
+                      </span>
+                    )}
+                    {pipelineHandoff.growthDeploymentPublicId && (
+                      <span className="mt-1 block text-[11px] font-medium text-slate-700">
+                        Growth Pipeline deployment · unified stack
                       </span>
                     )}
                   </p>
@@ -444,6 +454,12 @@ export default function WordPress() {
                   <Copy className="h-3.5 w-3.5" strokeWidth={2.25} />
                   Copy HTML
                 </button>
+                <Link
+                  to="/growth-pipeline"
+                  className="inline-flex h-9 items-center rounded-xl border border-violet-200/90 bg-white/90 px-3 text-xs font-medium text-violet-900 shadow-sm transition hover:bg-violet-50"
+                >
+                  Growth Pipeline
+                </Link>
                 <Link
                   to="/content"
                   className="inline-flex h-9 items-center rounded-xl border border-neutral-200/90 bg-white/90 px-3 text-xs font-medium text-neutral-800 shadow-sm transition hover:bg-neutral-50"
@@ -462,7 +478,7 @@ export default function WordPress() {
             </div>
           </div>
         )}
-        {/* Page header — clean row like reference, premium execution */}
+        {/* Page header — clean row like reference, professional execution */}
         <header className="border-b border-neutral-200/60 bg-white/70 backdrop-blur-md">
           <div className="mx-auto flex max-w-[1400px] flex-col gap-6 px-6 py-8 sm:flex-row sm:items-center sm:justify-between lg:px-10">
             <div className="flex items-start gap-4">

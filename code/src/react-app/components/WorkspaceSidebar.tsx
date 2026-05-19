@@ -43,13 +43,13 @@ const NAV_GROUPS: NavGroup[] = [
       { to: "/projects/new", icon: Zap, label: "New Project" },
       { to: "/magnets", icon: FolderKanban, label: "My tools" },
       { to: "/content", icon: FileText, label: "Content Studio" },
-      { to: "/ai-assistant-studio", icon: Sparkles, label: "AI Assistants" },
     ],
   },
   {
     title: "Publish",
     items: [
       { to: "/audience-growth", icon: Radar, label: "Audience Engine", badge: "Core" },
+      { to: "/ai-assistant-studio", icon: Sparkles, label: "AI Assistants" },
       { to: "/wordpress", icon: Globe, label: "WordPress Sites" },
     ],
   },
