@@ -1,9 +1,7 @@
-import { useState, useEffect } from "react";
+`import { useState, useEffect, type ComponentType } from "react";
 import { useParams, useNavigate, Link } from "react-router";
 import DashboardLayout from "@/react-app/components/DashboardLayout";
 import { useToast } from "@/react-app/components/Toast";
-import { Card } from "@/react-app/components/ui/card";
-import { Button } from "@/react-app/components/ui/button";
 import { Input } from "@/react-app/components/ui/input";
 import {
   Select,
@@ -12,7 +10,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/react-app/components/ui/select";
-import { ArrowLeft, Archive, Download, Plus, Search } from "lucide-react";
+import { cn } from "@/react-app/lib/utils";
+import BlueprintDetailPanel, {
+  type BlueprintPanelTool,
+} from "@/react-app/pages/BlueprintDetailPanel";
+import {
+  Archive,
+  ArrowLeft,
+  ArrowRight,
+  CircleDollarSign,
+  Download,
+  FolderKanban,
+  Layers,
+  Play,
+  Plus,
+  Search,
+  Sparkles,
+  Target,
+  Zap,
+} from "lucide-react";
 
 interface Project {
   id: number;
@@ -90,6 +106,75 @@ function matchesGoalFilter(purpose: string, goalFilter: string): boolean {
   }
 }
 
+function HeroIllustration() {
+  return (
+    <div className="relative hidden h-[200px] w-full max-w-[340px] shrink-0 lg:block" aria-hidden>
+      <div className="absolute -right-4 top-2 h-44 w-44 rounded-full bg-violet-400/15 blur-3xl" />
+      <div className="absolute bottom-0 right-8 h-32 w-32 rounded-full bg-indigo-300/20 blur-2xl" />
+
+      {/* Browser window */}
+      <div className="absolute right-4 top-0 w-[220px] rotate-[-4deg] rounded-2xl border border-violet-100/80 bg-white p-3 shadow-[0_24px_50px_-12px_rgba(99,91,255,0.35)]">
+        <div className="mb-2 flex gap-1">
+          <div className="h-2 w-2 rounded-full bg-red-300/80" />
+          <div className="h-2 w-2 rounded-full bg-amber-300/80" />
+          <div className="h-2 w-2 rounded-full bg-emerald-300/80" />
+        </div>
+        <div className="flex aspect-[16/10] items-center justify-center rounded-xl bg-gradient-to-br from-violet-100 to-indigo-50">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 text-white shadow-lg shadow-violet-500/40">
+            <Play className="ml-0.5 h-5 w-5 fill-current" />
+          </div>
+        </div>
+        <div className="mt-2 flex items-end justify-between gap-2 px-1">
+          <div className="flex h-14 flex-1 items-end gap-1">
+            {[40, 65, 45, 80, 55, 90].map((h, i) => (
+              <div
+                key={i}
+                className="flex-1 rounded-sm bg-gradient-to-t from-violet-500 to-indigo-400 opacity-80"
+                style={{ height: `${h}%` }}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Magnifying glass */}
+      <div className="absolute bottom-6 right-0 flex h-14 w-14 items-center justify-center rounded-2xl border border-white bg-white shadow-[0_12px_32px_-8px_rgba(99,91,255,0.3)]">
+        <Search className="h-6 w-6 text-violet-600" strokeWidth={2} />
+      </div>
+
+      <Sparkles className="absolute right-28 top-6 h-5 w-5 text-violet-400/70" />
+      <Sparkles className="absolute bottom-16 right-32 h-4 w-4 text-indigo-400/60" />
+    </div>
+  );
+}
+
+function GridSectionHeader({
+  icon: Icon,
+  label,
+  color = "violet",
+}: {
+  icon: ComponentType<{ className?: string; strokeWidth?: number }>;
+  label: string;
+  color?: "violet" | "emerald";
+}) {
+  return (
+    <div className="mb-3 flex items-center gap-2">
+      <Icon
+        className={cn("h-4 w-4", color === "emerald" ? "text-emerald-600" : "text-violet-600")}
+        strokeWidth={2}
+      />
+      <span
+        className={cn(
+          "text-[11px] font-bold uppercase tracking-[0.14em]",
+          color === "emerald" ? "text-emerald-600" : "text-violet-600",
+        )}
+      >
+        {label}
+      </span>
+    </div>
+  );
+}
+
 export default function ProjectView() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -99,6 +184,7 @@ export default function ProjectView() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [goalFilter, setGoalFilter] = useState("all");
+  const [panelTool, setPanelTool] = useState<BlueprintPanelTool | null>(null);
 
   useEffect(() => {
     loadProject();
@@ -159,102 +245,133 @@ export default function ProjectView() {
 
   const blueprintCount = blueprintTools.length;
 
+  const subtitleParts = project
+    ? [project.niche, project.goal, `${blueprintCount} assets`].filter(Boolean)
+    : [];
+
   if (loading || !project) {
     return (
-      <DashboardLayout>
-        <div className="flex min-h-[40vh] items-center justify-center text-muted-foreground">
-          Loading…
-        </div>
+      <DashboardLayout innerClassName="p-0" shellClassName="bg-[#F3F4F8]">
+        <div className="flex min-h-[60vh] items-center justify-center text-slate-500">Loading…</div>
       </DashboardLayout>
     );
   }
 
   return (
-    <DashboardLayout innerClassName="p-0">
-      <div className="mx-auto max-w-6xl space-y-8 px-6 py-8 lg:px-8">
-        {/* Page header */}
-        <header className="space-y-5">
-          <button
-            type="button"
-            onClick={() => navigate("/dashboard")}
-            className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </button>
+    <DashboardLayout innerClassName="p-0" shellClassName="bg-[#F3F4F8]">
+      <div className="mx-auto w-full max-w-[1100px] px-5 py-6 md:px-8 md:py-8">
+        {/* —— Hero card —— */}
+        <section className="relative mb-8 overflow-hidden rounded-[24px] bg-white shadow-[0_4px_24px_-4px_rgba(99,91,255,0.12),0_8px_40px_-8px_rgba(15,23,42,0.06)]">
+          <div
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_70%_20%,rgba(139,92,246,0.12),transparent_55%),radial-gradient(ellipse_50%_40%_at_10%_80%,rgba(167,139,250,0.08),transparent_50%)]"
+            aria-hidden
+          />
 
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="space-y-1">
-              <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">{project.name}</h1>
-              <p className="text-sm text-muted-foreground">
-                {project.niche} · {blueprintCount} assets
-              </p>
+          <div className="relative px-6 pb-14 pt-5 md:px-8 md:pb-16 md:pt-6">
+            <div className="mb-6 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => navigate("/dashboard")}
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back
+              </button>
+              <button
+                type="button"
+                onClick={exportCSV}
+                className="inline-flex items-center gap-2 rounded-xl border border-violet-200 bg-white px-4 py-2 text-sm font-medium text-violet-700 shadow-sm transition-colors hover:border-violet-300 hover:bg-violet-50/50"
+              >
+                <Download className="h-4 w-4" />
+                Export CSV
+              </button>
             </div>
-            <Button variant="outline" onClick={exportCSV} className="shrink-0 gap-2 self-start">
-              <Download className="h-4 w-4" />
-              Export CSV
-            </Button>
-          </div>
 
-          {/* Asset Blueprint tab */}
-          <div className="flex items-center gap-2 border-b border-border pb-0">
-            <span className="inline-flex items-center gap-2 border-b-2 border-[var(--brand)] px-1 pb-3 text-sm font-semibold text-foreground">
-              Asset Blueprint
-              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--brand)] px-1.5 text-[11px] font-bold text-white tabular-nums">
-                {blueprintCount}
-              </span>
-            </span>
-          </div>
-        </header>
-
-        {/* Toolbar */}
-        <section className="space-y-4">
-          <h2 className="text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground">YOUR PROJECTS</h2>
-          <Card className="p-4">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  type="search"
-                  placeholder="Search..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
-                />
+            <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
+              <div className="max-w-xl space-y-4">
+                <span className="inline-flex items-center gap-2 rounded-lg border border-violet-100 bg-violet-50/80 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-violet-700">
+                  <FolderKanban className="h-3.5 w-3.5" />
+                  PROJECT WORKSPACE
+                </span>
+                <h1 className="text-3xl font-bold leading-tight tracking-tight text-slate-900 md:text-[2rem] lg:text-[2.15rem]">
+                  {project.name}
+                </h1>
+                <p className="text-sm text-slate-500 md:text-[15px]">{subtitleParts.join(" · ")}</p>
               </div>
-              <Select value={goalFilter} onValueChange={setGoalFilter}>
-                <SelectTrigger className="w-full lg:w-[180px]">
-                  <SelectValue placeholder="All Goals" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Goals</SelectItem>
-                  <SelectItem value="backlinks">Drive Backlinks</SelectItem>
-                  <SelectItem value="leads">Generate Leads</SelectItem>
-                  <SelectItem value="traffic">Increase Traffic</SelectItem>
-                  <SelectItem value="engagement">Improve Engagement</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button type="button" variant="outline" className="gap-2">
-                <Archive className="h-4 w-4" />
-                Archived
-              </Button>
-              <Link to="/projects/new" className="lg:ml-auto">
-                <Button className="w-full gap-2 lg:w-auto">
-                  <Plus className="h-4 w-4" />
-                  New Project
-                </Button>
-              </Link>
+              <HeroIllustration />
             </div>
-          </Card>
+
+            {/* Asset Blueprint tab — overlaps bottom */}
+            <div className="absolute bottom-0 left-6 md:left-8">
+              <div className="inline-flex items-center gap-2 rounded-t-xl border border-b-0 border-slate-100 bg-white px-5 py-3 shadow-[0_-4px_20px_-4px_rgba(99,91,255,0.08)]">
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-100 text-violet-600">
+                  <Layers className="h-3.5 w-3.5" />
+                </div>
+                <span className="border-b-2 border-violet-600 pb-0.5 text-sm font-semibold text-slate-800">
+                  Asset Blueprint
+                </span>
+                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-violet-600 px-1.5 text-[11px] font-bold text-white">
+                  {blueprintCount}
+                </span>
+              </div>
+            </div>
+          </div>
         </section>
 
-        {/* Asset list — stacked sections (distinct from vendor 2×2 grid) */}
-        <section className="space-y-5">
-          {filteredTools.length === 0 ? (
-            <Card className="p-12 text-center">
-              <p className="text-sm font-medium text-muted-foreground">No blueprints found</p>
-            </Card>
-          ) : (
-            filteredTools.map((tool) => {
+        {/* —— Toolbar —— */}
+        <section className="mb-8">
+          <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.2em] text-violet-600/90">YOUR PROJECTS</p>
+          <div className="flex flex-col gap-3 rounded-2xl bg-white/60 p-3 shadow-sm ring-1 ring-slate-100/80 md:flex-row md:items-center md:p-4">
+            <div className="relative min-w-0 flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Input
+                type="search"
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-11 rounded-xl border-slate-200 bg-white pl-10 shadow-none"
+              />
+            </div>
+            <Select value={goalFilter} onValueChange={setGoalFilter}>
+              <SelectTrigger className="h-11 w-full rounded-xl border-slate-200 bg-white md:w-[150px]">
+                <SelectValue placeholder="All Goals" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Goals</SelectItem>
+                <SelectItem value="backlinks">Drive Backlinks</SelectItem>
+                <SelectItem value="leads">Generate Leads</SelectItem>
+                <SelectItem value="traffic">Increase Traffic</SelectItem>
+                <SelectItem value="engagement">Improve Engagement</SelectItem>
+              </SelectContent>
+            </Select>
+            <button
+              type="button"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
+            >
+              <Archive className="h-4 w-4" />
+              Archived
+            </button>
+            <Link to="/projects/new" className="md:ml-auto">
+              <button
+                type="button"
+                className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-5 text-sm font-semibold text-white shadow-[0_8px_24px_-6px_rgba(99,91,255,0.45)] transition hover:shadow-[0_10px_28px_-6px_rgba(99,91,255,0.55)] md:w-auto"
+              >
+                <Plus className="h-4 w-4" />
+                New Project
+              </button>
+            </Link>
+          </div>
+        </section>
+
+        {/* —— Blueprint cards —— */}
+        {filteredTools.length === 0 ? (
+          <div className="rounded-[24px] bg-white p-12 text-center shadow-sm">
+            <p className="font-medium text-slate-700">No blueprints found</p>
+            <p className="mt-1 text-sm text-slate-500">Try another search or goal filter.</p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {filteredTools.map((tool) => {
               const blueprint = parseToolBlueprintJson(tool.blueprint as string);
               const purpose = (blueprint.purpose as string) || tool.description || "";
               const monetization = (blueprint.monetization_strategy as string) || "";
@@ -264,68 +381,124 @@ export default function ProjectView() {
                 : [];
 
               return (
-                <Card key={tool.id} className="overflow-hidden p-0">
-                  <div className="flex flex-col gap-4 border-b border-border bg-muted/30 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <h3 className="text-lg font-bold text-foreground">{tool.name}</h3>
-                      <p className="text-sm text-muted-foreground">{tool.category}</p>
+                <article
+                  key={tool.id}
+                  className="overflow-hidden rounded-[24px] bg-white shadow-[0_4px_24px_-4px_rgba(99,91,255,0.1),0_8px_32px_-8px_rgba(15,23,42,0.05)]"
+                >
+                  {/* Card header */}
+                  <header className="flex flex-col gap-4 border-b border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between md:px-8">
+                    <div className="flex items-start gap-4">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/30">
+                        <Sparkles className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <h2 className="text-lg font-bold text-slate-900 md:text-xl">{tool.name}</h2>
+                        <span className="mt-1.5 inline-flex rounded-full bg-violet-100 px-3 py-0.5 text-xs font-semibold text-violet-700">
+                          {tool.category}
+                        </span>
+                      </div>
                     </div>
-                    <Link to={`/blueprints/${tool.id}`} className="shrink-0">
-                      <Button
-                        variant="outline"
-                        className="w-full border-amber-500/60 text-amber-700 hover:bg-amber-500/10 sm:w-auto"
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setPanelTool({
+                          id: tool.id,
+                          project_id: tool.project_id,
+                          name: tool.name,
+                          description: tool.description,
+                          category: tool.category,
+                          blueprint: tool.blueprint,
+                          landing_page_html: tool.landing_page_html,
+                        })
+                      }
+                      className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-violet-200 bg-white px-4 py-2.5 text-sm font-semibold text-violet-700 transition hover:border-violet-300 hover:bg-violet-50"
+                    >
+                      View Full Blueprint
+                      <ArrowRight className="h-4 w-4" />
+                    </button>
+                  </header>
+
+                  {/* 2×2 grid */}
+                  <div className="grid md:grid-cols-2">
+                    {/* Purpose */}
+                    <div className="border-b border-slate-100 p-6 md:border-r md:p-8">
+                      <GridSectionHeader icon={Target} label="PURPOSE" />
+                      <div className="border-l-[3px] border-violet-500 pl-4">
+                        <p className="text-sm leading-relaxed text-slate-600 md:text-[15px] md:leading-7">{purpose}</p>
+                      </div>
+                    </div>
+
+                    {/* Keywords */}
+                    <div className="border-b border-slate-100 p-6 md:p-8">
+                      <GridSectionHeader icon={Search} label="KEYWORDS" />
+                      <div className="flex flex-wrap gap-2">
+                        {keywords.map((keyword: string, i: number) => (
+                          <span
+                            key={i}
+                            className="inline-flex items-center gap-1.5 rounded-full bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-800"
+                          >
+                            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-violet-500" />
+                            {keyword}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Monetization */}
+                    {monetization ? (
+                      <div className="relative overflow-hidden border-b border-slate-100 p-6 md:border-b-0 md:border-r md:p-8">
+                        <div
+                          className="pointer-events-none absolute -bottom-8 -right-8 h-32 w-32 rounded-full bg-emerald-400/10 blur-2xl"
+                          aria-hidden
+                        />
+                        <GridSectionHeader icon={CircleDollarSign} label="MONETIZATION" color="emerald" />
+                        <div className="relative border-l-[3px] border-emerald-500 pl-4">
+                          <p className="text-sm leading-relaxed text-slate-600 md:text-[15px] md:leading-7">
+                            {monetization}
+                          </p>
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {/* CTA */}
+                    {cta ? (
+                      <div
+                        className={cn(
+                          "relative overflow-hidden bg-gradient-to-br from-violet-50/90 via-indigo-50/50 to-violet-100/40 p-6 md:p-8",
+                          !monetization && "md:col-span-2",
+                        )}
                       >
-                        View Full Blueprint
-                      </Button>
-                    </Link>
-                  </div>
-
-                  <div className="divide-y divide-border">
-                    <div className="grid gap-6 px-5 py-5 md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
-                      <div className="space-y-2">
-                        <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">PURPOSE</p>
-                        <p className="text-sm leading-relaxed text-foreground">{purpose}</p>
-                      </div>
-                      <div className="space-y-3">
-                        <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">KEYWORDS</p>
-                        <div className="flex flex-wrap gap-2">
-                          {keywords.map((keyword: string, i: number) => (
-                            <span
-                              key={i}
-                              className="rounded-md border border-border bg-muted/50 px-2.5 py-1 text-xs text-foreground"
-                            >
-                              {keyword}
-                            </span>
-                          ))}
+                        <GridSectionHeader icon={Zap} label="CALL TO ACTION" />
+                        <div className="flex items-center gap-4 rounded-2xl border border-white/80 bg-white p-4 shadow-[0_8px_24px_-8px_rgba(99,91,255,0.15)]">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 text-white">
+                            <Sparkles className="h-4 w-4" />
+                          </div>
+                          <p className="min-w-0 flex-1 text-sm font-semibold leading-snug text-slate-800">{cta}</p>
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 text-white shadow-md">
+                            <ArrowRight className="h-4 w-4" />
+                          </span>
                         </div>
                       </div>
-                    </div>
-
-                    <div className="grid gap-6 px-5 py-5 md:grid-cols-2">
-                      {monetization ? (
-                        <div className="space-y-2">
-                          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
-                            MONETIZATION
-                          </p>
-                          <p className="line-clamp-3 text-sm leading-relaxed text-foreground">{monetization}</p>
-                        </div>
-                      ) : null}
-                      {cta ? (
-                        <div className="space-y-2">
-                          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
-                            CALL TO ACTION
-                          </p>
-                          <p className="text-sm font-medium leading-relaxed text-amber-700">{cta}</p>
-                        </div>
-                      ) : null}
-                    </div>
+                    ) : null}
                   </div>
-                </Card>
+                </article>
               );
-            })
-          )}
-        </section>
+            })}
+          </div>
+        )}
       </div>
+
+      <BlueprintDetailPanel
+        tool={panelTool}
+        open={panelTool !== null}
+        onClose={() => setPanelTool(null)}
+        onBlueprintUpdated={(toolId, blueprintJson) => {
+          setTools((prev) =>
+            prev.map((t) => (t.id === toolId ? { ...t, blueprint: blueprintJson } : t)),
+          );
+          setPanelTool((prev) => (prev?.id === toolId ? { ...prev, blueprint: blueprintJson } : prev));
+        }}
+      />
     </DashboardLayout>
   );
 }
