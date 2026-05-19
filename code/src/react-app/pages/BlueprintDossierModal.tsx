@@ -1,6 +1,13 @@
-import { type ComponentType, type ReactNode } from "react";
+import { useState, type ComponentType, type ReactNode } from "react";
 import { cn } from "@/react-app/lib/utils";
 import { VISUAL_THEMES, normalizeVisualThemeId } from "@/react-app/lib/visualThemes";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/react-app/components/ui/select";
 import {
   Calculator,
   Check,
@@ -8,6 +15,7 @@ import {
   Code2,
   Download,
   FileOutput,
+  GitBranch,
   Hash,
   LayoutTemplate,
   Link2,
@@ -20,8 +28,28 @@ import {
   TrendingUp,
   Users,
   Wand2,
+  Zap,
 } from "lucide-react";
 import type { BlueprintDossierProject, BlueprintDossierTool } from "@/react-app/pages/BlueprintDossier";
+
+const AUDIENCE_OPTIONS = [
+  "General / Broad",
+  "Small Business Owners",
+  "Marketing Agencies",
+  "Enterprise Teams",
+  "Freelancers & Consultants",
+] as const;
+
+const MONETIZATION_OPTIONS = [
+  "Lead Generation (email capture)",
+  "Affiliate Links",
+  "SaaS Subscription",
+  "Freemium Upsell",
+  "Services / Consulting",
+] as const;
+
+type VariationConfig = { audience: string; monetization: string };
+type VariationResult = VariationConfig & Record<string, unknown> & { summary?: string };
 
 function formatBlueprintHeading(raw: string): string {
   const trimmed = raw.trim();
@@ -97,7 +125,89 @@ export interface BlueprintDossierModalProps {
   regenerateLandingPage: () => void;
   onClose?: () => void;
   onNavigate: (path: string) => void;
+  onToolUpdate?: (tool: BlueprintDossierTool) => void;
   showToast: (opts: { title: string; type: "success" | "error"; message?: string }) => void;
+}
+
+function VariationField({
+  label,
+  icon: Icon,
+  value,
+  onValueChange,
+  options,
+}: {
+  label: string;
+  icon: ComponentType<{ className?: string }>;
+  value: string;
+  onValueChange: (v: string) => void;
+  options: readonly string[];
+}) {
+  return (
+    <div className="space-y-1.5">
+      <label className="flex items-center gap-1.5 text-xs font-medium text-slate-600">
+        <Icon className="h-3.5 w-3.5 text-slate-400" />
+        {label}
+      </label>
+      <Select value={value} onValueChange={onValueChange}>
+        <SelectTrigger className="h-10 w-full rounded-lg border-slate-200 bg-white text-sm">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {options.map((opt) => (
+            <SelectItem key={opt} value={opt}>
+              {opt}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
+function VariationColumn({
+  letter,
+  badgeClass,
+  audience,
+  monetization,
+  onAudienceChange,
+  onMonetizationChange,
+}: {
+  letter: "A" | "B";
+  badgeClass: string;
+  audience: string;
+  monetization: string;
+  onAudienceChange: (v: string) => void;
+  onMonetizationChange: (v: string) => void;
+}) {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <span
+          className={cn(
+            "flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold text-white",
+            badgeClass,
+          )}
+        >
+          {letter}
+        </span>
+        <span className="text-sm font-bold text-slate-900">Variation {letter}</span>
+      </div>
+      <VariationField
+        label="Audience"
+        icon={Users}
+        value={audience}
+        onValueChange={onAudienceChange}
+        options={AUDIENCE_OPTIONS}
+      />
+      <VariationField
+        label="Monetization"
+        icon={CircleDollarSign}
+        value={monetization}
+        onValueChange={onMonetizationChange}
+        options={MONETIZATION_OPTIONS}
+      />
+    </div>
+  );
 }
 
 export default function BlueprintDossierModal({
@@ -139,13 +249,87 @@ export default function BlueprintDossierModal({
   regenerateLandingPage,
   onClose,
   onNavigate,
+  onToolUpdate,
   showToast,
 }: BlueprintDossierModalProps) {
+  const [varA, setVarA] = useState<VariationConfig>({
+    audience: AUDIENCE_OPTIONS[0],
+    monetization: MONETIZATION_OPTIONS[0],
+  });
+  const [varB, setVarB] = useState<VariationConfig>({
+    audience: AUDIENCE_OPTIONS[1],
+    monetization: MONETIZATION_OPTIONS[1],
+  });
+  const [generatingVariations, setGeneratingVariations] = useState(false);
+  const [variationResults, setVariationResults] = useState<{
+    variationA: VariationResult;
+    variationB: VariationResult;
+  } | null>(null);
+  const [applyingVariation, setApplyingVariation] = useState<"A" | "B" | null>(null);
+
   const tabs = [
     { id: "blueprint" as const, label: "Blueprint", icon: Sparkles },
-    { id: "variations" as const, label: "Variations", icon: LayoutTemplate },
-    { id: "landing" as const, label: "Landing Page", icon: FileOutput },
+    { id: "variations" as const, label: "Variations", icon: GitBranch },
+    { id: "landing" as const, label: "Landing Page", icon: LayoutTemplate },
   ];
+
+  const generateVariations = async () => {
+    if (!tool.blueprint) {
+      showToast({ title: "Generate a blueprint first", type: "error" });
+      return;
+    }
+    setGeneratingVariations(true);
+    setVariationResults(null);
+    try {
+      const res = await fetch(`/api/tools/${tool.id}/variations`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ variationA: varA, variationB: varB }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error((err as { error?: string }).error || "Failed to generate variations");
+      }
+      const data = await res.json();
+      setVariationResults({ variationA: data.variationA, variationB: data.variationB });
+      showToast({ title: "Variations generated!", type: "success" });
+    } catch (e) {
+      showToast({
+        title: "Failed to generate variations",
+        message: e instanceof Error ? e.message : undefined,
+        type: "error",
+      });
+    } finally {
+      setGeneratingVariations(false);
+    }
+  };
+
+  const applyVariation = async (which: "A" | "B") => {
+    if (!variationResults) return;
+    const picked = { ...(which === "A" ? variationResults.variationA : variationResults.variationB) };
+    delete picked.summary;
+    delete picked.audience;
+    delete picked.monetization;
+    setApplyingVariation(which);
+    try {
+      const next = JSON.stringify(picked);
+      const res = await fetch(`/api/tools/${tool.id}/blueprint/apply`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ blueprint: next }),
+      });
+      if (!res.ok) throw new Error("Failed to apply");
+      onToolUpdate?.({ ...tool, blueprint: next });
+      showToast({ title: `Variation ${which} applied`, type: "success" });
+      onTabChange("blueprint");
+    } catch {
+      showToast({ title: "Failed to apply variation", type: "error" });
+    } finally {
+      setApplyingVariation(null);
+    }
+  };
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -211,7 +395,111 @@ export default function BlueprintDossierModal({
               </div>
             ) : (
               <>
-                <section className="mb-6 rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+                <Section icon={Target} title="Purpose">
+                  <p className="whitespace-pre-line text-sm leading-relaxed text-slate-700">{purpose}</p>
+                </Section>
+
+                {strategySections.map((section) => (
+                  <Section key={section.title} icon={TrendingUp} title={formatBlueprintHeading(section.title)}>
+                    <p className="whitespace-pre-line text-sm leading-relaxed text-slate-700">
+                      {String(section.value)}
+                    </p>
+                  </Section>
+                ))}
+
+                {audiencePainPoints.length > 0 && (
+                  <Section icon={Users} title="Audience pain points">
+                    <ul className="list-inside list-disc space-y-1 text-sm text-slate-700">
+                      {audiencePainPoints.map((point, i) => (
+                        <li key={i}>{point}</li>
+                      ))}
+                    </ul>
+                  </Section>
+                )}
+
+                <Section icon={Hash} title="Target keywords">
+                  {keywords.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {keywords.map((kw, i) => (
+                        <span
+                          key={i}
+                          className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-700"
+                        >
+                          {kw}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm italic text-slate-500">Unspecified</p>
+                  )}
+                </Section>
+
+                <Section icon={ListChecks} title="Inputs required">
+                  <p className="whitespace-pre-line text-sm text-slate-700">{inputs || "Unspecified"}</p>
+                </Section>
+
+                <Section icon={FileOutput} title="Output type">
+                  <p className="whitespace-pre-line text-sm text-slate-700">{output || "Unspecified"}</p>
+                </Section>
+
+                <Section icon={Calculator} title="Calculation logic">
+                  <p className="whitespace-pre-line text-sm leading-relaxed text-slate-700">
+                    {calculationLogic || "Unspecified"}
+                  </p>
+                </Section>
+
+                {features.length > 0 && (
+                  <Section icon={Sparkles} title="Features">
+                    <ul className="list-inside list-disc space-y-1 text-sm text-slate-700">
+                      {features.map((f, i) => (
+                        <li key={i}>{f}</li>
+                      ))}
+                    </ul>
+                  </Section>
+                )}
+
+                <Section icon={CircleDollarSign} title="Monetization strategy">
+                  <p className="whitespace-pre-line text-sm leading-relaxed text-slate-700">
+                    {monetization || "Unspecified"}
+                  </p>
+                </Section>
+
+                {monetizationRoadmap.length > 0 && (
+                  <Section icon={TrendingUp} title="Monetization roadmap">
+                    <ol className="list-inside list-decimal space-y-1 text-sm text-slate-700">
+                      {monetizationRoadmap.map((item, i) => (
+                        <li key={i}>{item}</li>
+                      ))}
+                    </ol>
+                  </Section>
+                )}
+
+                {eeatStructure.length > 0 && (
+                  <Section icon={Check} title="EEAT structure">
+                    <ul className="list-inside list-disc space-y-1 text-sm text-slate-700">
+                      {eeatStructure.map((item, i) => (
+                        <li key={i}>{item}</li>
+                      ))}
+                    </ul>
+                  </Section>
+                )}
+
+                <Section icon={Link2} title="Internal linking suggestions">
+                  <p className="whitespace-pre-line text-sm text-slate-700">{linking || "Unspecified"}</p>
+                </Section>
+
+                <section className="py-6">
+                  <div className="mb-3 flex items-center gap-2">
+                    <Wand2 className="h-4 w-4 text-orange-500" strokeWidth={1.75} />
+                    <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">Call to action</h3>
+                  </div>
+                  <div className="rounded-2xl bg-gradient-to-br from-orange-50 to-amber-50/80 px-4 py-4 ring-1 ring-orange-100">
+                    <p className="text-sm font-semibold leading-relaxed text-orange-900">{cta || "Unspecified"}</p>
+                  </div>
+                </section>
+
+                <section className="border-t border-slate-100 py-6">
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
                   <div className="mb-3 flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
                       <Palette className="h-4 w-4 text-violet-600" />
@@ -328,112 +616,11 @@ export default function BlueprintDossierModal({
                       </button>
                     </div>
                   )}
-                </section>
 
-                <Section icon={Target} title="Purpose">
-                  <p className="whitespace-pre-line text-sm leading-relaxed text-slate-700">{purpose}</p>
-                </Section>
-
-                {strategySections.map((section) => (
-                  <Section key={section.title} icon={TrendingUp} title={formatBlueprintHeading(section.title)}>
-                    <p className="whitespace-pre-line text-sm leading-relaxed text-slate-700">
-                      {String(section.value)}
-                    </p>
-                  </Section>
-                ))}
-
-                {audiencePainPoints.length > 0 && (
-                  <Section icon={Users} title="Audience pain points">
-                    <ul className="list-inside list-disc space-y-1 text-sm text-slate-700">
-                      {audiencePainPoints.map((point, i) => (
-                        <li key={i}>{point}</li>
-                      ))}
-                    </ul>
-                  </Section>
-                )}
-
-                <Section icon={Hash} title="Target keywords">
-                  {keywords.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {keywords.map((kw, i) => (
-                        <span
-                          key={i}
-                          className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-700"
-                        >
-                          {kw}
-                        </span>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm italic text-slate-500">Unspecified</p>
-                  )}
-                </Section>
-
-                <Section icon={ListChecks} title="Inputs required">
-                  <p className="whitespace-pre-line text-sm text-slate-700">{inputs || "Unspecified"}</p>
-                </Section>
-
-                <Section icon={FileOutput} title="Output type">
-                  <p className="whitespace-pre-line text-sm text-slate-700">{output || "Unspecified"}</p>
-                </Section>
-
-                <Section icon={Calculator} title="Calculation logic">
-                  <p className="whitespace-pre-line text-sm leading-relaxed text-slate-700">
-                    {calculationLogic || "Unspecified"}
-                  </p>
-                </Section>
-
-                {features.length > 0 && (
-                  <Section icon={Sparkles} title="Features">
-                    <ul className="list-inside list-disc space-y-1 text-sm text-slate-700">
-                      {features.map((f, i) => (
-                        <li key={i}>{f}</li>
-                      ))}
-                    </ul>
-                  </Section>
-                )}
-
-                <Section icon={CircleDollarSign} title="Monetization strategy">
-                  <p className="whitespace-pre-line text-sm leading-relaxed text-slate-700">
-                    {monetization || "Unspecified"}
-                  </p>
-                </Section>
-
-                {monetizationRoadmap.length > 0 && (
-                  <Section icon={TrendingUp} title="Monetization roadmap">
-                    <ol className="list-inside list-decimal space-y-1 text-sm text-slate-700">
-                      {monetizationRoadmap.map((item, i) => (
-                        <li key={i}>{item}</li>
-                      ))}
-                    </ol>
-                  </Section>
-                )}
-
-                {eeatStructure.length > 0 && (
-                  <Section icon={Check} title="EEAT structure">
-                    <ul className="list-inside list-disc space-y-1 text-sm text-slate-700">
-                      {eeatStructure.map((item, i) => (
-                        <li key={i}>{item}</li>
-                      ))}
-                    </ul>
-                  </Section>
-                )}
-
-                <Section icon={Link2} title="Internal linking suggestions">
-                  <p className="whitespace-pre-line text-sm text-slate-700">{linking || "Unspecified"}</p>
-                </Section>
-
-                <section className="py-6">
-                  <div className="mb-3 flex items-center gap-2">
-                    <Wand2 className="h-4 w-4 text-orange-500" strokeWidth={1.75} />
-                    <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">Call to action</h3>
-                  </div>
-                  <div className="rounded-2xl bg-gradient-to-br from-orange-50 to-amber-50/80 px-4 py-4 ring-1 ring-orange-100">
-                    <p className="text-sm font-semibold leading-relaxed text-orange-900">{cta || "Unspecified"}</p>
                   </div>
                 </section>
 
-                <div className="flex flex-col gap-2 border-t border-slate-100 py-6 sm:flex-row">
+                <div className="flex flex-col gap-2 pt-2 sm:flex-row">
                   <button
                     type="button"
                     onClick={copyBlueprint}
@@ -466,37 +653,82 @@ export default function BlueprintDossierModal({
         )}
 
         {tab === "variations" && (
-          <div className="space-y-6 py-4">
-            <div>
-              <h3 className="text-base font-semibold text-slate-900">Explore variations</h3>
-              <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                Branch audiences, revenue models, acquisition plays, and blueprint upgrades in the project workspace.
+          <div className="space-y-5 py-4">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/90 p-5">
+              <p className="mb-5 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">
+                Configure variations
               </p>
+              <div className="grid gap-6 sm:grid-cols-2">
+                <VariationColumn
+                  letter="A"
+                  badgeClass="bg-violet-600"
+                  audience={varA.audience}
+                  monetization={varA.monetization}
+                  onAudienceChange={(v) => setVarA((prev) => ({ ...prev, audience: v }))}
+                  onMonetizationChange={(v) => setVarA((prev) => ({ ...prev, monetization: v }))}
+                />
+                <VariationColumn
+                  letter="B"
+                  badgeClass="bg-sky-500"
+                  audience={varB.audience}
+                  monetization={varB.monetization}
+                  onAudienceChange={(v) => setVarB((prev) => ({ ...prev, audience: v }))}
+                  onMonetizationChange={(v) => setVarB((prev) => ({ ...prev, monetization: v }))}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={generateVariations}
+                disabled={generatingVariations || !tool.blueprint}
+                className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-orange-500 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {generatingVariations ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Generating…
+                  </>
+                ) : (
+                  <>
+                    <Zap className="h-4 w-4 fill-current" />
+                    Generate 2 Blueprint Variations
+                  </>
+                )}
+              </button>
             </div>
-            <dl className="space-y-5">
-              {[
-                ["Audience registers", "Creators, agencies, SMBs, enterprise—mapped as separate intent lanes."],
-                ["Revenue chemistry", "Lead gen, affiliate, SaaS, services—pressure-test before you ship."],
-                ["Traffic geology", "Organic, authority content, partnerships—see which vein converts."],
-                ["Blueprint succession", "Promote a stronger fork to overwrite the active blueprint."],
-              ].map(([title, body]) => (
-                <div key={title}>
-                  <dt className="text-xs font-bold uppercase tracking-wide text-slate-500">{title}</dt>
-                  <dd className="mt-1 text-sm leading-relaxed text-slate-700">{body}</dd>
-                </div>
-              ))}
-            </dl>
-            <button
-              type="button"
-              className="w-full rounded-xl bg-slate-900 py-3 text-sm font-semibold text-white hover:bg-slate-800"
-              onClick={() => {
-                const path = tool.project_id != null ? `/projects/${tool.project_id}` : "/magnets";
-                onClose?.();
-                onNavigate(path);
-              }}
-            >
-              Enter workspace
-            </button>
+
+            {variationResults && (
+              <div className="space-y-3">
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Generated variations</p>
+                {(["A", "B"] as const).map((which) => {
+                  const v = which === "A" ? variationResults.variationA : variationResults.variationB;
+                  const title = (v.title as string) || (v.purpose as string) || `Variation ${which}`;
+                  return (
+                    <div
+                      key={which}
+                      className="rounded-xl border border-slate-200 bg-white p-4"
+                    >
+                      <div className="mb-2 flex items-center justify-between gap-2">
+                        <p className="text-sm font-semibold text-slate-900">{title}</p>
+                        <span className="text-[10px] font-medium uppercase text-slate-400">
+                          {v.audience} · {v.monetization}
+                        </span>
+                      </div>
+                      {v.summary && (
+                        <p className="mb-3 text-xs leading-relaxed text-slate-600">{String(v.summary)}</p>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => applyVariation(which)}
+                        disabled={applyingVariation !== null}
+                        className="w-full rounded-lg border border-slate-200 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-50 disabled:opacity-50"
+                      >
+                        {applyingVariation === which ? "Applying…" : `Use Variation ${which}`}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 

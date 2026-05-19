@@ -466,6 +466,7 @@ export function BlueprintDossierContent({
         regenerateLandingPage={regenerateLandingPage}
         onClose={onClose}
         onNavigate={onNavigate}
+        onToolUpdate={onToolUpdate}
         showToast={showToast}
       />
     );
