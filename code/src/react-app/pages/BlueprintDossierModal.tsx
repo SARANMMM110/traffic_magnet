@@ -1,4 +1,10 @@
-import { useState, type ComponentType, type ReactNode } from "react";
+import {
+  useState,
+  type ComponentType,
+  type Dispatch,
+  type ReactNode,
+  type SetStateAction,
+} from "react";
 import { cn } from "@/react-app/lib/utils";
 import { VISUAL_THEMES, normalizeVisualThemeId } from "@/react-app/lib/visualThemes";
 import {
@@ -110,10 +116,14 @@ export interface BlueprintDossierModalProps {
   savingTheme: boolean;
   persistVisualTheme: (id: string) => void;
   buildStep: BuildStep | null;
+  htmlBuildAction: "standalone" | "embed" | null;
   buildResult: { action: "standalone" | "embed"; html: string } | null;
-  setBuildResult: (v: null) => void;
+  setBuildResult: Dispatch<
+    SetStateAction<{ action: "standalone" | "embed"; html: string } | null>
+  >;
   buildTool: (action: "standalone" | "embed") => void;
   copied: boolean;
+  setCopied: (v: boolean) => void;
   copyBlueprint: () => void;
   regenerateBlueprint: () => void;
   generateBlueprint: () => void;
@@ -234,10 +244,12 @@ export default function BlueprintDossierModal({
   savingTheme,
   persistVisualTheme,
   buildStep,
+  htmlBuildAction,
   buildResult,
   setBuildResult,
   buildTool,
   copied,
+  setCopied,
   copyBlueprint,
   regenerateBlueprint,
   generateBlueprint,
@@ -247,8 +259,8 @@ export default function BlueprintDossierModal({
   downloadLandingPage,
   copyLandingPageHTML,
   regenerateLandingPage,
-  onClose,
-  onNavigate,
+  // onClose,
+  // onNavigate,
   onToolUpdate,
   showToast,
 }: BlueprintDossierModalProps) {
@@ -307,10 +319,8 @@ export default function BlueprintDossierModal({
 
   const applyVariation = async (which: "A" | "B") => {
     if (!variationResults) return;
-    const picked = { ...(which === "A" ? variationResults.variationA : variationResults.variationB) };
-    delete picked.summary;
-    delete picked.audience;
-    delete picked.monetization;
+    const variation = which === "A" ? variationResults.variationA : variationResults.variationB;
+    const { summary, audience, monetization, ...picked } = variation;
     setApplyingVariation(which);
     try {
       const next = JSON.stringify(picked);
@@ -382,7 +392,7 @@ export default function BlueprintDossierModal({
                 <button
                   type="button"
                   onClick={generateBlueprint}
-                  disabled={buildStep !== null}
+                  disabled={buildStep === "analyzing" || htmlBuildAction !== null}
                   className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
                 >
                   {buildStep === "analyzing" ? (
@@ -546,42 +556,24 @@ export default function BlueprintDossierModal({
                       );
                     })}
                   </div>
-                  {!buildResult ? (
-                    <div className="grid gap-2 sm:grid-cols-2">
-                      <button
-                        type="button"
-                        onClick={() => buildTool("standalone")}
-                        disabled={buildStep !== null}
-                        className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-3 text-left text-sm hover:border-violet-200 hover:bg-violet-50/50 disabled:opacity-50"
-                      >
-                        <Download className="h-4 w-4 text-violet-600" />
-                        <span>
-                          <span className="font-semibold text-slate-800">Standalone</span>
-                          <span className="mt-0.5 block text-xs text-slate-500">Download .html</span>
-                        </span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => buildTool("embed")}
-                        disabled={buildStep !== null}
-                        className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-3 text-left text-sm hover:border-violet-200 hover:bg-violet-50/50 disabled:opacity-50"
-                      >
-                        <Code2 className="h-4 w-4 text-violet-600" />
-                        <span>
-                          <span className="font-semibold text-slate-800">Embed</span>
-                          <span className="mt-0.5 block text-xs text-slate-500">Copy snippet</span>
-                        </span>
-                      </button>
+                  {htmlBuildAction ? (
+                    <div className="flex items-center justify-center gap-2 rounded-xl border border-violet-100 bg-violet-50/60 px-4 py-4">
+                      <Loader2 className="h-4 w-4 animate-spin text-violet-600" />
+                      <span className="text-sm font-medium text-violet-800">
+                        {htmlBuildAction === "standalone"
+                          ? "Generating standalone HTML…"
+                          : "Generating embed snippet…"}
+                      </span>
                     </div>
-                  ) : (
+                  ) : buildResult ? (
                     <div className="space-y-2">
                       <p className="rounded-lg bg-emerald-50 px-3 py-2 text-center text-xs font-medium text-emerald-800">
                         {buildResult.action === "standalone" ? "HTML ready" : "Embed ready"}
                       </p>
-                      {buildResult.action === "standalone" ? (
+                      <div className="grid gap-2 sm:grid-cols-2">
                         <button
                           type="button"
-                          className="w-full rounded-xl bg-slate-900 py-2.5 text-sm font-semibold text-white"
+                          className="flex items-center justify-center gap-2 rounded-xl bg-slate-900 py-2.5 text-sm font-semibold text-white"
                           onClick={() => {
                             const blob = new Blob([buildResult.html], { type: "text/html" });
                             const url = URL.createObjectURL(blob);
@@ -593,26 +585,64 @@ export default function BlueprintDossierModal({
                             showToast({ title: "Downloaded!", type: "success" });
                           }}
                         >
+                          <Download className="h-4 w-4" />
                           Download .html
                         </button>
-                      ) : (
                         <button
                           type="button"
-                          className="w-full rounded-xl bg-slate-900 py-2.5 text-sm font-semibold text-white"
+                          className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50"
                           onClick={() => {
-                            void navigator.clipboard.writeText(buildResult.html);
-                            showToast({ title: "Copied to clipboard!", type: "success" });
+                            void navigator.clipboard.writeText(buildResult.html).then(() => {
+                              setCopied(true);
+                              showToast({ title: "Copied to clipboard!", type: "success" });
+                              setTimeout(() => setCopied(false), 2000);
+                            });
                           }}
                         >
-                          {copied ? "Copied" : "Copy embed"}
+                          <Code2 className="h-4 w-4" />
+                          {copied
+                            ? "Copied"
+                            : buildResult.action === "embed"
+                              ? "Copy embed"
+                              : "Copy code"}
                         </button>
-                      )}
+                      </div>
                       <button
                         type="button"
-                        onClick={() => setBuildResult(null)}
+                        onClick={() => {
+                          setBuildResult(null);
+                          setCopied(false);
+                        }}
                         className="w-full text-center text-xs text-slate-500 hover:text-slate-800"
                       >
                         Build again
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <button
+                        type="button"
+                        onClick={() => buildTool("standalone")}
+                        disabled={htmlBuildAction !== null || buildStep === "analyzing"}
+                        className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-3 text-left text-sm hover:border-violet-200 hover:bg-violet-50/50 disabled:opacity-50"
+                      >
+                        <Download className="h-4 w-4 text-violet-600" />
+                        <span>
+                          <span className="font-semibold text-slate-800">Standalone</span>
+                          <span className="mt-0.5 block text-xs text-slate-500">Download .html</span>
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => buildTool("embed")}
+                        disabled={htmlBuildAction !== null || buildStep === "analyzing"}
+                        className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-3 text-left text-sm hover:border-violet-200 hover:bg-violet-50/50 disabled:opacity-50"
+                      >
+                        <Code2 className="h-4 w-4 text-violet-600" />
+                        <span>
+                          <span className="font-semibold text-slate-800">Embed</span>
+                          <span className="mt-0.5 block text-xs text-slate-500">Copy snippet</span>
+                        </span>
                       </button>
                     </div>
                   )}
@@ -631,22 +661,12 @@ export default function BlueprintDossierModal({
                   <button
                     type="button"
                     onClick={regenerateBlueprint}
-                    disabled={buildStep !== null}
+                    disabled={htmlBuildAction !== null || buildStep === "analyzing"}
                     className="flex-1 rounded-xl bg-slate-900 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
                   >
                     {buildStep === "analyzing" ? "Regenerating…" : "Regenerate"}
                   </button>
                 </div>
-
-                {buildStep && (
-                  <p className="mb-4 text-center text-xs font-medium text-slate-500">
-                    {buildStep === "analyzing" && "Working on blueprint…"}
-                    {buildStep === "logic" && "Building logic…"}
-                    {buildStep === "styling" && "Applying theme…"}
-                    {buildStep === "embed" && "Preparing embed…"}
-                    {buildStep === "done" && "Done"}
-                  </p>
-                )}
               </>
             )}
           </div>

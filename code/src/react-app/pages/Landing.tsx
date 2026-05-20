@@ -104,15 +104,11 @@ export default function Landing() {
       <div className="relative z-10">
         <header className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
           <Link to="/" className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-950 text-white shadow-sm">
-              <Sparkles className="h-5 w-5" />
-            </span>
-            <span>
-              <span className="block text-sm font-extrabold tracking-tight">Ai Auto Traffic</span>
-              <span className="block text-xs" style={{ color: "var(--text-muted)" }}>
-                AI opportunity engine
-              </span>
-            </span>
+            <img 
+              src="/ai-auto-traffic-logo.png" 
+              alt="Ai Auto Traffic" 
+              className="h-10 w-auto object-contain"
+            />
           </Link>
 
           <nav className="hidden items-center gap-7 text-sm font-semibold md:flex" style={{ color: "var(--text-secondary)" }}>

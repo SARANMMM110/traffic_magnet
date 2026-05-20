@@ -89,7 +89,7 @@ const STEP_PANELS: Array<{
   {
     title: "Customize Your Asset",
     description:
-      "Tune tone, depth, and format. Traffic Magnet adapts layout, schema, and calls-to-action to match your brand and funnel.",
+      "Tune tone, depth, and format. Ai Auto Traffic adapts layout, schema, and calls-to-action to match your brand and funnel.",
     cta: "Open customization",
     ctaAction: "new-project",
   },

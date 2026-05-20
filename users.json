@@ -36,6 +36,24 @@
     "updated_at": "2026-04-24T20:15:53Z"
   },
   {
+    "created_at": "2026-05-20T18:03:57Z",
+    "email": "5dollarfridayn30@gmail.com",
+    "google_sub": "109224178377598560249",
+    "google_user_data": {
+      "name": "Melvin Sosa",
+      "hd": null,
+      "sub": "109224178377598560249",
+      "email": "5dollarfridayn30@gmail.com",
+      "email_verified": true,
+      "family_name": "Sosa",
+      "given_name": "Melvin",
+      "picture": "https://lh3.googleusercontent.com/a/ACg8ocLCH5T_BLM99jAWJLerPocaewFhXKWCzEiaBwO9DUW4DejYRspH=s96-c"
+    },
+    "id": "019e468f-0267-7668-8b50-328ffbe7c14f",
+    "last_signed_in_at": "2026-05-20T18:03:57Z",
+    "updated_at": "2026-05-20T18:03:57Z"
+  },
+  {
     "created_at": "2026-04-24T13:29:20Z",
     "email": "m3emp110@gmail.com",
     "google_sub": "112044897924448800172",
@@ -70,5 +88,23 @@
     "id": "019dc115-223e-7a88-86ff-2cfde8f52ba8",
     "last_signed_in_at": "2026-04-24T20:01:20Z",
     "updated_at": "2026-04-24T20:01:20Z"
+  },
+  {
+    "created_at": "2026-05-20T15:58:13Z",
+    "email": "frankandres@gmail.com",
+    "google_sub": "115782666800468406943",
+    "google_user_data": {
+      "name": "Frank Andres",
+      "hd": null,
+      "sub": "115782666800468406943",
+      "email": "frankandres@gmail.com",
+      "email_verified": true,
+      "family_name": "Andres",
+      "given_name": "Frank",
+      "picture": "https://lh3.googleusercontent.com/a/ACg8ocKo2k7fUqGUGKOruuu8O6bPRF_RPq8fQiF8Q_KslxL3Qz24mvwU=s96-c"
+    },
+    "id": "019e461b-e20a-713f-aa3c-3e1aff528d33",
+    "last_signed_in_at": "2026-05-20T15:58:13Z",
+    "updated_at": "2026-05-20T15:58:13Z"
   }
 ]

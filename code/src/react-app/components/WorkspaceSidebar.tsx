@@ -49,7 +49,7 @@ const NAV_GROUPS: NavGroup[] = [
     title: "Publish",
     items: [
       { to: "/audience-growth", icon: Radar, label: "Audience Engine", badge: "Core" },
-      { to: "/ai-assistant-studio", icon: Sparkles, label: "AI Assistants" },
+      { to: "/customgpt", icon: Sparkles, label: "CustomGPT Builder" },
       { to: "/wordpress", icon: Globe, label: "WordPress Sites" },
     ],
   },
@@ -75,7 +75,7 @@ export default function WorkspaceSidebar({ className = "" }: WorkspaceSidebarPro
   const isActive = (path: string) => location.pathname === path;
 
   const getInitials = (email: string) => {
-    return email.charAt(0).toUpperCase();
+    return email?.charAt(0).toUpperCase() || 'U';
   };
 
   return (
@@ -114,18 +114,18 @@ export default function WorkspaceSidebar({ className = "" }: WorkspaceSidebarPro
       >
         {/* Header */}
         <div className={`flex items-center gap-3 p-5 ${isCollapsed ? "justify-center" : ""}`}>
-          <div className="relative group">
-            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl blur-md opacity-40 group-hover:opacity-60 transition-opacity" />
-            <div className="relative w-11 h-11 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-              <TrendingUp className="w-6 h-6 text-white" />
-            </div>
-          </div>
-          {!isCollapsed && (
-            <div className="flex-1 min-w-0">
-              <h1 className="font-bold text-slate-900 text-lg leading-tight truncate">
-                Traffic Magnet
-              </h1>
-              <p className="text-xs font-medium text-slate-500">AI Growth Studio</p>
+          {!isCollapsed ? (
+            <img 
+              src="/ai-auto-traffic-logo.png" 
+              alt="Ai Auto Traffic" 
+              className="h-10 w-auto object-contain"
+            />
+          ) : (
+            <div className="relative group">
+              <div className="absolute inset-0 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl blur-md opacity-40 group-hover:opacity-60 transition-opacity" />
+              <div className="relative w-11 h-11 bg-gradient-to-br from-green-600 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg">
+                <TrendingUp className="w-6 h-6 text-white" />
+              </div>
             </div>
           )}
         </div>

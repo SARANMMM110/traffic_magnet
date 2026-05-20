@@ -68,7 +68,7 @@ export default function BlueprintDetailPanel({
     return () => {
       cancelled = true;
     };
-  }, [open, panelTool?.id, onClose]);
+  }, [open, panelTool?.id]);
 
   useEffect(() => {
     if (!open) return;

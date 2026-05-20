@@ -147,10 +147,16 @@ export function ConnectWordPressPanel({ open, onOpenChange, onConnected }: Conne
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok || data.ok === false) {
-        const msg =
+        let msg =
           data.message ||
           (typeof data.error === "string" ? data.error : null) ||
           "We could not complete the connection. Check your details and try again.";
+        
+        // Append detail if available
+        if (data.detail && typeof data.detail === "string") {
+          msg += ` (${data.detail})`;
+        }
+        
         setError(msg);
         setErrorCode(typeof data.code === "string" ? data.code : null);
         setPhase("auth");

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, type ReactNode } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import { cn } from "@/react-app/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/react-app/components/ui/tabs";
 import {
@@ -128,6 +128,7 @@ export function BlueprintDossierContent({
   const [panelTab, setPanelTab] = useState<"blueprint" | "variations" | "landing">("blueprint");
   const [selectedTheme, setSelectedTheme] = useState("modern");
   const [buildStep, setBuildStep] = useState<BuildStep | null>(null);
+  const [htmlBuildAction, setHtmlBuildAction] = useState<"standalone" | "embed" | null>(null);
   const [buildResult, setBuildResult] = useState<{ action: "standalone" | "embed"; html: string } | null>(null);
   const [copied, setCopied] = useState(false);
   const [generatingLanding, setGeneratingLanding] = useState(false);
@@ -145,7 +146,7 @@ export function BlueprintDossierContent({
   useEffect(() => {
     setToolState(toolProp);
     setLandingPageHtml(toolProp.landing_page_html);
-  }, [toolProp.id, toolProp.blueprint, toolProp.landing_page_html, toolProp.html_content]);
+  }, [toolProp.id]);
 
   useEffect(() => {
     if (!tool?.blueprint) return;
@@ -184,11 +185,19 @@ export function BlueprintDossierContent({
   };
 
   const buildTool = async (action: "standalone" | "embed") => {
-    if (!tool) {
+    if (!tool) return;
+    if (!tool.blueprint) {
+      showToast({ title: "Generate a blueprint first", type: "error" });
       return;
     }
-    
+
+    setHtmlBuildAction(action);
+    setBuildResult(null);
+    setCopied(false);
+
+    // Step 1: Compiling logic (real API call happens here)
     setBuildStep("logic");
+
     try {
       const response = await fetch(`/api/tools/${tool.id}/html`, {
         method: "POST",
@@ -200,22 +209,38 @@ export function BlueprintDossierContent({
         }),
       });
 
-      if (response.ok) {
-        setBuildStep("styling");
-        await new Promise((resolve) => setTimeout(resolve, 800));
-        setBuildStep("embed");
-        await new Promise((resolve) => setTimeout(resolve, 800));
+      const data = (await response.json().catch(() => ({}))) as {
+        html?: string;
+        error?: string;
+        message?: string;
+      };
 
-        const data = await response.json();
-        setTool({ ...tool, html_content: data.html });
-        setBuildStep("done");
-        setBuildResult({ action, html: data.html });
-        showToast({ title: "Tool built successfully!", type: "success" });
-        setTimeout(() => setBuildStep(null), 2000);
-      } else {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.message || errorData?.error || "Failed to build tool");
+      if (!response.ok) {
+        throw new Error(data.message || data.error || "Failed to build tool");
       }
+
+      if (!data.html || typeof data.html !== "string") {
+        throw new Error("No HTML was returned from the server");
+      }
+
+      // Step 2: Inking theme (artificial delay)
+      setBuildStep("styling");
+      await new Promise((resolve) => setTimeout(resolve, 800));
+
+      // Step 3: Binding embed (artificial delay)
+      setBuildStep("embed");
+      await new Promise((resolve) => setTimeout(resolve, 800));
+
+      // Step 4: Pass complete
+      setBuildStep("done");
+      setBuildResult({ action, html: data.html });
+      showToast({ title: "Tool built successfully!", type: "success" });
+
+      // Clear done state and show output after 1 second
+      setTimeout(() => {
+        setBuildStep(null);
+        setHtmlBuildAction(null);
+      }, 1000);
     } catch (error) {
       console.error("Tool building failed:", error);
       showToast({
@@ -224,6 +249,7 @@ export function BlueprintDossierContent({
         type: "error",
       });
       setBuildStep(null);
+      setHtmlBuildAction(null);
     }
   };
 
@@ -451,10 +477,12 @@ export function BlueprintDossierContent({
         savingTheme={savingTheme}
         persistVisualTheme={persistVisualTheme}
         buildStep={buildStep}
+        htmlBuildAction={htmlBuildAction}
         buildResult={buildResult}
         setBuildResult={setBuildResult}
         buildTool={buildTool}
         copied={copied}
+        setCopied={setCopied}
         copyBlueprint={copyBlueprint}
         regenerateBlueprint={regenerateBlueprint}
         generateBlueprint={generateBlueprint}
@@ -729,7 +757,7 @@ export function BlueprintDossierContent({
 
                 {strategySections.map((section) => (
                   <DossierSection key={section.title} title={formatBlueprintHeading(section.title)}>
-                    <p className="whitespace-pre-line text-stone-700">{section.value}</p>
+                    <p className="whitespace-pre-line text-stone-700">{String(section.value)}</p>
                   </DossierSection>
                 ))}
 

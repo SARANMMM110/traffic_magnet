@@ -17,6 +17,8 @@ import {
 import { registerAudienceEngineRoutes } from "./audience/audienceRoutes";
 import { registerAssistantRoutes } from "./assistant/assistantRoutes";
 import { registerGrowthPipelineRoutes } from "./growth/growthPipelineRoutes";
+import { registerGPTRoutes } from "./gpt/gptRoutes";
+import { registerCustomGPTRoutes } from "./customgpt/customGPTRoutes";
 import { assetRegistryRoutes } from "./routes/assetRegistry";
 import { publishedAssetsRoutes, publicAssetRoutes } from "./routes/publishedAssets";
 
@@ -88,14 +90,15 @@ app.get("/api/settings/keys", authMiddleware, async (c) => {
   const user = c.get("user")!;
   
   const result = await c.env.DB.prepare(
-    "SELECT openai_key, anthropic_key, ideogram_key FROM api_keys WHERE user_id = ? LIMIT 1"
+    "SELECT openai_key, anthropic_key, ideogram_key, perplexity_key FROM api_keys WHERE user_id = ? LIMIT 1"
   ).bind(user.id).first();
 
   if (!result) {
     return c.json({ 
       openai_key: null, 
       anthropic_key: null, 
-      ideogram_key: null 
+      ideogram_key: null,
+      perplexity_key: null
     });
   }
 
@@ -110,6 +113,7 @@ app.get("/api/settings/keys", authMiddleware, async (c) => {
     openai_key: maskKey(result.openai_key as string | null),
     anthropic_key: maskKey(result.anthropic_key as string | null),
     ideogram_key: maskKey(result.ideogram_key as string | null),
+    perplexity_key: maskKey(result.perplexity_key as string | null),
   });
 });
 
@@ -118,7 +122,7 @@ app.post("/api/settings/keys", authMiddleware, async (c) => {
   const user = c.get("user")!;
   const body = await c.req.json();
 
-  const { openai_key, anthropic_key, ideogram_key } = body;
+  const { openai_key, anthropic_key, ideogram_key, perplexity_key } = body;
 
   // Check if user already has keys
   const existing = await c.env.DB.prepare(
@@ -142,6 +146,10 @@ app.post("/api/settings/keys", authMiddleware, async (c) => {
       updates.push("ideogram_key = ?");
       params.push(ideogram_key);
     }
+    if (perplexity_key !== undefined && perplexity_key !== null) {
+      updates.push("perplexity_key = ?");
+      params.push(perplexity_key);
+    }
 
     if (updates.length > 0) {
       updates.push("updated_at = CURRENT_TIMESTAMP");
@@ -154,8 +162,8 @@ app.post("/api/settings/keys", authMiddleware, async (c) => {
   } else {
     // Insert new keys
     await c.env.DB.prepare(
-      "INSERT INTO api_keys (user_id, openai_key, anthropic_key, ideogram_key) VALUES (?, ?, ?, ?)"
-    ).bind(user.id, openai_key || null, anthropic_key || null, ideogram_key || null).run();
+      "INSERT INTO api_keys (user_id, openai_key, anthropic_key, ideogram_key, perplexity_key) VALUES (?, ?, ?, ?, ?)"
+    ).bind(user.id, openai_key || null, anthropic_key || null, ideogram_key || null, perplexity_key || null).run();
   }
 
   return c.json({ success: true });
@@ -1548,21 +1556,28 @@ app.post("/api/wordpress/sites", authMiddleware, async (c) => {
     );
   }
 
+  console.log("[WordPress] Testing connection:", { siteUrl, username: username.substring(0, 3) + "***" });
   const test = await testWordPressApplicationPassword({ siteUrl, username, applicationPassword });
   if (!test.ok) {
-    return c.json(test, 422);
+    console.error("[WordPress] Connection test failed:", {
+      siteUrl,
+      username,
+      code: test.code,
+      message: test.message,
+      detail: test.detail,
+    });
+    return c.json({ 
+      ok: false, 
+      code: test.code, 
+      message: test.message,
+      detail: test.detail 
+    }, 422);
   }
-  if (!test.publishingAccess) {
-    return c.json(
-      {
-        ok: false,
-        code: "NO_PUBLISH_CAPABILITY",
-        message:
-          "This WordPress user cannot publish posts. Use an Administrator or Editor account, or enable the right capabilities.",
-      },
-      422,
-    );
-  }
+  console.log("[WordPress] Connection test passed:", {
+    domain: test.domain,
+    wpUser: test.wpUser.name,
+    publishingAccess: test.publishingAccess,
+  });
 
   let encrypted: string;
   try {
@@ -1741,6 +1756,22 @@ app.patch("/api/wordpress/sites/:id", authMiddleware, async (c) => {
 registerAudienceEngineRoutes(app as never);
 registerAssistantRoutes(app as never);
 registerGrowthPipelineRoutes(app as never);
+
+// GPT routes require authentication
+app.use("/api/gpts/*", authMiddleware);
+registerGPTRoutes(app as never);
+
+// CustomGPT Builder routes require authentication
+app.use("/api/customgpt/*", authMiddleware);
+registerCustomGPTRoutes(app as never);
+
+// GPT conversation routes (extend GPT routes)
+const gptConversationRoutes = (await import("./gpt/gptConversationRoutes")).default;
+app.route("/api/gpts", gptConversationRoutes);
+
+// GPT embed routes
+const gptEmbedRoutes = (await import("./gpt/gptEmbedRoutes")).default;
+app.route("/api/gpts", gptEmbedRoutes);
 
 // Asset Registry Routes (authenticated)
 app.use("/api/assets/*", authMiddleware);

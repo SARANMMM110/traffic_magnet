@@ -12,6 +12,7 @@ import {
   Menu,
   X,
   WandSparkles,
+  Bot,
 } from "lucide-react";
 import { useAuth } from "@getmocha/users-service/react";
 
@@ -56,7 +57,7 @@ export default function Sidebar() {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const getInitials = (email: string) => {
-    return email.charAt(0).toUpperCase();
+    return email?.charAt(0).toUpperCase() || 'U';
   };
 
   const closeMobile = () => {
@@ -138,6 +139,11 @@ export default function Sidebar() {
             to="/content"
             icon={<FileText className="w-4 h-4" />}
             label="Content Wrapper"
+          />
+          <SidebarLink
+            to="/customgpt"
+            icon={<Bot className="w-4 h-4" />}
+            label="CustomGPT Builder"
           />
           <SidebarLink to="/faq" icon={<HelpCircle className="w-4 h-4" />} label="Help & FAQ" />
           <SidebarLink to="/settings" icon={<Settings className="w-4 h-4" />} label="Settings" />

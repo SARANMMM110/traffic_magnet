@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router";
 import { AuthProvider } from "@getmocha/users-service/react";
+import { Toaster } from "sonner";
 import ProtectedRoute from "@/react-app/components/ProtectedRoute";
 import Landing from "@/react-app/pages/Landing";
 import Dashboard from "@/react-app/pages/Dashboard";
@@ -19,6 +20,7 @@ import UpgradePage from "@/react-app/pages/UpgradePage";
 import WordPress from "@/react-app/pages/WordPress";
 import AudienceGrowthEngine from "@/react-app/pages/AudienceGrowthEngine";
 import AIAssistantStudio from "@/react-app/pages/AIAssistantStudio";
+import CustomGPTBuilder from "@/react-app/pages/CustomGPTBuilder";
 import Login from "@/react-app/pages/Login";
 import Signup from "@/react-app/pages/Signup";
 import Onboarding from "@/react-app/pages/Onboarding";
@@ -27,6 +29,7 @@ import AuthCallback from "@/react-app/pages/AuthCallback";
 export default function App() {
   return (
     <AuthProvider>
+      <Toaster position="top-center" richColors />
       <Router>
         <Routes>
           <Route path="/" element={<Landing />} />
@@ -174,6 +177,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <AIAssistantStudio />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/customgpt"
+            element={
+              <ProtectedRoute>
+                <CustomGPTBuilder />
               </ProtectedRoute>
             }
           />

@@ -1,4 +1,4 @@
-`import { useState, useEffect, type ComponentType } from "react";
+import { useState, useEffect, useCallback, type ComponentType } from "react";
 import { useParams, useNavigate, Link } from "react-router";
 import DashboardLayout from "@/react-app/components/DashboardLayout";
 import { useToast } from "@/react-app/components/Toast";
@@ -249,6 +249,15 @@ export default function ProjectView() {
     ? [project.niche, project.goal, `${blueprintCount} assets`].filter(Boolean)
     : [];
 
+  const handleClosePanel = useCallback(() => setPanelTool(null), []);
+
+  const handleBlueprintUpdated = useCallback((toolId: number, blueprintJson: string) => {
+    setTools((prev) =>
+      prev.map((t) => (t.id === toolId ? { ...t, blueprint: blueprintJson } : t)),
+    );
+    setPanelTool((prev) => (prev?.id === toolId ? { ...prev, blueprint: blueprintJson } : prev));
+  }, []);
+
   if (loading || !project) {
     return (
       <DashboardLayout innerClassName="p-0" shellClassName="bg-[#F3F4F8]">
@@ -491,13 +500,8 @@ export default function ProjectView() {
       <BlueprintDetailPanel
         tool={panelTool}
         open={panelTool !== null}
-        onClose={() => setPanelTool(null)}
-        onBlueprintUpdated={(toolId, blueprintJson) => {
-          setTools((prev) =>
-            prev.map((t) => (t.id === toolId ? { ...t, blueprint: blueprintJson } : t)),
-          );
-          setPanelTool((prev) => (prev?.id === toolId ? { ...prev, blueprint: blueprintJson } : prev));
-        }}
+        onClose={handleClosePanel}
+        onBlueprintUpdated={handleBlueprintUpdated}
       />
     </DashboardLayout>
   );

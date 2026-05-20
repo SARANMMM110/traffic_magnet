@@ -74,7 +74,7 @@ export default function SettingsPage() {
   };
 
   const getInitials = (email: string) => {
-    return email.charAt(0).toUpperCase();
+    return email?.charAt(0).toUpperCase() || 'U';
   };
 
   const getAvatarColor = (email: string) => {

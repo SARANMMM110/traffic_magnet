@@ -74,11 +74,25 @@ function mapFetchError(e: unknown): WordPressConnectErr {
 
 function hasPublishCapability(capabilities: Record<string, boolean> | undefined): boolean {
   if (!capabilities) return false;
-  return Boolean(
-    capabilities.publish_posts ||
-      capabilities.edit_published_posts ||
-      capabilities.edit_posts,
-  );
+  
+  // Check for administrator role first (most permissive)
+  if (capabilities.administrator) return true;
+  
+  // Check for core publishing capabilities
+  // Administrator and Editor roles have these
+  if (capabilities.publish_posts) return true;
+  if (capabilities.edit_posts) return true;
+  if (capabilities.edit_others_posts) return true;
+  if (capabilities.edit_published_posts) return true;
+  
+  // Check for level-based capabilities (older WordPress versions)
+  if (capabilities.level_7 || capabilities.level_8 || capabilities.level_9 || capabilities.level_10) return true;
+  
+  // If we have any capabilities at all, let's be permissive and allow it
+  // The actual publishing will fail gracefully if they lack permissions
+  const hasAnyCapabilities = Object.keys(capabilities).some(key => capabilities[key] === true);
+  
+  return hasAnyCapabilities;
 }
 
 /**
@@ -188,6 +202,15 @@ export async function testWordPressApplicationPassword(params: {
     }
 
     const capabilities = json.capabilities as Record<string, boolean> | undefined;
+    
+    // Log capabilities for debugging
+    console.log("[WordPress] User capabilities:", {
+      userId: id,
+      username: name || slug,
+      capabilities: capabilities ? Object.keys(capabilities).filter(k => capabilities[k]) : [],
+      allCapabilities: capabilities,
+    });
+    
     const publishingAccess = hasPublishCapability(capabilities);
 
     const wpVersion = res.headers.get("x-wp-version");

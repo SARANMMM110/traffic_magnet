@@ -125,26 +125,7 @@ const getAssetIcon = (assetType: string) => {
   }
 };
 
-const AI_INSIGHTS = [
-  {
-    title: "Google Sign-In recommended",
-    detail: "OAuth gates show 42% higher verified lead rates for your niche",
-    icon: Sparkles,
-    confidence: 94,
-  },
-  {
-    title: "Exit intent performs well",
-    detail: "Users spending 45s+ respond better to exit gates than timed overlays",
-    icon: Target,
-    confidence: 87,
-  },
-  {
-    title: "Optimize CTA timing",
-    detail: "Delay unlock prompt by 1800ms for 23% conversion lift",
-    icon: Zap,
-    confidence: 91,
-  },
-];
+
 
 export default function CaptureFlowBuilder({ open, onOpenChange, onDeploy }: CaptureFlowBuilderProps) {
   const [step, setStep] = useState<BuilderStep>("asset");
@@ -776,76 +757,7 @@ export default function CaptureFlowBuilder({ open, onOpenChange, onDeploy }: Cap
               </div>
             </div>
 
-            {/* RIGHT PANEL - AI Insights */}
-            <div className="w-80 overflow-y-auto border-l border-slate-200/60 bg-gradient-to-b from-violet-50/30 to-white p-6">
-              <div className="space-y-6">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-violet-600" />
-                    <h3 className="text-xs font-semibold uppercase tracking-wider text-violet-700">
-                      AI Optimization
-                    </h3>
-                  </div>
-                  <p className="mt-1 text-xs text-slate-600">Intelligence-driven conversion insights</p>
-                </div>
 
-                <div className="space-y-3">
-                  {AI_INSIGHTS.map((insight) => (
-                    <div
-                      key={insight.title}
-                      className="rounded-xl border border-violet-200/60 bg-white p-4 shadow-sm"
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-600 text-white">
-                          <insight.icon className="h-4 w-4" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-semibold leading-snug text-slate-900">{insight.title}</p>
-                          <p className="mt-1 text-xs leading-relaxed text-slate-600">{insight.detail}</p>
-                          <div className="mt-2 flex items-center gap-2">
-                            <div className="h-1 flex-1 overflow-hidden rounded-full bg-slate-100">
-                              <div
-                                className="h-full rounded-full bg-gradient-to-r from-violet-600 to-violet-400"
-                                style={{ width: `${insight.confidence}%` }}
-                              />
-                            </div>
-                            <span className="text-[10px] font-semibold text-slate-500">
-                              {insight.confidence}% confidence
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="rounded-xl border border-slate-200 bg-white p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                    Predicted Performance
-                  </p>
-                  <div className="mt-3 space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-slate-600">Conversion Rate</span>
-                      <span className="font-semibold text-slate-900">
-                        {currentCaptureType?.conversion || "—"}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-slate-600">Lead Quality</span>
-                      <span className="font-semibold text-slate-900">
-                        {currentCaptureType?.quality || "—"}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-slate-600">Monthly Est.</span>
-                      <span className="font-semibold text-emerald-600">+420 leads</span>
-                    </div>
-                  </div>
-                </div>
-
-
-              </div>
-            </div>
           </div>
 
           {/* Footer Actions */}

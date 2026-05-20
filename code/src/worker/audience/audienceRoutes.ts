@@ -758,7 +758,39 @@ function registerAudienceWidgetAndAuthRoutes(app: Hono<{ Bindings: Bindings }>) 
         .bind(user.id)
         .all();
       const flows = (rows.results ?? []).map((r: any) => mapFlowRow(r as Record<string, unknown>));
-      return c.json({ flows });
+      
+      // Fetch stats for each flow
+      const flowsWithStats = await Promise.all(
+        flows.map(async (flow: any) => {
+          // Get total lead count
+          const leadCount = await (c.env.DB as D1Like).prepare(
+            "SELECT COUNT(*) as count FROM subscribers WHERE capture_flow_id = ?"
+          )
+            .bind(flow.id)
+            .first<{ count: number }>();
+          
+          // Get recent subscribers (last 5)
+          const recentSubs = await (c.env.DB as D1Like).prepare(
+            "SELECT email, name, created_at FROM subscribers WHERE capture_flow_id = ? ORDER BY created_at DESC LIMIT 5"
+          )
+            .bind(flow.id)
+            .all();
+          
+          return {
+            ...flow,
+            stats: {
+              totalLeads: Number(leadCount?.count) || 0,
+              recentSubscribers: (recentSubs.results ?? []).map((s: any) => ({
+                email: s.email,
+                name: s.name,
+                capturedAt: s.created_at,
+              })),
+            },
+          };
+        })
+      );
+      
+      return c.json({ flows: flowsWithStats });
     } catch (e) {
       console.error("audience flows list", e);
       return c.json({ flows: [], error: "Apply migration 0002_audience_engine.sql" });

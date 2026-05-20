@@ -1,5 +1,24 @@
 # Todo
 
+## CustomGPT Instruction Builder (NEW FEATURE)
+- #300: DONE - Created CustomGPT Builder page with research pain points and instruction generation
+- #301: DONE - Built backend endpoints for pain point research (OpenAI/Perplexity) and instruction generation
+- #302: DONE - Added navigation and routes for CustomGPT Builder
+- #303: DONE - Implemented modern UI with framer-motion, collapsible sections, and premium design
+
+## GPT Platform - Full Build (SEE gpt-platform-roadmap.md)
+- #200: DONE - Fix Create tab scrolling and Preview panel UX issues
+- #201: DONE - Build basic GPT runtime engine with streaming responses
+- #202: DONE - Implement knowledge system (upload, chunking, embeddings, retrieval)
+- #203: DONE - Build Actions system with OpenAPI schema support (backend complete, function calling enabled)
+- #204: DONE - Create GPT deployment and sharing infrastructure (publish/unpublish, public URLs, public chat)
+- #205: DONE - Build embeddable GPT widget system (popup and inline modes)
+- #206: DONE - Implement memory and conversation persistence (sessions, message saving, conversation history)
+- #207: DONE - Add multi-model execution (OpenAI, Anthropic, Gemini, DeepSeek)
+- #250: DONE - Profile & Customization (avatar upload, personality/tone presets, color themes)
+- #270: DONE - GPT Usage System (standalone chat interface, conversation history, session management, export)
+- #280: DONE - Embeddable GPT Widgets (popup/inline modes, customizable themes, embed code generator)
+
 ## Audience Engine - Production Infrastructure (ACTIVE BUILD)
 - #121: DONE - Universal asset publishing system (published_assets, public routes, slug system)
 - #122: DONE - Deployment pipeline (CREATE → GENERATE → DEPLOY → ACTIVATE workflow)
